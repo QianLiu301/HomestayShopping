@@ -1,0 +1,328 @@
+from flask import request
+from app.api import api_bp
+from app.models import (
+    Product, Vehicle, Location, Setting, Coupon, CouponUsage,
+    TransferOrder, ShopOrder, OrderItem
+)
+from app import db
+from app.utils import success_response, error_response, generate_order_no, get_lang
+
+
+# ==================== 接送机订单 ====================
+
+@api_bp.route('/transfer/price', methods=['GET'])
+def get_transfer_price():
+    """获取接送机价格配置"""
+    pickup_price = float(Setting.get_value('pickup_price', 300))
+    dropoff_price = float(Setting.get_value('dropoff_price', 300))
+    combo_discount = float(Setting.get_value('combo_discount', 0.9))
+    
+    return success_response({
+        'pickup_price': pickup_price,
+        'dropoff_price': dropoff_price,
+        'combo_price': round((pickup_price + dropoff_price) * combo_discount, 2),
+        'combo_discount': combo_discount
+    })
+
+
+@api_bp.route('/transfer/orders', methods=['POST'])
+def create_transfer_order():
+    """创建接送机订单"""
+    data = request.get_json()
+    
+    if not data:
+        return error_response('请求数据为空')
+    
+    # 验证必填字段
+    required_fields = ['service_type', 'vehicle_id', 'contact_name']
+    for field in required_fields:
+        if not data.get(field):
+            return error_response(f'缺少必填字段: {field}')
+    
+    # 验证服务类型
+    service_type = data.get('service_type')
+    if service_type not in ['pickup', 'dropoff', 'combo']:
+        return error_response('无效的服务类型')
+    
+    # 验证车型
+    vehicle = Vehicle.query.filter_by(id=data.get('vehicle_id'), status=1).first()
+    if not vehicle:
+        return error_response('车型不存在')
+    
+    # 验证地址
+    location_id = data.get('location_id')
+    custom_address = data.get('custom_address')
+    custom_district = data.get('custom_district')
+    
+    if location_id:
+        location = Location.query.filter_by(id=location_id, status=1).first()
+        if not location:
+            return error_response('民宿点不存在')
+    elif custom_address:
+        if not custom_district:
+            return error_response('请选择所在区')
+    else:
+        return error_response('请选择或填写地址')
+    
+    # 验证联系方式
+    contact_phone = data.get('contact_phone')
+    contact_email = data.get('contact_email')
+    if not contact_phone and not contact_email:
+        return error_response('请填写手机号或邮箱')
+    
+    # 计算价格
+    pickup_price = float(Setting.get_value('pickup_price', 300))
+    dropoff_price = float(Setting.get_value('dropoff_price', 300))
+    combo_discount = float(Setting.get_value('combo_discount', 0.9))
+    
+    if service_type == 'pickup':
+        base_price = pickup_price
+    elif service_type == 'dropoff':
+        base_price = dropoff_price
+    else:  # combo
+        base_price = round((pickup_price + dropoff_price) * combo_discount, 2)
+    
+    vehicle_extra = float(vehicle.extra_price) if vehicle.extra_price else 0
+    discount_amount = 0
+    coupon_id = None
+    
+    # 验证优惠券
+    coupon_code = data.get('coupon_code')
+    if coupon_code:
+        coupon = Coupon.query.filter_by(code=coupon_code).first()
+        if coupon:
+            is_valid, msg = coupon.is_valid()
+            if is_valid and coupon.apply_to in ['all', 'transfer']:
+                discount_amount = coupon.calculate_discount(base_price + vehicle_extra)
+                coupon_id = coupon.id
+    
+    total_price = base_price + vehicle_extra - discount_amount
+    
+    # 创建订单
+    order = TransferOrder(
+        order_no=generate_order_no('TR'),
+        service_type=service_type,
+        vehicle_id=vehicle.id,
+        flight_no=data.get('flight_no'),
+        flight_time=data.get('flight_time'),
+        location_id=location_id,
+        custom_address=custom_address,
+        custom_district=custom_district,
+        contact_name=data.get('contact_name'),
+        contact_phone=contact_phone,
+        contact_email=contact_email,
+        base_price=base_price,
+        vehicle_extra=vehicle_extra,
+        discount_amount=discount_amount,
+        coupon_id=coupon_id,
+        total_price=total_price,
+        remark=data.get('remark'),
+        status=0  # 待确认
+    )
+    
+    db.session.add(order)
+    
+    # 记录优惠券使用
+    if coupon_id:
+        usage = CouponUsage(
+            coupon_id=coupon_id,
+            order_type='transfer',
+            order_id=order.id,
+            contact_email=contact_email,
+            contact_phone=contact_phone,
+            discount_amount=discount_amount
+        )
+        db.session.add(usage)
+        coupon.used_count += 1
+    
+    db.session.commit()
+    
+    return success_response({
+        'order_no': order.order_no,
+        'total_price': float(order.total_price)
+    }, '订单创建成功')
+
+
+# ==================== 商城订单 ====================
+
+@api_bp.route('/shop/orders', methods=['POST'])
+def create_shop_order():
+    """创建商城订单"""
+    data = request.get_json()
+    
+    if not data:
+        return error_response('请求数据为空')
+    
+    # 验证商品列表
+    items_data = data.get('items', [])
+    if not items_data:
+        return error_response('购物车为空')
+    
+    # 验证地址
+    location_id = data.get('location_id')
+    custom_address = data.get('custom_address')
+    custom_district = data.get('custom_district')
+    room_number = data.get('room_number')
+    
+    if location_id:
+        location = Location.query.filter_by(id=location_id, status=1).first()
+        if not location:
+            return error_response('民宿点不存在')
+    elif custom_address:
+        if not custom_district:
+            return error_response('请选择所在区')
+    else:
+        return error_response('请选择或填写地址')
+    
+    # 验证联系信息
+    contact_name = data.get('contact_name')
+    contact_phone = data.get('contact_phone')
+    contact_email = data.get('contact_email')
+    
+    if not contact_name:
+        return error_response('请填写收件人姓名')
+    if not contact_phone and not contact_email:
+        return error_response('请填写手机号或邮箱')
+    
+    # 计算商品小计
+    subtotal = 0
+    order_items = []
+    
+    for item_data in items_data:
+        product_id = item_data.get('product_id')
+        quantity = item_data.get('quantity', 1)
+        spec_name = item_data.get('spec_name')
+        
+        product = Product.query.filter_by(id=product_id, status=1).first()
+        if not product:
+            return error_response(f'商品(ID:{product_id})不存在或已下架')
+        
+        # 获取价格（考虑规格）
+        price = float(product.price)
+        if spec_name and product.specs:
+            for spec in product.specs:
+                if spec.get('name') == spec_name:
+                    price = float(spec.get('price', product.price))
+                    break
+        
+        item_subtotal = price * quantity
+        subtotal += item_subtotal
+        
+        order_items.append({
+            'product_id': product_id,
+            'product_name': product.name_zh,
+            'spec_name': spec_name,
+            'price': price,
+            'quantity': quantity,
+            'subtotal': item_subtotal
+        })
+    
+    # 验证优惠券
+    discount_amount = 0
+    coupon_id = None
+    coupon_code = data.get('coupon_code')
+    
+    if coupon_code:
+        coupon = Coupon.query.filter_by(code=coupon_code).first()
+        if coupon:
+            is_valid, msg = coupon.is_valid()
+            if is_valid and coupon.apply_to in ['all', 'shop']:
+                discount_amount = coupon.calculate_discount(subtotal)
+                coupon_id = coupon.id
+    
+    total_price = subtotal - discount_amount
+    
+    # 创建订单
+    order = ShopOrder(
+        order_no=generate_order_no('SH'),
+        location_id=location_id,
+        custom_address=custom_address,
+        custom_district=custom_district,
+        room_number=room_number,
+        contact_name=contact_name,
+        contact_phone=contact_phone,
+        contact_email=contact_email,
+        subtotal=subtotal,
+        discount_amount=discount_amount,
+        coupon_id=coupon_id,
+        total_price=total_price,
+        remark=data.get('remark'),
+        status=0  # 待支付
+    )
+    
+    db.session.add(order)
+    db.session.flush()  # 获取order.id
+    
+    # 创建订单明细
+    for item in order_items:
+        order_item = OrderItem(
+            order_id=order.id,
+            product_id=item['product_id'],
+            product_name=item['product_name'],
+            spec_name=item['spec_name'],
+            price=item['price'],
+            quantity=item['quantity'],
+            subtotal=item['subtotal']
+        )
+        db.session.add(order_item)
+    
+    # 记录优惠券使用
+    if coupon_id:
+        usage = CouponUsage(
+            coupon_id=coupon_id,
+            order_type='shop',
+            order_id=order.id,
+            contact_email=contact_email,
+            contact_phone=contact_phone,
+            discount_amount=discount_amount
+        )
+        db.session.add(usage)
+        coupon.used_count += 1
+    
+    db.session.commit()
+    
+    return success_response({
+        'order_no': order.order_no,
+        'total_price': float(order.total_price)
+    }, '订单创建成功')
+
+
+# ==================== 订单查询 ====================
+
+@api_bp.route('/orders/query', methods=['POST'])
+def query_order():
+    """查询订单（通过订单号+邮箱/手机号）"""
+    data = request.get_json()
+    
+    if not data:
+        return error_response('请求数据为空')
+    
+    order_no = data.get('order_no')
+    contact = data.get('contact')  # 邮箱或手机号
+    
+    if not order_no or not contact:
+        return error_response('请填写订单号和联系方式')
+    
+    # 先查商城订单
+    shop_order = ShopOrder.query.filter_by(order_no=order_no).first()
+    if shop_order:
+        if shop_order.contact_email == contact or shop_order.contact_phone == contact:
+            return success_response({
+                'type': 'shop',
+                'order': shop_order.to_dict()
+            })
+        else:
+            return error_response('联系方式不匹配')
+    
+    # 再查接送机订单
+    transfer_order = TransferOrder.query.filter_by(order_no=order_no).first()
+    if transfer_order:
+        if transfer_order.contact_email == contact or transfer_order.contact_phone == contact:
+            return success_response({
+                'type': 'transfer',
+                'order': transfer_order.to_dict()
+            })
+        else:
+            return error_response('联系方式不匹配')
+    
+    return error_response('订单不存在', 404)
