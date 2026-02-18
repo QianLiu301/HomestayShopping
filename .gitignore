@@ -28,3 +28,8 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Node / H5
+node_modules/
+h5/dist/
+h5/node_modules/
