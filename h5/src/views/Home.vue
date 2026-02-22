@@ -195,9 +195,10 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.hero { position: relative; height: 100vh; min-height: 600px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%); overflow: hidden; text-align: center; color: #fff; }
-.hero::before { content: ''; position: absolute; top: -50%; right: -20%; width: 600px; height: 600px; border-radius: 50%; background: radial-gradient(circle, rgba(200,169,126,0.15) 0%, transparent 70%); }
+.hero { position: relative; height: 100vh; min-height: 600px; display: flex; align-items: center; justify-content: center; background: url('/images/hero-bg.jpg') center center / cover no-repeat; overflow: hidden; text-align: center; color: #fff; }
+.hero::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(26,26,46,0.75) 0%, rgba(22,33,62,0.65) 40%, rgba(15,52,96,0.6) 100%); z-index: 1; }
 .hero-content { position: relative; z-index: 2; padding: 0 24px; max-width: 800px; }
+.hero-scroll-hint { z-index: 2; }
 .hero-label { font-size: 13px; letter-spacing: 4px; text-transform: uppercase; color: var(--accent); margin-bottom: 20px; opacity: 0; }
 .hero-title { font-family: var(--font-display); font-size: clamp(36px, 7vw, 72px); font-weight: 700; line-height: 1.1; margin-bottom: 20px; opacity: 0; }
 .hero-subtitle { font-size: 18px; color: rgba(255,255,255,0.7); line-height: 1.6; margin-bottom: 40px; max-width: 500px; margin-left: auto; margin-right: auto; opacity: 0; }
