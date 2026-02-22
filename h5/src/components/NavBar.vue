@@ -105,10 +105,10 @@ onUnmounted(() => { window.removeEventListener('scroll', onScroll); document.rem
   position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
   transition: all 0.3s ease;
   background: var(--white);
-  box-shadow: 0 1px 10px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 10px rgba(74,55,40,0.06);
 }
 .navbar.dark-mode { background: transparent; box-shadow: none; color: #fff; }
-.navbar.scrolled { background: rgba(255,255,255,0.97); backdrop-filter: blur(20px); box-shadow: 0 1px 20px rgba(0,0,0,0.06); color: var(--text); }
+.navbar.scrolled { background: rgba(255,252,247,0.97); backdrop-filter: blur(20px); box-shadow: 0 1px 20px rgba(74,55,40,0.08); color: var(--text); }
 
 .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; height: var(--nav-height); display: flex; align-items: center; justify-content: space-between; }
 .nav-logo { font-family: var(--font-display); font-size: 22px; font-weight: 700; letter-spacing: 2px; cursor: pointer; color: inherit; }
@@ -120,7 +120,7 @@ onUnmounted(() => { window.removeEventListener('scroll', onScroll); document.rem
 
 .nav-right { display: flex; align-items: center; gap: 16px; }
 .lang-btn { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 500; color: inherit; position: relative; }
-.lang-dropdown { position: absolute; top: 100%; right: 0; margin-top: 12px; background: var(--white); border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); overflow: hidden; min-width: 140px; }
+.lang-dropdown { position: absolute; top: 100%; right: 0; margin-top: 12px; background: var(--white); border-radius: 10px; box-shadow: 0 8px 30px rgba(74,55,40,0.12); overflow: hidden; min-width: 140px; }
 .lang-item { padding: 12px 20px; font-size: 14px; color: var(--text); cursor: pointer; transition: background 0.2s; }
 .lang-item:hover, .lang-item.active { background: var(--accent-light); color: var(--accent-dark); }
 
