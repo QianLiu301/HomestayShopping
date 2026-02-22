@@ -6,8 +6,8 @@ import es from './es'
 
 const i18n = createI18n({
   legacy: false,
-  locale: localStorage.getItem('lang') || 'zh',
-  fallbackLocale: 'zh',
+  locale: localStorage.getItem('lang') || 'en',
+  fallbackLocale: 'en',
   messages: { zh, en, ru, es }
 })
 

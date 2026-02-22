@@ -14,8 +14,8 @@ app.use(createPinia())
 app.use(router)
 app.use(i18n)
 
-// Set Vant default locale
-const savedLang = localStorage.getItem('lang') || 'zh'
+// Default to English for Vant components
+const savedLang = localStorage.getItem('lang') || 'en'
 if (savedLang !== 'zh') {
   Locale.use('en-US', enUS)
 }
