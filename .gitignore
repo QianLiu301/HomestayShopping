@@ -29,7 +29,9 @@ Thumbs.db
 .coverage
 htmlcov/
 
-# Node / H5
+# Node / H5 / Admin
 node_modules/
 h5/dist/
 h5/node_modules/
+admin/dist/
+admin/node_modules/
