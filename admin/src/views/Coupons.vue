@@ -95,7 +95,7 @@ async function loadData() {
   loading.value = true
   try {
     const res = await getCoupons({ page: page.value, per_page: pageSize })
-    list.value = res.data?.items || res.data || []
+    list.value = res.data?.list || res.data?.items || []
     total.value = res.data?.total || list.value.length
   } catch {}
   loading.value = false

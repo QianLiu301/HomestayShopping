@@ -83,8 +83,8 @@ onMounted(async () => {
     statCards.value[1].value = shopRes.data?.total ?? 0
     statCards.value[2].value = transRes.data?.total ?? 0
     statCards.value[3].value = couponRes.data?.total ?? couponRes.data?.length ?? 0
-    recentShopOrders.value = shopRes.data?.items || shopRes.data || []
-    recentTransferOrders.value = transRes.data?.items || transRes.data || []
+    recentShopOrders.value = shopRes.data?.list || shopRes.data?.items || []
+    recentTransferOrders.value = transRes.data?.list || transRes.data?.items || []
   } catch {}
 })
 </script>

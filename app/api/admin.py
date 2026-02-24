@@ -29,7 +29,10 @@ def admin_get_products():
     if status is not None:
         query = query.filter_by(status=status)
     if keyword:
-        query = query.filter(Product.name_zh.ilike(f'%{keyword}%'))
+        query = query.filter(
+            (Product.name_zh.ilike(f'%{keyword}%')) |
+            (Product.name_en.ilike(f'%{keyword}%'))
+        )
     
     query = query.order_by(Product.sort_order.desc(), Product.id.desc())
     result = paginate_query(query, page, per_page)
@@ -47,20 +50,23 @@ def admin_get_products():
 def admin_create_product():
     """创建商品"""
     data = request.get_json()
-    
-    if not data.get('name_zh'):
+
+    name_zh = data.get('name_zh') or data.get('name_en')
+    name_en = data.get('name_en') or data.get('name_zh')
+
+    if not name_zh and not name_en:
         return error_response('商品名称不能为空')
     if not data.get('price'):
         return error_response('价格不能为空')
-    
+
     product = Product(
         category_id=data.get('category_id'),
-        name_zh=data.get('name_zh'),
-        name_en=data.get('name_en'),
+        name_zh=name_zh,
+        name_en=name_en,
         name_ru=data.get('name_ru'),
         name_es=data.get('name_es'),
-        desc_zh=data.get('desc_zh'),
-        desc_en=data.get('desc_en'),
+        desc_zh=data.get('desc_zh') or data.get('desc_en'),
+        desc_en=data.get('desc_en') or data.get('desc_zh'),
         desc_ru=data.get('desc_ru'),
         desc_es=data.get('desc_es'),
         price=data.get('price'),
@@ -134,13 +140,16 @@ def admin_get_categories():
 def admin_create_category():
     """创建分类"""
     data = request.get_json()
-    
-    if not data.get('name_zh'):
+
+    name_zh = data.get('name_zh') or data.get('name_en')
+    name_en = data.get('name_en') or data.get('name_zh')
+
+    if not name_zh and not name_en:
         return error_response('分类名称不能为空')
-    
+
     category = Category(
-        name_zh=data.get('name_zh'),
-        name_en=data.get('name_en'),
+        name_zh=name_zh,
+        name_en=name_en,
         name_ru=data.get('name_ru'),
         name_es=data.get('name_es'),
         icon=data.get('icon'),
@@ -207,17 +216,20 @@ def admin_get_vehicles():
 def admin_create_vehicle():
     """创建车型"""
     data = request.get_json()
-    
-    if not data.get('name_zh'):
+
+    name_zh = data.get('name_zh') or data.get('name_en')
+    name_en = data.get('name_en') or data.get('name_zh')
+
+    if not name_zh and not name_en:
         return error_response('车型名称不能为空')
-    
+
     vehicle = Vehicle(
-        name_zh=data.get('name_zh'),
-        name_en=data.get('name_en'),
+        name_zh=name_zh,
+        name_en=name_en,
         name_ru=data.get('name_ru'),
         name_es=data.get('name_es'),
-        desc_zh=data.get('desc_zh'),
-        desc_en=data.get('desc_en'),
+        desc_zh=data.get('desc_zh') or data.get('desc_en'),
+        desc_en=data.get('desc_en') or data.get('desc_zh'),
         seats=data.get('seats', 5),
         luggage_capacity=data.get('luggage_capacity', 2),
         extra_price=data.get('extra_price', 0),
@@ -286,17 +298,24 @@ def admin_get_locations():
 def admin_create_location():
     """创建民宿点"""
     data = request.get_json()
-    
-    if not data.get('name_zh') or not data.get('address_zh'):
-        return error_response('名称和地址不能为空')
-    
+
+    name_zh = data.get('name_zh') or data.get('name_en')
+    name_en = data.get('name_en') or data.get('name_zh')
+    address_zh = data.get('address_zh') or data.get('address_en')
+    address_en = data.get('address_en') or data.get('address_zh')
+
+    if not name_zh and not name_en:
+        return error_response('名称不能为空')
+    if not address_zh and not address_en:
+        return error_response('地址不能为空')
+
     location = Location(
-        name_zh=data.get('name_zh'),
-        name_en=data.get('name_en'),
+        name_zh=name_zh,
+        name_en=name_en,
         name_ru=data.get('name_ru'),
         name_es=data.get('name_es'),
-        address_zh=data.get('address_zh'),
-        address_en=data.get('address_en'),
+        address_zh=address_zh,
+        address_en=address_en,
         district=data.get('district'),
         sort_order=data.get('sort_order', 0),
         status=data.get('status', 1)

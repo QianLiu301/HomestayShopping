@@ -93,7 +93,7 @@ async function loadData() {
     if (keyword.value) params.keyword = keyword.value
     if (statusFilter.value !== '' && statusFilter.value !== null) params.status = statusFilter.value
     const res = await getShopOrders(params)
-    list.value = res.data?.items || res.data || []
+    list.value = res.data?.list || res.data?.items || []
     total.value = res.data?.total || list.value.length
   } catch {}
   loading.value = false
