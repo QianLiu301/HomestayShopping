@@ -2,6 +2,15 @@ from datetime import datetime
 from app import db
 
 
+def _localized(obj, field, lang):
+    """Get localized field with fallback: target lang -> en -> zh"""
+    return (
+        getattr(obj, f'{field}_{lang}', None)
+        or getattr(obj, f'{field}_en', None)
+        or getattr(obj, f'{field}_zh', None)
+    )
+
+
 class Admin(db.Model):
     """管理员表"""
     __tablename__ = 'admins'
@@ -47,12 +56,12 @@ class Location(db.Model):
     def to_dict(self, lang='zh'):
         return {
             'id': self.id,
-            'name': getattr(self, f'name_{lang}', None) or self.name_zh,
+            'name': _localized(self, 'name', lang),
             'name_zh': self.name_zh,
             'name_en': self.name_en,
             'name_ru': self.name_ru,
             'name_es': self.name_es,
-            'address': getattr(self, f'address_{lang}', None) or self.address_zh,
+            'address': _localized(self, 'address', lang),
             'address_zh': self.address_zh,
             'address_en': self.address_en,
             'address_ru': self.address_ru,
@@ -83,7 +92,7 @@ class Category(db.Model):
     def to_dict(self, lang='zh'):
         return {
             'id': self.id,
-            'name': getattr(self, f'name_{lang}', None) or self.name_zh,
+            'name': _localized(self, 'name', lang),
             'name_zh': self.name_zh,
             'name_en': self.name_en,
             'name_ru': self.name_ru,
@@ -122,12 +131,12 @@ class Product(db.Model):
         return {
             'id': self.id,
             'category_id': self.category_id,
-            'name': getattr(self, f'name_{lang}', None) or self.name_zh,
+            'name': _localized(self, 'name', lang),
             'name_zh': self.name_zh,
             'name_en': self.name_en,
             'name_ru': self.name_ru,
             'name_es': self.name_es,
-            'desc': getattr(self, f'desc_{lang}', None) or self.desc_zh,
+            'desc': _localized(self, 'desc', lang),
             'desc_zh': self.desc_zh,
             'desc_en': self.desc_en,
             'desc_ru': self.desc_ru,
@@ -166,12 +175,12 @@ class Vehicle(db.Model):
     def to_dict(self, lang='zh'):
         return {
             'id': self.id,
-            'name': getattr(self, f'name_{lang}', None) or self.name_zh,
+            'name': _localized(self, 'name', lang),
             'name_zh': self.name_zh,
             'name_en': self.name_en,
             'name_ru': self.name_ru,
             'name_es': self.name_es,
-            'desc': getattr(self, f'desc_{lang}', None) or self.desc_zh,
+            'desc': _localized(self, 'desc', lang),
             'desc_zh': self.desc_zh,
             'desc_en': self.desc_en,
             'desc_ru': self.desc_ru,
@@ -227,7 +236,7 @@ class Coupon(db.Model):
         return {
             'id': self.id,
             'code': self.code,
-            'name': getattr(self, f'name_{lang}', None) or self.name_zh,
+            'name': _localized(self, 'name', lang),
             'name_zh': self.name_zh,
             'name_en': self.name_en,
             'discount_type': self.discount_type,
