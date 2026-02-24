@@ -262,6 +262,8 @@ def admin_create_vehicle():
         name_es=data.get('name_es'),
         desc_zh=data.get('desc_zh') or data.get('desc_en'),
         desc_en=data.get('desc_en') or data.get('desc_zh'),
+        desc_ru=data.get('desc_ru'),
+        desc_es=data.get('desc_es'),
         seats=data.get('seats', 5),
         luggage_capacity=data.get('luggage_capacity', 2),
         extra_price=data.get('extra_price', 0),
@@ -288,7 +290,8 @@ def admin_update_vehicle(vehicle_id):
     
     fields = [
         'name_zh', 'name_en', 'name_ru', 'name_es',
-        'desc_zh', 'desc_en', 'seats', 'luggage_capacity',
+        'desc_zh', 'desc_en', 'desc_ru', 'desc_es',
+        'seats', 'luggage_capacity',
         'extra_price', 'image', 'sort_order', 'status'
     ]
     
@@ -348,6 +351,8 @@ def admin_create_location():
         name_es=data.get('name_es'),
         address_zh=address_zh,
         address_en=address_en,
+        address_ru=data.get('address_ru'),
+        address_es=data.get('address_es'),
         district=data.get('district'),
         sort_order=data.get('sort_order', 0),
         status=data.get('status', 1)
@@ -371,7 +376,8 @@ def admin_update_location(location_id):
     
     fields = [
         'name_zh', 'name_en', 'name_ru', 'name_es',
-        'address_zh', 'address_en', 'district', 'sort_order', 'status'
+        'address_zh', 'address_en', 'address_ru', 'address_es',
+        'district', 'sort_order', 'status'
     ]
     
     for field in fields:

@@ -29,7 +29,7 @@ class Admin(db.Model):
 class Location(db.Model):
     """民宿点表"""
     __tablename__ = 'locations'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     name_zh = db.Column(db.String(100), nullable=False)
     name_en = db.Column(db.String(100))
@@ -37,22 +37,26 @@ class Location(db.Model):
     name_es = db.Column(db.String(100))
     address_zh = db.Column(db.String(255), nullable=False)
     address_en = db.Column(db.String(255))
+    address_ru = db.Column(db.String(255))
+    address_es = db.Column(db.String(255))
     district = db.Column(db.String(50))
     sort_order = db.Column(db.Integer, default=0)
     status = db.Column(db.SmallInteger, default=1)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     def to_dict(self, lang='zh'):
         return {
             'id': self.id,
-            'name': getattr(self, f'name_{lang}') or self.name_zh,
+            'name': getattr(self, f'name_{lang}', None) or self.name_zh,
             'name_zh': self.name_zh,
             'name_en': self.name_en,
             'name_ru': self.name_ru,
             'name_es': self.name_es,
-            'address': getattr(self, f'address_{lang}') if lang == 'en' else self.address_zh,
+            'address': getattr(self, f'address_{lang}', None) or self.address_zh,
             'address_zh': self.address_zh,
             'address_en': self.address_en,
+            'address_ru': self.address_ru,
+            'address_es': self.address_es,
             'district': self.district,
             'sort_order': self.sort_order,
             'status': self.status
@@ -79,7 +83,7 @@ class Category(db.Model):
     def to_dict(self, lang='zh'):
         return {
             'id': self.id,
-            'name': getattr(self, f'name_{lang}') or self.name_zh,
+            'name': getattr(self, f'name_{lang}', None) or self.name_zh,
             'name_zh': self.name_zh,
             'name_en': self.name_en,
             'name_ru': self.name_ru,
@@ -118,12 +122,12 @@ class Product(db.Model):
         return {
             'id': self.id,
             'category_id': self.category_id,
-            'name': getattr(self, f'name_{lang}') or self.name_zh,
+            'name': getattr(self, f'name_{lang}', None) or self.name_zh,
             'name_zh': self.name_zh,
             'name_en': self.name_en,
             'name_ru': self.name_ru,
             'name_es': self.name_es,
-            'desc': getattr(self, f'desc_{lang}') or self.desc_zh,
+            'desc': getattr(self, f'desc_{lang}', None) or self.desc_zh,
             'desc_zh': self.desc_zh,
             'desc_en': self.desc_en,
             'desc_ru': self.desc_ru,
@@ -141,7 +145,7 @@ class Product(db.Model):
 class Vehicle(db.Model):
     """车型表"""
     __tablename__ = 'vehicles'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     name_zh = db.Column(db.String(50), nullable=False)
     name_en = db.Column(db.String(50))
@@ -149,6 +153,8 @@ class Vehicle(db.Model):
     name_es = db.Column(db.String(50))
     desc_zh = db.Column(db.String(100))
     desc_en = db.Column(db.String(100))
+    desc_ru = db.Column(db.String(100))
+    desc_es = db.Column(db.String(100))
     seats = db.Column(db.Integer, nullable=False)
     luggage_capacity = db.Column(db.Integer, nullable=False)
     extra_price = db.Column(db.Numeric(10, 2), default=0)
@@ -156,18 +162,20 @@ class Vehicle(db.Model):
     sort_order = db.Column(db.Integer, default=0)
     status = db.Column(db.SmallInteger, default=1)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     def to_dict(self, lang='zh'):
         return {
             'id': self.id,
-            'name': getattr(self, f'name_{lang}') or self.name_zh,
+            'name': getattr(self, f'name_{lang}', None) or self.name_zh,
             'name_zh': self.name_zh,
             'name_en': self.name_en,
             'name_ru': self.name_ru,
             'name_es': self.name_es,
-            'desc': getattr(self, f'desc_{lang}') or self.desc_zh,
+            'desc': getattr(self, f'desc_{lang}', None) or self.desc_zh,
             'desc_zh': self.desc_zh,
             'desc_en': self.desc_en,
+            'desc_ru': self.desc_ru,
+            'desc_es': self.desc_es,
             'seats': self.seats,
             'luggage_capacity': self.luggage_capacity,
             'extra_price': float(self.extra_price) if self.extra_price else 0,
@@ -219,7 +227,7 @@ class Coupon(db.Model):
         return {
             'id': self.id,
             'code': self.code,
-            'name': getattr(self, f'name_{lang}') or self.name_zh,
+            'name': getattr(self, f'name_{lang}', None) or self.name_zh,
             'name_zh': self.name_zh,
             'name_en': self.name_en,
             'discount_type': self.discount_type,
