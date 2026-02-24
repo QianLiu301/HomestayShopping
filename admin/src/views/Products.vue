@@ -114,8 +114,18 @@
           </el-col>
         </el-row>
 
-        <el-form-item label="Image URLs (one per line)">
-          <el-input v-model="imagesText" type="textarea" :rows="3" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg" />
+        <el-form-item label="Product Images">
+          <el-upload
+            :file-list="fileList"
+            :http-request="handleUpload"
+            :on-remove="handleRemove"
+            :before-upload="beforeUpload"
+            list-type="picture-card"
+            accept="image/*"
+            multiple
+          >
+            <el-icon><Plus /></el-icon>
+          </el-upload>
         </el-form-item>
 
         <el-row :gutter="16">
@@ -143,10 +153,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { getProducts, createProduct, updateProduct, deleteProduct, getCategories } from '../api'
+import { getProducts, createProduct, updateProduct, deleteProduct, getCategories, uploadFile } from '../api'
 
 const list = ref([])
 const categories = ref([])
@@ -160,6 +170,8 @@ const pageSize = 15
 const total = ref(0)
 const keyword = ref('')
 const categoryFilter = ref('')
+const fileList = ref([])
+const uploadedImages = ref([])
 
 const defaultForm = () => ({
   name_en: '', name_zh: '', name_ru: '', name_es: '',
@@ -168,7 +180,6 @@ const defaultForm = () => ({
   sort_order: 0, is_featured: false, status: 1
 })
 const form = reactive(defaultForm())
-const imagesText = ref('')
 
 function getCategoryName(id) {
   const c = categories.value.find(x => x.id === id)
@@ -197,17 +208,66 @@ async function loadCategories() {
 
 function openDialog(row) {
   Object.assign(form, defaultForm())
-  imagesText.value = ''
+  fileList.value = []
+  uploadedImages.value = []
+
   if (row) {
     isEdit.value = true
     editId.value = row.id
-    Object.keys(form).forEach(k => { if (row[k] !== undefined) form[k] = row[k] })
-    imagesText.value = (row.images || []).join('\n')
+    // Populate form fields from row data
+    Object.keys(form).forEach(k => {
+      if (row[k] !== undefined && row[k] !== null) form[k] = row[k]
+    })
+    // Populate image list for display
+    const images = row.images || []
+    uploadedImages.value = [...images]
+    fileList.value = images.map((url, idx) => ({
+      name: `image-${idx}`,
+      url: url
+    }))
   } else {
     isEdit.value = false
     editId.value = null
   }
   dialogVisible.value = true
+}
+
+function beforeUpload(file) {
+  const isImage = file.type.startsWith('image/')
+  const isLt10M = file.size / 1024 / 1024 < 10
+  if (!isImage) {
+    ElMessage.error('Only image files are allowed')
+    return false
+  }
+  if (!isLt10M) {
+    ElMessage.error('Image must be less than 10MB')
+    return false
+  }
+  return true
+}
+
+async function handleUpload(options) {
+  try {
+    const res = await uploadFile(options.file)
+    const url = res.data?.url
+    if (url) {
+      uploadedImages.value.push(url)
+      options.onSuccess(res)
+    } else {
+      options.onError(new Error('Upload failed'))
+    }
+  } catch (err) {
+    options.onError(err)
+  }
+}
+
+function handleRemove(file) {
+  // Find and remove the corresponding URL
+  const url = file.url || file.response?.data?.url
+  if (url) {
+    const idx = uploadedImages.value.indexOf(url)
+    if (idx > -1) uploadedImages.value.splice(idx, 1)
+  }
 }
 
 async function onSave() {
@@ -216,8 +276,7 @@ async function onSave() {
   if (!form.price) return ElMessage.warning('Price is required')
 
   saving.value = true
-  const data = { ...form }
-  data.images = imagesText.value.split('\n').map(s => s.trim()).filter(Boolean)
+  const data = { ...form, images: [...uploadedImages.value] }
   try {
     if (isEdit.value) {
       await updateProduct(editId.value, data)

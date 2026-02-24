@@ -46,7 +46,13 @@ class Location(db.Model):
         return {
             'id': self.id,
             'name': getattr(self, f'name_{lang}') or self.name_zh,
+            'name_zh': self.name_zh,
+            'name_en': self.name_en,
+            'name_ru': self.name_ru,
+            'name_es': self.name_es,
             'address': getattr(self, f'address_{lang}') if lang == 'en' else self.address_zh,
+            'address_zh': self.address_zh,
+            'address_en': self.address_en,
             'district': self.district,
             'sort_order': self.sort_order,
             'status': self.status
@@ -74,6 +80,10 @@ class Category(db.Model):
         return {
             'id': self.id,
             'name': getattr(self, f'name_{lang}') or self.name_zh,
+            'name_zh': self.name_zh,
+            'name_en': self.name_en,
+            'name_ru': self.name_ru,
+            'name_es': self.name_es,
             'icon': self.icon,
             'sort_order': self.sort_order,
             'status': self.status
@@ -83,7 +93,7 @@ class Category(db.Model):
 class Product(db.Model):
     """商品表"""
     __tablename__ = 'products'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
     name_zh = db.Column(db.String(100), nullable=False)
@@ -103,13 +113,21 @@ class Product(db.Model):
     status = db.Column(db.SmallInteger, default=1)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     def to_dict(self, lang='zh'):
         return {
             'id': self.id,
             'category_id': self.category_id,
             'name': getattr(self, f'name_{lang}') or self.name_zh,
+            'name_zh': self.name_zh,
+            'name_en': self.name_en,
+            'name_ru': self.name_ru,
+            'name_es': self.name_es,
             'desc': getattr(self, f'desc_{lang}') or self.desc_zh,
+            'desc_zh': self.desc_zh,
+            'desc_en': self.desc_en,
+            'desc_ru': self.desc_ru,
+            'desc_es': self.desc_es,
             'price': float(self.price) if self.price else 0,
             'original_price': float(self.original_price) if self.original_price else None,
             'images': self.images or [],
@@ -143,7 +161,13 @@ class Vehicle(db.Model):
         return {
             'id': self.id,
             'name': getattr(self, f'name_{lang}') or self.name_zh,
+            'name_zh': self.name_zh,
+            'name_en': self.name_en,
+            'name_ru': self.name_ru,
+            'name_es': self.name_es,
             'desc': getattr(self, f'desc_{lang}') or self.desc_zh,
+            'desc_zh': self.desc_zh,
+            'desc_en': self.desc_en,
             'seats': self.seats,
             'luggage_capacity': self.luggage_capacity,
             'extra_price': float(self.extra_price) if self.extra_price else 0,
@@ -196,6 +220,8 @@ class Coupon(db.Model):
             'id': self.id,
             'code': self.code,
             'name': getattr(self, f'name_{lang}') or self.name_zh,
+            'name_zh': self.name_zh,
+            'name_en': self.name_en,
             'discount_type': self.discount_type,
             'discount_value': float(self.discount_value),
             'min_amount': float(self.min_amount) if self.min_amount else 0,

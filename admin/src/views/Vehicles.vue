@@ -54,7 +54,19 @@
           <el-col :span="8"><el-form-item label="Luggage Capacity" required><el-input-number v-model="form.luggage_capacity" :min="0" style="width:100%" /></el-form-item></el-col>
           <el-col :span="8"><el-form-item label="Extra Price"><el-input-number v-model="form.extra_price" :min="0" :precision="2" style="width:100%" /></el-form-item></el-col>
         </el-row>
-        <el-form-item label="Image URL"><el-input v-model="form.image" placeholder="https://..." /></el-form-item>
+        <el-form-item label="Vehicle Image">
+          <el-upload
+            :file-list="fileList"
+            :http-request="handleUpload"
+            :on-remove="handleRemove"
+            :before-upload="beforeUpload"
+            :limit="1"
+            list-type="picture-card"
+            accept="image/*"
+          >
+            <el-icon v-if="!form.image"><Plus /></el-icon>
+          </el-upload>
+        </el-form-item>
         <el-row :gutter="16">
           <el-col :span="12"><el-form-item label="Sort Order"><el-input-number v-model="form.sort_order" :min="0" style="width:100%" /></el-form-item></el-col>
           <el-col :span="12"><el-form-item label="Status"><el-radio-group v-model="form.status"><el-radio :value="1">Active</el-radio><el-radio :value="0">Hidden</el-radio></el-radio-group></el-form-item></el-col>
@@ -72,7 +84,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { getVehicles, createVehicle, updateVehicle, deleteVehicle } from '../api'
+import { getVehicles, createVehicle, updateVehicle, deleteVehicle, uploadFile } from '../api'
 
 const list = ref([])
 const loading = ref(false)
@@ -80,6 +92,7 @@ const saving = ref(false)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const editId = ref(null)
+const fileList = ref([])
 
 const defaultForm = () => ({ name_en: '', name_zh: '', name_ru: '', name_es: '', desc_en: '', desc_zh: '', seats: 4, luggage_capacity: 2, extra_price: 0, image: '', sort_order: 0, status: 1 })
 const form = reactive(defaultForm())
@@ -92,9 +105,40 @@ async function loadData() {
 
 function openDialog(row) {
   Object.assign(form, defaultForm())
-  if (row) { isEdit.value = true; editId.value = row.id; Object.keys(form).forEach(k => { if (row[k] !== undefined) form[k] = row[k] }) }
-  else { isEdit.value = false; editId.value = null }
+  fileList.value = []
+  if (row) {
+    isEdit.value = true
+    editId.value = row.id
+    Object.keys(form).forEach(k => { if (row[k] !== undefined && row[k] !== null) form[k] = row[k] })
+    if (row.image) {
+      fileList.value = [{ name: 'vehicle-image', url: row.image }]
+    }
+  } else {
+    isEdit.value = false
+    editId.value = null
+  }
   dialogVisible.value = true
+}
+
+function beforeUpload(file) {
+  const isImage = file.type.startsWith('image/')
+  const isLt10M = file.size / 1024 / 1024 < 10
+  if (!isImage) { ElMessage.error('Only image files are allowed'); return false }
+  if (!isLt10M) { ElMessage.error('Image must be less than 10MB'); return false }
+  return true
+}
+
+async function handleUpload(options) {
+  try {
+    const res = await uploadFile(options.file)
+    const url = res.data?.url
+    if (url) { form.image = url; options.onSuccess(res) }
+    else { options.onError(new Error('Upload failed')) }
+  } catch (err) { options.onError(err) }
+}
+
+function handleRemove() {
+  form.image = ''
 }
 
 async function onSave() {

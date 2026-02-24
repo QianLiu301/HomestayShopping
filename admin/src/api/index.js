@@ -29,6 +29,13 @@ http.interceptors.response.use(
 export const login = data => http.post('/auth/login', data)
 export const getAdminInfo = () => http.get('/auth/info')
 
+// Upload
+export const uploadFile = file => {
+  const formData = new FormData()
+  formData.append('file', file)
+  return http.post('/admin/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+}
+
 // Products
 export const getProducts = params => http.get('/admin/products', { params })
 export const createProduct = data => http.post('/admin/products', data)

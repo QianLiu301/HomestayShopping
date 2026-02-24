@@ -1,4 +1,6 @@
-from flask import request
+import os
+import uuid
+from flask import request, current_app
 from app.api import api_bp
 from app.models import (
     Admin, Product, Category, Vehicle, Location, Setting, Coupon,
@@ -8,6 +10,36 @@ from app import db, bcrypt
 from app.utils import (
     success_response, error_response, admin_required, paginate_query
 )
+
+
+# ==================== 文件上传 ====================
+
+def allowed_file(filename):
+    allowed = current_app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif', 'webp'})
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed
+
+
+@api_bp.route('/admin/upload', methods=['POST'])
+@admin_required
+def admin_upload_file():
+    """上传文件"""
+    if 'file' not in request.files:
+        return error_response('没有选择文件')
+
+    file = request.files['file']
+    if file.filename == '':
+        return error_response('没有选择文件')
+
+    if not allowed_file(file.filename):
+        return error_response('不支持的文件格式，请上传 png/jpg/jpeg/gif/webp')
+
+    ext = file.filename.rsplit('.', 1)[1].lower()
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    file.save(os.path.join(upload_folder, filename))
+
+    url = f"/uploads/{filename}"
+    return success_response({'url': url}, '上传成功')
 
 
 # ==================== 商品管理 ====================

@@ -35,3 +35,6 @@ h5/dist/
 h5/node_modules/
 admin/dist/
 admin/node_modules/
+
+# Uploads
+uploads/

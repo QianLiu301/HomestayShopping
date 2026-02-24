@@ -22,6 +22,11 @@ class Config:
     # 跨域配置
     CORS_ORIGINS = os.getenv('CORS_ORIGINS', '*')
 
+    # 文件上传配置
+    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
+    MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10MB
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
 
 class DevelopmentConfig(Config):
     """开发环境配置"""
