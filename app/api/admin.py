@@ -10,6 +10,7 @@ from app import db, bcrypt
 from app.utils import (
     success_response, error_response, admin_required, paginate_query
 )
+from app.translations import auto_fill_translations
 
 
 # ==================== 文件上传 ====================
@@ -82,6 +83,7 @@ def admin_get_products():
 def admin_create_product():
     """创建商品"""
     data = request.get_json()
+    data = auto_fill_translations(data, ['name', 'desc'])
 
     name_zh = data.get('name_zh') or data.get('name_en')
     name_en = data.get('name_en') or data.get('name_zh')
@@ -123,9 +125,10 @@ def admin_update_product(product_id):
     product = Product.query.get(product_id)
     if not product:
         return error_response('商品不存在', 404)
-    
+
     data = request.get_json()
-    
+    data = auto_fill_translations(data, ['name', 'desc'])
+
     # 更新字段
     fields = [
         'category_id', 'name_zh', 'name_en', 'name_ru', 'name_es',
@@ -172,6 +175,7 @@ def admin_get_categories():
 def admin_create_category():
     """创建分类"""
     data = request.get_json()
+    data = auto_fill_translations(data, ['name'])
 
     name_zh = data.get('name_zh') or data.get('name_en')
     name_en = data.get('name_en') or data.get('name_zh')
@@ -202,9 +206,10 @@ def admin_update_category(category_id):
     category = Category.query.get(category_id)
     if not category:
         return error_response('分类不存在', 404)
-    
+
     data = request.get_json()
-    
+    data = auto_fill_translations(data, ['name'])
+
     fields = ['name_zh', 'name_en', 'name_ru', 'name_es', 'icon', 'sort_order', 'status']
     for field in fields:
         if field in data:
@@ -248,6 +253,7 @@ def admin_get_vehicles():
 def admin_create_vehicle():
     """创建车型"""
     data = request.get_json()
+    data = auto_fill_translations(data, ['name', 'desc'])
 
     name_zh = data.get('name_zh') or data.get('name_en')
     name_en = data.get('name_en') or data.get('name_zh')
@@ -285,9 +291,10 @@ def admin_update_vehicle(vehicle_id):
     vehicle = Vehicle.query.get(vehicle_id)
     if not vehicle:
         return error_response('车型不存在', 404)
-    
+
     data = request.get_json()
-    
+    data = auto_fill_translations(data, ['name', 'desc'])
+
     fields = [
         'name_zh', 'name_en', 'name_ru', 'name_es',
         'desc_zh', 'desc_en', 'desc_ru', 'desc_es',
@@ -333,6 +340,7 @@ def admin_get_locations():
 def admin_create_location():
     """创建民宿点"""
     data = request.get_json()
+    data = auto_fill_translations(data, ['name', 'address'])
 
     name_zh = data.get('name_zh') or data.get('name_en')
     name_en = data.get('name_en') or data.get('name_zh')
@@ -371,9 +379,10 @@ def admin_update_location(location_id):
     location = Location.query.get(location_id)
     if not location:
         return error_response('民宿点不存在', 404)
-    
+
     data = request.get_json()
-    
+    data = auto_fill_translations(data, ['name', 'address'])
+
     fields = [
         'name_zh', 'name_en', 'name_ru', 'name_es',
         'address_zh', 'address_en', 'address_ru', 'address_es',
