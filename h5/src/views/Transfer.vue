@@ -199,6 +199,16 @@
         @cancel="showDistrictPicker = false"
       />
     </van-popup>
+
+    <!-- Payment QR popup -->
+    <PaymentPopup
+      v-model:show="showPaymentPopup"
+      :method="form.payment_method"
+      :amount="totalPrice"
+      :order-no="pendingOrderNo"
+      @paid="onPaymentConfirmed"
+      @cancel="onPaymentCancel"
+    />
   </div>
 </template>
 
@@ -208,6 +218,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { showToast } from 'vant'
 import { getVehicles, getLocations, getDistricts, getTransferPrice, createTransferOrder, verifyCoupon } from '../api'
+import PaymentPopup from '../components/PaymentPopup.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -242,6 +253,9 @@ const couponLoading = ref(false)
 const showDatePicker = ref(false)
 const showLocationPicker = ref(false)
 const showDistrictPicker = ref(false)
+const showPaymentPopup = ref(false)
+const pendingOrderNo = ref('')
+const pendingAmount = ref('')
 
 const now = new Date()
 const datePickerValue = ref([
@@ -347,19 +361,39 @@ async function onSubmit() {
   submitting.value = true
   try {
     const res = await createTransferOrder(data)
-    router.replace({
-      path: '/order-result',
-      query: {
-        orderNo: res.data.order_no,
-        amount: res.data.total_price,
-        type: 'transfer'
-      }
-    })
+    pendingOrderNo.value = res.data.order_no
+    pendingAmount.value = res.data.total_price
+
+    if (form.payment_method === 'wechat' || form.payment_method === 'alipay') {
+      showPaymentPopup.value = true
+    } else {
+      goToResult()
+    }
   } catch (e) {
     showToast(e.message)
   } finally {
     submitting.value = false
   }
+}
+
+function goToResult() {
+  router.replace({
+    path: '/order-result',
+    query: {
+      orderNo: pendingOrderNo.value,
+      amount: pendingAmount.value,
+      type: 'transfer'
+    }
+  })
+}
+
+function onPaymentConfirmed() {
+  showToast(t('payment.paymentSubmitted'))
+  goToResult()
+}
+
+function onPaymentCancel() {
+  goToResult()
 }
 
 onMounted(async () => {

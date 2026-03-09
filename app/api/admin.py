@@ -514,6 +514,36 @@ def admin_update_transfer_order(order_id):
     return success_response(order.to_dict(), '更新成功')
 
 
+# ==================== 确认收款 ====================
+
+@api_bp.route('/admin/orders/shop/<int:order_id>/confirm-payment', methods=['POST'])
+@admin_required
+def admin_confirm_shop_payment(order_id):
+    """管理员确认商城订单已收款"""
+    from datetime import datetime
+    order = ShopOrder.query.get(order_id)
+    if not order:
+        return error_response('订单不存在', 404)
+    order.payment_status = 1
+    order.payment_time = datetime.utcnow()
+    db.session.commit()
+    return success_response(order.to_dict(), '已确认收款')
+
+
+@api_bp.route('/admin/orders/transfer/<int:order_id>/confirm-payment', methods=['POST'])
+@admin_required
+def admin_confirm_transfer_payment(order_id):
+    """管理员确认接送机订单已收款"""
+    from datetime import datetime
+    order = TransferOrder.query.get(order_id)
+    if not order:
+        return error_response('订单不存在', 404)
+    order.payment_status = 1
+    order.payment_time = datetime.utcnow()
+    db.session.commit()
+    return success_response(order.to_dict(), '已确认收款')
+
+
 # ==================== 优惠券管理 ====================
 
 @api_bp.route('/admin/coupons', methods=['GET'])

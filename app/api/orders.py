@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import request
 from app.api import api_bp
 from app.models import (
@@ -116,6 +117,7 @@ def create_transfer_order():
         discount_amount=discount_amount,
         coupon_id=coupon_id,
         total_price=total_price,
+        payment_method=data.get('payment_method'),
         remark=data.get('remark'),
         status=0  # 待确认
     )
@@ -246,6 +248,7 @@ def create_shop_order():
         discount_amount=discount_amount,
         coupon_id=coupon_id,
         total_price=total_price,
+        payment_method=data.get('payment_method'),
         remark=data.get('remark'),
         status=0  # 待支付
     )
@@ -326,3 +329,35 @@ def query_order():
             return error_response('联系方式不匹配')
     
     return error_response('订单不存在', 404)
+
+
+# ==================== 用户确认已支付 ====================
+
+@api_bp.route('/orders/confirm-paid', methods=['POST'])
+def confirm_paid():
+    """用户点击'我已支付'后，标记订单为待确认状态"""
+    data = request.get_json()
+    order_no = data.get('order_no')
+
+    if not order_no:
+        return error_response('缺少订单号')
+
+    # 查找订单
+    order = ShopOrder.query.filter_by(order_no=order_no).first()
+    order_type = 'shop'
+    if not order:
+        order = TransferOrder.query.filter_by(order_no=order_no).first()
+        order_type = 'transfer'
+
+    if not order:
+        return error_response('订单不存在', 404)
+
+    # 标记为"用户已点击支付"（payment_status=0仍为未确认，status改为1待确认）
+    if order.status == 0:
+        order.status = 1  # 待确认（管理员需核实收款）
+    db.session.commit()
+
+    return success_response({
+        'order_no': order.order_no,
+        'type': order_type
+    }, '已提交支付确认，请等待商家核实')

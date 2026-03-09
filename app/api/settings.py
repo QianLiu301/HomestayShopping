@@ -5,6 +5,17 @@ from app import db
 from app.utils import success_response, error_response, admin_required
 
 
+@api_bp.route('/payment/qrcodes', methods=['GET'])
+def get_payment_qrcodes():
+    """获取支付收款二维码（公开接口）"""
+    wechat_qr = Setting.get_value('wechat_qr_url', '')
+    alipay_qr = Setting.get_value('alipay_qr_url', '')
+    return success_response({
+        'wechat_qr_url': wechat_qr,
+        'alipay_qr_url': alipay_qr
+    })
+
+
 @api_bp.route('/admin/settings', methods=['GET'])
 @admin_required
 def admin_get_settings():

@@ -155,6 +155,16 @@
         @cancel="showDistrictPicker = false"
       />
     </van-popup>
+
+    <!-- Payment QR popup -->
+    <PaymentPopup
+      v-model:show="showPaymentPopup"
+      :method="form.payment_method"
+      :amount="finalPrice"
+      :order-no="pendingOrderNo"
+      @paid="onPaymentConfirmed"
+      @cancel="onPaymentCancel"
+    />
   </div>
 </template>
 
@@ -165,6 +175,7 @@ import { useI18n } from 'vue-i18n'
 import { showToast } from 'vant'
 import { getLocations, getDistricts, createShopOrder, verifyCoupon } from '../api'
 import { useCartStore } from '../stores/cart'
+import PaymentPopup from '../components/PaymentPopup.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -194,6 +205,9 @@ const couponLoading = ref(false)
 
 const showLocationPicker = ref(false)
 const showDistrictPicker = ref(false)
+const showPaymentPopup = ref(false)
+const pendingOrderNo = ref('')
+const pendingAmount = ref('')
 
 const locationColumns = computed(() =>
   locations.value.map(l => ({ text: l.name, value: l.id }))
@@ -252,6 +266,7 @@ async function onSubmit() {
     contact_email: form.contact_email,
     room_number: form.room_number,
     remark: form.remark,
+    payment_method: form.payment_method,
     items: cart.items.map(item => ({
       product_id: item.productId,
       quantity: item.quantity,
@@ -277,19 +292,41 @@ async function onSubmit() {
   try {
     const res = await createShopOrder(data)
     cart.clear()
-    router.replace({
-      path: '/order-result',
-      query: {
-        orderNo: res.data.order_no,
-        amount: res.data.total_price,
-        type: 'shop'
-      }
-    })
+    pendingOrderNo.value = res.data.order_no
+    pendingAmount.value = res.data.total_price
+
+    // For wechat/alipay show QR payment popup; for credit_card go directly to result
+    if (form.payment_method === 'wechat' || form.payment_method === 'alipay') {
+      showPaymentPopup.value = true
+    } else {
+      goToResult()
+    }
   } catch (e) {
     showToast(e.message)
   } finally {
     submitting.value = false
   }
+}
+
+function goToResult() {
+  router.replace({
+    path: '/order-result',
+    query: {
+      orderNo: pendingOrderNo.value,
+      amount: pendingAmount.value,
+      type: 'shop'
+    }
+  })
+}
+
+function onPaymentConfirmed() {
+  showToast(t('payment.paymentSubmitted'))
+  goToResult()
+}
+
+function onPaymentCancel() {
+  // Order already created, still go to result page
+  goToResult()
 }
 
 onMounted(async () => {

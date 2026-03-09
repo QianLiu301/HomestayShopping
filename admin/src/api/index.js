@@ -63,8 +63,10 @@ export const deleteLocation = id => http.delete(`/admin/locations/${id}`)
 // Orders
 export const getShopOrders = params => http.get('/admin/orders/shop', { params })
 export const updateShopOrder = (id, data) => http.put(`/admin/orders/shop/${id}`, data)
+export const confirmShopPayment = id => http.post(`/admin/orders/shop/${id}/confirm-payment`)
 export const getTransferOrders = params => http.get('/admin/orders/transfer', { params })
 export const updateTransferOrder = (id, data) => http.put(`/admin/orders/transfer/${id}`, data)
+export const confirmTransferPayment = id => http.post(`/admin/orders/transfer/${id}/confirm-payment`)
 
 // Coupons
 export const getCoupons = params => http.get('/admin/coupons', { params })

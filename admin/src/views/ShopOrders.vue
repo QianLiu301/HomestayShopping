@@ -22,6 +22,13 @@
         <el-table-column label="Total" width="100">
           <template #default="{ row }">¥{{ row.total_price }}</template>
         </el-table-column>
+        <el-table-column label="Payment" width="110">
+          <template #default="{ row }">
+            <el-tag :type="row.payment_status === 1 ? 'success' : 'warning'" size="small">
+              {{ row.payment_status === 1 ? 'Paid' : 'Unpaid' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="Status" width="110">
           <template #default="{ row }">
             <el-tag :type="statusTypes[row.status]" size="small">{{ statusLabels[row.status] }}</el-tag>
@@ -46,8 +53,25 @@
         <el-descriptions-item label="Phone">{{ current.contact_phone }}</el-descriptions-item>
         <el-descriptions-item label="Email">{{ current.contact_email }}</el-descriptions-item>
         <el-descriptions-item label="Total">¥{{ current.total_price }}</el-descriptions-item>
-        <el-descriptions-item label="Payment">{{ current.payment_method || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="Payment Method">{{ paymentMethodLabel(current.payment_method) }}</el-descriptions-item>
+        <el-descriptions-item label="Payment Status">
+          <el-tag :type="current.payment_status === 1 ? 'success' : 'warning'" size="small">
+            {{ current.payment_status === 1 ? 'Paid' : 'Unpaid' }}
+          </el-tag>
+        </el-descriptions-item>
       </el-descriptions>
+
+      <!-- Confirm Payment Button -->
+      <div v-if="current && current.payment_status !== 1" style="margin-top:16px;padding:12px;background:#fff7e6;border-radius:8px;text-align:center">
+        <p style="margin:0 0 10px;color:#e6a23c;font-size:13px">Customer selected: {{ paymentMethodLabel(current.payment_method) }}. Please verify payment received before confirming.</p>
+        <el-button type="warning" :loading="confirmingPayment" @click="onConfirmPayment">
+          Confirm Payment Received
+        </el-button>
+      </div>
+      <div v-else-if="current && current.payment_status === 1" style="margin-top:16px;padding:12px;background:#f0f9eb;border-radius:8px;text-align:center">
+        <p style="margin:0;color:#67c23a;font-size:13px">Payment confirmed ✓</p>
+      </div>
+
       <el-form style="margin-top:20px" label-position="top">
         <el-form-item label="Update Status">
           <el-select v-model="updateForm.status" style="width:100%">
@@ -69,11 +93,12 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getShopOrders, updateShopOrder } from '../api'
+import { getShopOrders, updateShopOrder, confirmShopPayment } from '../api'
 
 const list = ref([])
 const loading = ref(false)
 const saving = ref(false)
+const confirmingPayment = ref(false)
 const dialogVisible = ref(false)
 const current = ref(null)
 const page = ref(1)
@@ -85,6 +110,11 @@ const updateForm = reactive({ status: 0, remark: '' })
 
 const statusLabels = { 0: 'Pending', 1: 'Confirmed', 2: 'Completed', 3: 'Cancelled' }
 const statusTypes = { 0: 'warning', 1: 'primary', 2: 'success', 3: 'info' }
+const paymentMethods = { wechat: 'WeChat Pay', alipay: 'Alipay', credit_card: 'Credit Card' }
+
+function paymentMethodLabel(method) {
+  return paymentMethods[method] || method || '-'
+}
 
 async function loadData() {
   loading.value = true
@@ -115,6 +145,17 @@ async function onUpdate() {
     loadData()
   } catch {}
   saving.value = false
+}
+
+async function onConfirmPayment() {
+  confirmingPayment.value = true
+  try {
+    await confirmShopPayment(current.value.id)
+    ElMessage.success('Payment confirmed')
+    current.value.payment_status = 1
+    loadData()
+  } catch {}
+  confirmingPayment.value = false
 }
 
 onMounted(loadData)
