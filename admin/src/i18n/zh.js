@@ -1,0 +1,244 @@
+export default {
+  // Layout & Nav
+  nav: {
+    dashboard: '仪表盘',
+    shop: '商城',
+    products: '商品管理',
+    categories: '分类管理',
+    transfer: '接送服务',
+    vehicles: '车辆管理',
+    locations: '地点管理',
+    orders: '订单管理',
+    shopOrders: '商城订单',
+    transferOrders: '接送订单',
+    coupons: '优惠券',
+    settings: '系统设置',
+    payment: '支付设置',
+    logout: '退出登录'
+  },
+
+  // Common
+  common: {
+    save: '保存',
+    cancel: '取消',
+    close: '关闭',
+    edit: '编辑',
+    delete: '删除',
+    add: '添加',
+    update: '更新',
+    search: '搜索',
+    status: '状态',
+    actions: '操作',
+    active: '启用',
+    hidden: '隐藏',
+    disabled: '禁用',
+    sort: '排序',
+    yes: '是',
+    no: '否',
+    confirm: '确认',
+    manage: '管理',
+    created: '已创建',
+    updated: '已更新',
+    deleted: '已删除',
+    saved: '已保存',
+    uploadFailed: '上传失败',
+    nameRequired: '名称不能为空',
+    image: '图片',
+    noData: '暂无数据'
+  },
+
+  // Login
+  login: {
+    title: '管理后台',
+    username: '用户名',
+    password: '密码',
+    submit: '登 录',
+    usernamePlaceholder: '请输入用户名',
+    passwordPlaceholder: '请输入密码',
+    usernameRequired: '请输入用户名',
+    passwordRequired: '请输入密码',
+    success: '登录成功'
+  },
+
+  // Dashboard
+  dashboard: {
+    products: '商品数量',
+    shopOrders: '商城订单',
+    transferOrders: '接送订单',
+    coupons: '优惠券',
+    recentShopOrders: '最近商城订单',
+    recentTransferOrders: '最近接送订单',
+    orderNo: '订单号',
+    customer: '客户',
+    total: '金额',
+    type: '类型'
+  },
+
+  // Products
+  products: {
+    title: '商品管理',
+    addProduct: '添加商品',
+    editProduct: '编辑商品',
+    searchPlaceholder: '搜索商品...',
+    nameEn: '名称 (英文)',
+    nameZh: '名称 (中文)',
+    nameRu: '名称 (俄文)',
+    nameEs: '名称 (西文)',
+    descEn: '描述 (英文)',
+    descZh: '描述 (中文)',
+    category: '分类',
+    price: '价格',
+    originalPrice: '原价',
+    sortOrder: '排序',
+    featured: '推荐',
+    productImages: '商品图片',
+    categoryRequired: '请选择分类',
+    priceRequired: '请填写价格',
+    imageError: '仅支持图片文件',
+    imageSizeError: '图片大小不能超过10MB'
+  },
+
+  // Categories
+  categories: {
+    title: '分类管理',
+    addCategory: '添加分类',
+    editCategory: '编辑分类',
+    nameEn: '名称 (英文)',
+    nameZh: '名称 (中文)',
+    nameRu: '名称 (俄文)',
+    nameEs: '名称 (西文)',
+    icon: '图标',
+    deleteConfirm: '确定删除该分类？'
+  },
+
+  // Vehicles
+  vehicles: {
+    title: '车辆管理',
+    addVehicle: '添加车辆',
+    editVehicle: '编辑车辆',
+    nameEn: '名称 (英文)',
+    nameZh: '名称 (中文)',
+    nameRu: '名称 (俄文)',
+    nameEs: '名称 (西文)',
+    descEn: '描述 (英文)',
+    descZh: '描述 (中文)',
+    seats: '座位数',
+    luggage: '行李容量',
+    extraPrice: '加价',
+    vehicleImage: '车辆图片',
+    deleteConfirm: '确定删除该车辆？'
+  },
+
+  // Locations
+  locations: {
+    title: '地点管理',
+    addLocation: '添加地点',
+    editLocation: '编辑地点',
+    nameEn: '名称 (英文)',
+    nameZh: '名称 (中文)',
+    nameRu: '名称 (俄文)',
+    nameEs: '名称 (西文)',
+    addressEn: '地址 (英文)',
+    addressZh: '地址 (中文)',
+    district: '区域',
+    address: '地址',
+    deleteConfirm: '确定删除该地点？'
+  },
+
+  // Orders
+  orders: {
+    orderNo: '订单号',
+    customer: '客户',
+    phone: '电话',
+    email: '邮箱',
+    total: '总计',
+    items: '商品',
+    payment: '付款',
+    paymentMethod: '支付方式',
+    paymentStatus: '支付状态',
+    paid: '已付款',
+    unpaid: '未付款',
+    status: '状态',
+    created: '创建时间',
+    pending: '待处理',
+    confirmed: '已确认',
+    completed: '已完成',
+    cancelled: '已取消',
+    unknown: '未知',
+    searchPlaceholder: '搜索订单号/客户...',
+    orderDetail: '订单详情',
+    transferOrderDetail: '接送订单详情',
+    updateStatus: '更新状态',
+    remark: '备注',
+    confirmPayment: '确认收款',
+    confirmPaymentTip: '客户选择了: {method}。请确认已收到款项后再点击确认。',
+    paymentConfirmed: '已确认收款 ✓',
+    paymentConfirmedMsg: '已确认收款',
+    wechat: '微信支付',
+    alipay: '支付宝',
+    creditCard: '信用卡',
+    serviceType: '服务类型',
+    flightNo: '航班号',
+    flightTime: '航班时间',
+    basePrice: '基础价格',
+    vehicleExtra: '车辆加价',
+    discount: '优惠'
+  },
+
+  // Coupons
+  coupons: {
+    title: '优惠券管理',
+    addCoupon: '添加优惠券',
+    editCoupon: '编辑优惠券',
+    code: '优惠码',
+    nameEn: '名称 (英文)',
+    nameZh: '名称 (中文)',
+    discountType: '优惠类型',
+    fixedAmount: '固定金额',
+    percentage: '百分比',
+    discountValue: '优惠值',
+    minAmount: '最低金额',
+    maxDiscount: '最大优惠',
+    applyTo: '适用范围',
+    all: '全部',
+    shop: '商城',
+    transferLabel: '接送',
+    totalCount: '总数量',
+    perUserLimit: '每人限用',
+    usage: '使用情况',
+    startTime: '开始时间',
+    endTime: '结束时间',
+    expires: '到期时间',
+    codeRequired: '优惠码不能为空',
+    deleteConfirm: '确定删除该优惠券？'
+  },
+
+  // Settings
+  settings: {
+    title: '系统设置',
+    transferPricing: '接送定价设置',
+    saveChanges: '保存修改',
+    pickupPrice: '接机价格 (¥)',
+    dropoffPrice: '送机价格 (¥)',
+    comboDiscount: '套餐折扣 (%)',
+    comboTip: '套餐价格 = (接机价 + 送机价) × (1 - 折扣%/100)',
+    settingsSaved: '设置已保存'
+  },
+
+  // Payment Settings
+  payment: {
+    title: '支付设置',
+    qrCodes: '收款二维码',
+    saveQrCodes: '保存二维码',
+    wechatQr: '微信支付收款码',
+    alipayQr: '支付宝收款码',
+    uploadWechat: '上传微信收款码',
+    uploadAlipay: '上传支付宝收款码',
+    clickToReplace: '点击替换',
+    remove: '移除',
+    qrTip: '上传您的个人/商户微信支付和支付宝收款二维码图片。',
+    qrTip2: '客户下单后将扫描这些二维码完成付款。',
+    imageUploaded: '图片已上传',
+    qrSaved: '二维码已保存'
+  }
+}

@@ -20,7 +20,8 @@ const routes = [
       { path: 'orders/shop', name: 'ShopOrders', component: () => import('../views/ShopOrders.vue'), meta: { title: 'Shop Orders' } },
       { path: 'orders/transfer', name: 'TransferOrders', component: () => import('../views/TransferOrders.vue'), meta: { title: 'Transfer Orders' } },
       { path: 'coupons', name: 'Coupons', component: () => import('../views/Coupons.vue'), meta: { title: 'Coupons' } },
-      { path: 'settings', name: 'Settings', component: () => import('../views/Settings.vue'), meta: { title: 'Settings' } }
+      { path: 'settings', name: 'Settings', component: () => import('../views/Settings.vue'), meta: { title: 'Settings' } },
+      { path: 'payment', name: 'Payment', component: () => import('../views/Payment.vue'), meta: { title: 'Payment' } }
     ]
   }
 ]

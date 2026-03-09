@@ -1,0 +1,244 @@
+export default {
+  // Layout & Nav
+  nav: {
+    dashboard: 'Dashboard',
+    shop: 'Shop',
+    products: 'Products',
+    categories: 'Categories',
+    transfer: 'Transfer',
+    vehicles: 'Vehicles',
+    locations: 'Locations',
+    orders: 'Orders',
+    shopOrders: 'Shop Orders',
+    transferOrders: 'Transfer Orders',
+    coupons: 'Coupons',
+    settings: 'Settings',
+    payment: 'Payment',
+    logout: 'Logout'
+  },
+
+  // Common
+  common: {
+    save: 'Save',
+    cancel: 'Cancel',
+    close: 'Close',
+    edit: 'Edit',
+    delete: 'Delete',
+    add: 'Add',
+    update: 'Update',
+    search: 'Search',
+    status: 'Status',
+    actions: 'Actions',
+    active: 'Active',
+    hidden: 'Hidden',
+    disabled: 'Disabled',
+    sort: 'Sort',
+    yes: 'Yes',
+    no: 'No',
+    confirm: 'Confirm',
+    manage: 'Manage',
+    created: 'Created',
+    updated: 'Updated',
+    deleted: 'Deleted',
+    saved: 'Saved',
+    uploadFailed: 'Upload failed',
+    nameRequired: 'Name is required',
+    image: 'Image',
+    noData: 'No Data'
+  },
+
+  // Login
+  login: {
+    title: 'Admin Dashboard',
+    username: 'Username',
+    password: 'Password',
+    submit: 'Login',
+    usernamePlaceholder: 'Enter username',
+    passwordPlaceholder: 'Enter password',
+    usernameRequired: 'Please enter username',
+    passwordRequired: 'Please enter password',
+    success: 'Login successful'
+  },
+
+  // Dashboard
+  dashboard: {
+    products: 'Products',
+    shopOrders: 'Shop Orders',
+    transferOrders: 'Transfer Orders',
+    coupons: 'Coupons',
+    recentShopOrders: 'Recent Shop Orders',
+    recentTransferOrders: 'Recent Transfer Orders',
+    orderNo: 'Order No',
+    customer: 'Customer',
+    total: 'Total',
+    type: 'Type'
+  },
+
+  // Products
+  products: {
+    title: 'Products',
+    addProduct: 'Add Product',
+    editProduct: 'Edit Product',
+    searchPlaceholder: 'Search products...',
+    nameEn: 'Name (EN)',
+    nameZh: 'Name (ZH)',
+    nameRu: 'Name (RU)',
+    nameEs: 'Name (ES)',
+    descEn: 'Description (EN)',
+    descZh: 'Description (ZH)',
+    category: 'Category',
+    price: 'Price',
+    originalPrice: 'Original Price',
+    sortOrder: 'Sort Order',
+    featured: 'Featured',
+    productImages: 'Product Images',
+    categoryRequired: 'Category is required',
+    priceRequired: 'Price is required',
+    imageError: 'Only image files are allowed',
+    imageSizeError: 'Image must be less than 10MB'
+  },
+
+  // Categories
+  categories: {
+    title: 'Categories',
+    addCategory: 'Add Category',
+    editCategory: 'Edit Category',
+    nameEn: 'Name (EN)',
+    nameZh: 'Name (ZH)',
+    nameRu: 'Name (RU)',
+    nameEs: 'Name (ES)',
+    icon: 'Icon',
+    deleteConfirm: 'Delete this category?'
+  },
+
+  // Vehicles
+  vehicles: {
+    title: 'Vehicles',
+    addVehicle: 'Add Vehicle',
+    editVehicle: 'Edit Vehicle',
+    nameEn: 'Name (EN)',
+    nameZh: 'Name (ZH)',
+    nameRu: 'Name (RU)',
+    nameEs: 'Name (ES)',
+    descEn: 'Description (EN)',
+    descZh: 'Description (ZH)',
+    seats: 'Seats',
+    luggage: 'Luggage',
+    extraPrice: 'Extra Price',
+    vehicleImage: 'Vehicle Image',
+    deleteConfirm: 'Delete this vehicle?'
+  },
+
+  // Locations
+  locations: {
+    title: 'Locations',
+    addLocation: 'Add Location',
+    editLocation: 'Edit Location',
+    nameEn: 'Name (EN)',
+    nameZh: 'Name (ZH)',
+    nameRu: 'Name (RU)',
+    nameEs: 'Name (ES)',
+    addressEn: 'Address (EN)',
+    addressZh: 'Address (ZH)',
+    district: 'District',
+    address: 'Address',
+    deleteConfirm: 'Delete this location?'
+  },
+
+  // Orders
+  orders: {
+    orderNo: 'Order No',
+    customer: 'Customer',
+    phone: 'Phone',
+    email: 'Email',
+    total: 'Total',
+    items: 'Items',
+    payment: 'Payment',
+    paymentMethod: 'Payment Method',
+    paymentStatus: 'Payment Status',
+    paid: 'Paid',
+    unpaid: 'Unpaid',
+    status: 'Status',
+    created: 'Created',
+    pending: 'Pending',
+    confirmed: 'Confirmed',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+    unknown: 'Unknown',
+    searchPlaceholder: 'Search order no / customer...',
+    orderDetail: 'Order Detail',
+    transferOrderDetail: 'Transfer Order Detail',
+    updateStatus: 'Update Status',
+    remark: 'Remark',
+    confirmPayment: 'Confirm Payment Received',
+    confirmPaymentTip: 'Customer selected: {method}. Please verify payment received before confirming.',
+    paymentConfirmed: 'Payment confirmed ✓',
+    paymentConfirmedMsg: 'Payment confirmed',
+    wechat: 'WeChat Pay',
+    alipay: 'Alipay',
+    creditCard: 'Credit Card',
+    serviceType: 'Service Type',
+    flightNo: 'Flight No',
+    flightTime: 'Flight Time',
+    basePrice: 'Base Price',
+    vehicleExtra: 'Vehicle Extra',
+    discount: 'Discount'
+  },
+
+  // Coupons
+  coupons: {
+    title: 'Coupons',
+    addCoupon: 'Add Coupon',
+    editCoupon: 'Edit Coupon',
+    code: 'Code',
+    nameEn: 'Name (EN)',
+    nameZh: 'Name (ZH)',
+    discountType: 'Discount Type',
+    fixedAmount: 'Fixed Amount',
+    percentage: 'Percentage',
+    discountValue: 'Discount Value',
+    minAmount: 'Min Amount',
+    maxDiscount: 'Max Discount',
+    applyTo: 'Apply To',
+    all: 'All',
+    shop: 'Shop',
+    transferLabel: 'Transfer',
+    totalCount: 'Total Count',
+    perUserLimit: 'Per User Limit',
+    usage: 'Usage',
+    startTime: 'Start Time',
+    endTime: 'End Time',
+    expires: 'Expires',
+    codeRequired: 'Code is required',
+    deleteConfirm: 'Delete this coupon?'
+  },
+
+  // Settings
+  settings: {
+    title: 'Settings',
+    transferPricing: 'Transfer Pricing Settings',
+    saveChanges: 'Save Changes',
+    pickupPrice: 'Pickup Price (¥)',
+    dropoffPrice: 'Dropoff Price (¥)',
+    comboDiscount: 'Combo Discount (%)',
+    comboTip: 'Combo price = (pickup + dropoff) × (1 - discount%/100)',
+    settingsSaved: 'Settings saved'
+  },
+
+  // Payment Settings
+  payment: {
+    title: 'Payment Settings',
+    qrCodes: 'Payment QR Codes',
+    saveQrCodes: 'Save QR Codes',
+    wechatQr: 'WeChat Pay QR Code',
+    alipayQr: 'Alipay QR Code',
+    uploadWechat: 'Upload WeChat QR',
+    uploadAlipay: 'Upload Alipay QR',
+    clickToReplace: 'Click to replace',
+    remove: 'Remove',
+    qrTip: 'Upload your personal/business WeChat Pay and Alipay collection QR code images.',
+    qrTip2: 'Customers will scan these QR codes to make payment after placing an order.',
+    imageUploaded: 'Image uploaded',
+    qrSaved: 'QR codes saved'
+  }
+}

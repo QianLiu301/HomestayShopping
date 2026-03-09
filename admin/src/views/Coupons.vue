@@ -2,33 +2,33 @@
   <div>
     <div class="page-header">
       <span></span>
-      <el-button type="primary" @click="openDialog()"><el-icon><Plus /></el-icon> Add Coupon</el-button>
+      <el-button type="primary" @click="openDialog()"><el-icon><Plus /></el-icon> {{ $t('coupons.addCoupon') }}</el-button>
     </div>
 
     <el-card shadow="hover">
       <el-table :data="list" v-loading="loading" stripe>
-        <el-table-column prop="code" label="Code" width="140" />
-        <el-table-column prop="name_en" label="Name" min-width="160" />
-        <el-table-column label="Discount" width="130">
+        <el-table-column prop="code" :label="$t('coupons.code')" width="140" />
+        <el-table-column prop="name_en" :label="$t('coupons.nameEn')" min-width="160" />
+        <el-table-column :label="$t('coupons.discountValue')" width="130">
           <template #default="{ row }">
             {{ row.discount_type === 'percent' ? `${row.discount_value}%` : `¥${row.discount_value}` }}
           </template>
         </el-table-column>
-        <el-table-column prop="apply_to" label="Apply To" width="100" />
-        <el-table-column label="Usage" width="100">
+        <el-table-column prop="apply_to" :label="$t('coupons.applyTo')" width="100" />
+        <el-table-column :label="$t('coupons.usage')" width="100">
           <template #default="{ row }">{{ row.used_count }} / {{ row.total_count || '∞' }}</template>
         </el-table-column>
-        <el-table-column prop="end_time" label="Expires" width="170" />
-        <el-table-column label="Status" width="90">
+        <el-table-column prop="end_time" :label="$t('coupons.expires')" width="170" />
+        <el-table-column :label="$t('common.status')" width="90">
           <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">{{ row.status === 1 ? 'Active' : 'Disabled' }}</el-tag>
+            <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">{{ row.status === 1 ? $t('common.active') : $t('common.disabled') }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="Actions" width="160" fixed="right">
+        <el-table-column :label="$t('common.actions')" width="160" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="openDialog(row)">Edit</el-button>
-            <el-popconfirm title="Delete this coupon?" @confirm="onDelete(row.id)">
-              <template #reference><el-button link type="danger">Delete</el-button></template>
+            <el-button link type="primary" @click="openDialog(row)">{{ $t('common.edit') }}</el-button>
+            <el-popconfirm :title="$t('coupons.deleteConfirm')" @confirm="onDelete(row.id)">
+              <template #reference><el-button link type="danger">{{ $t('common.delete') }}</el-button></template>
             </el-popconfirm>
           </template>
         </el-table-column>
@@ -38,35 +38,35 @@
       </div>
     </el-card>
 
-    <el-dialog v-model="dialogVisible" :title="isEdit ? 'Edit Coupon' : 'Add Coupon'" width="600px" destroy-on-close>
+    <el-dialog v-model="dialogVisible" :title="isEdit ? $t('coupons.editCoupon') : $t('coupons.addCoupon')" width="600px" destroy-on-close>
       <el-form :model="form" label-position="top">
         <el-row :gutter="16">
-          <el-col :span="12"><el-form-item label="Code" required><el-input v-model="form.code" placeholder="e.g. WELCOME10" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="Apply To"><el-select v-model="form.apply_to" style="width:100%"><el-option label="All" value="all" /><el-option label="Shop" value="shop" /><el-option label="Transfer" value="transfer" /></el-select></el-form-item></el-col>
+          <el-col :span="12"><el-form-item :label="$t('coupons.code')" required><el-input v-model="form.code" placeholder="e.g. WELCOME10" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item :label="$t('coupons.applyTo')"><el-select v-model="form.apply_to" style="width:100%"><el-option :label="$t('coupons.all')" value="all" /><el-option :label="$t('coupons.shop')" value="shop" /><el-option :label="$t('coupons.transferLabel')" value="transfer" /></el-select></el-form-item></el-col>
         </el-row>
         <el-row :gutter="16">
-          <el-col :span="12"><el-form-item label="Name (EN)"><el-input v-model="form.name_en" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="Name (ZH)"><el-input v-model="form.name_zh" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item :label="$t('coupons.nameEn')"><el-input v-model="form.name_en" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item :label="$t('coupons.nameZh')"><el-input v-model="form.name_zh" /></el-form-item></el-col>
         </el-row>
         <el-row :gutter="16">
-          <el-col :span="8"><el-form-item label="Discount Type"><el-select v-model="form.discount_type" style="width:100%"><el-option label="Fixed Amount" value="fixed" /><el-option label="Percentage" value="percent" /></el-select></el-form-item></el-col>
-          <el-col :span="8"><el-form-item label="Discount Value" required><el-input-number v-model="form.discount_value" :min="0" :precision="2" style="width:100%" /></el-form-item></el-col>
-          <el-col :span="8"><el-form-item label="Min Amount"><el-input-number v-model="form.min_amount" :min="0" :precision="2" style="width:100%" /></el-form-item></el-col>
+          <el-col :span="8"><el-form-item :label="$t('coupons.discountType')"><el-select v-model="form.discount_type" style="width:100%"><el-option :label="$t('coupons.fixedAmount')" value="fixed" /><el-option :label="$t('coupons.percentage')" value="percent" /></el-select></el-form-item></el-col>
+          <el-col :span="8"><el-form-item :label="$t('coupons.discountValue')" required><el-input-number v-model="form.discount_value" :min="0" :precision="2" style="width:100%" /></el-form-item></el-col>
+          <el-col :span="8"><el-form-item :label="$t('coupons.minAmount')"><el-input-number v-model="form.min_amount" :min="0" :precision="2" style="width:100%" /></el-form-item></el-col>
         </el-row>
         <el-row :gutter="16">
-          <el-col :span="8"><el-form-item label="Max Discount"><el-input-number v-model="form.max_discount" :min="0" :precision="2" style="width:100%" /></el-form-item></el-col>
-          <el-col :span="8"><el-form-item label="Total Count"><el-input-number v-model="form.total_count" :min="0" style="width:100%" /></el-form-item></el-col>
-          <el-col :span="8"><el-form-item label="Per User Limit"><el-input-number v-model="form.per_limit" :min="1" style="width:100%" /></el-form-item></el-col>
+          <el-col :span="8"><el-form-item :label="$t('coupons.maxDiscount')"><el-input-number v-model="form.max_discount" :min="0" :precision="2" style="width:100%" /></el-form-item></el-col>
+          <el-col :span="8"><el-form-item :label="$t('coupons.totalCount')"><el-input-number v-model="form.total_count" :min="0" style="width:100%" /></el-form-item></el-col>
+          <el-col :span="8"><el-form-item :label="$t('coupons.perUserLimit')"><el-input-number v-model="form.per_limit" :min="1" style="width:100%" /></el-form-item></el-col>
         </el-row>
         <el-row :gutter="16">
-          <el-col :span="12"><el-form-item label="Start Time"><el-date-picker v-model="form.start_time" type="datetime" style="width:100%" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="End Time"><el-date-picker v-model="form.end_time" type="datetime" style="width:100%" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item :label="$t('coupons.startTime')"><el-date-picker v-model="form.start_time" type="datetime" style="width:100%" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item :label="$t('coupons.endTime')"><el-date-picker v-model="form.end_time" type="datetime" style="width:100%" /></el-form-item></el-col>
         </el-row>
-        <el-form-item label="Status"><el-radio-group v-model="form.status"><el-radio :value="1">Active</el-radio><el-radio :value="0">Disabled</el-radio></el-radio-group></el-form-item>
+        <el-form-item :label="$t('common.status')"><el-radio-group v-model="form.status"><el-radio :value="1">{{ $t('common.active') }}</el-radio><el-radio :value="0">{{ $t('common.disabled') }}</el-radio></el-radio-group></el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">Cancel</el-button>
-        <el-button type="primary" :loading="saving" @click="onSave">Save</el-button>
+        <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="saving" @click="onSave">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -74,10 +74,12 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getCoupons, createCoupon, updateCoupon, deleteCoupon } from '../api'
 
+const { t } = useI18n()
 const list = ref([])
 const loading = ref(false)
 const saving = ref(false)
@@ -109,18 +111,18 @@ function openDialog(row) {
 }
 
 async function onSave() {
-  if (!form.code) return ElMessage.warning('Code is required')
+  if (!form.code) return ElMessage.warning(t('coupons.codeRequired'))
   saving.value = true
   try {
-    if (isEdit.value) { await updateCoupon(editId.value, form); ElMessage.success('Updated') }
-    else { await createCoupon(form); ElMessage.success('Created') }
+    if (isEdit.value) { await updateCoupon(editId.value, form); ElMessage.success(t('common.updated')) }
+    else { await createCoupon(form); ElMessage.success(t('common.created')) }
     dialogVisible.value = false; loadData()
   } catch {}
   saving.value = false
 }
 
 async function onDelete(id) {
-  try { await deleteCoupon(id); ElMessage.success('Deleted'); loadData() } catch {}
+  try { await deleteCoupon(id); ElMessage.success(t('common.deleted')); loadData() } catch {}
 }
 
 onMounted(loadData)

@@ -15,44 +15,49 @@
       >
         <el-menu-item index="/dashboard">
           <el-icon><DataAnalysis /></el-icon>
-          <template #title>Dashboard</template>
+          <template #title>{{ $t('nav.dashboard') }}</template>
         </el-menu-item>
 
         <el-sub-menu index="shop-mgmt">
           <template #title>
             <el-icon><ShoppingBag /></el-icon>
-            <span>Shop</span>
+            <span>{{ $t('nav.shop') }}</span>
           </template>
-          <el-menu-item index="/products">Products</el-menu-item>
-          <el-menu-item index="/categories">Categories</el-menu-item>
+          <el-menu-item index="/products">{{ $t('nav.products') }}</el-menu-item>
+          <el-menu-item index="/categories">{{ $t('nav.categories') }}</el-menu-item>
         </el-sub-menu>
 
         <el-sub-menu index="transfer-mgmt">
           <template #title>
             <el-icon><Van /></el-icon>
-            <span>Transfer</span>
+            <span>{{ $t('nav.transfer') }}</span>
           </template>
-          <el-menu-item index="/vehicles">Vehicles</el-menu-item>
-          <el-menu-item index="/locations">Locations</el-menu-item>
+          <el-menu-item index="/vehicles">{{ $t('nav.vehicles') }}</el-menu-item>
+          <el-menu-item index="/locations">{{ $t('nav.locations') }}</el-menu-item>
         </el-sub-menu>
 
         <el-sub-menu index="order-mgmt">
           <template #title>
             <el-icon><List /></el-icon>
-            <span>Orders</span>
+            <span>{{ $t('nav.orders') }}</span>
           </template>
-          <el-menu-item index="/orders/shop">Shop Orders</el-menu-item>
-          <el-menu-item index="/orders/transfer">Transfer Orders</el-menu-item>
+          <el-menu-item index="/orders/shop">{{ $t('nav.shopOrders') }}</el-menu-item>
+          <el-menu-item index="/orders/transfer">{{ $t('nav.transferOrders') }}</el-menu-item>
         </el-sub-menu>
 
         <el-menu-item index="/coupons">
           <el-icon><Ticket /></el-icon>
-          <template #title>Coupons</template>
+          <template #title>{{ $t('nav.coupons') }}</template>
+        </el-menu-item>
+
+        <el-menu-item index="/payment">
+          <el-icon><CreditCard /></el-icon>
+          <template #title>{{ $t('nav.payment') }}</template>
         </el-menu-item>
 
         <el-menu-item index="/settings">
           <el-icon><Setting /></el-icon>
-          <template #title>Settings</template>
+          <template #title>{{ $t('nav.settings') }}</template>
         </el-menu-item>
       </el-menu>
     </el-aside>
@@ -63,9 +68,21 @@
           <el-icon class="collapse-btn" @click="isCollapse = !isCollapse">
             <Fold v-if="!isCollapse" /><Expand v-else />
           </el-icon>
-          <span class="page-title">{{ $route.meta.title }}</span>
+          <span class="page-title">{{ pageTitle }}</span>
         </div>
         <div class="header-right">
+          <el-dropdown class="lang-switcher" @command="switchLang">
+            <span class="lang-btn">
+              {{ locale === 'zh' ? '中文' : 'EN' }}
+              <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="zh" :disabled="locale === 'zh'">中文</el-dropdown-item>
+                <el-dropdown-item command="en" :disabled="locale === 'en'">English</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
           <el-dropdown @command="onCommand">
             <span class="user-info">
               <el-icon><UserFilled /></el-icon>
@@ -74,7 +91,7 @@
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="logout">Logout</el-dropdown-item>
+                <el-dropdown-item command="logout">{{ $t('nav.logout') }}</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -88,16 +105,42 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
-import { DataAnalysis, ShoppingBag, Van, List, Ticket, Setting, Fold, Expand, UserFilled, ArrowDown } from '@element-plus/icons-vue'
+import { DataAnalysis, ShoppingBag, Van, List, Ticket, Setting, CreditCard, Fold, Expand, UserFilled, ArrowDown } from '@element-plus/icons-vue'
 
+const { t, locale } = useI18n()
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 const isCollapse = ref(false)
 
+const titleMap = {
+  '/dashboard': 'nav.dashboard',
+  '/products': 'nav.products',
+  '/categories': 'nav.categories',
+  '/vehicles': 'nav.vehicles',
+  '/locations': 'nav.locations',
+  '/orders/shop': 'nav.shopOrders',
+  '/orders/transfer': 'nav.transferOrders',
+  '/coupons': 'nav.coupons',
+  '/settings': 'nav.settings',
+  '/payment': 'nav.payment'
+}
+
+const pageTitle = computed(() => {
+  const key = titleMap[route.path]
+  return key ? t(key) : (route.meta.title || '')
+})
+
 onMounted(() => auth.fetchUser())
+
+function switchLang(lang) {
+  locale.value = lang
+  localStorage.setItem('admin_lang', lang)
+}
 
 function onCommand(cmd) {
   if (cmd === 'logout') {
@@ -138,7 +181,10 @@ function onCommand(cmd) {
 .header-left { display: flex; align-items: center; gap: 16px; }
 .collapse-btn { font-size: 20px; cursor: pointer; color: #8a7b6b; }
 .page-title { font-size: 18px; font-weight: 600; color: #4a3728; }
-.header-right { display: flex; align-items: center; }
+.header-right { display: flex; align-items: center; gap: 16px; }
+.lang-switcher { cursor: pointer; }
+.lang-btn { display: flex; align-items: center; gap: 4px; font-size: 13px; color: #4a3728; cursor: pointer; padding: 4px 8px; border-radius: 4px; border: 1px solid #e8dfd4; }
+.lang-btn:hover { border-color: #c8a97e; color: #c8a97e; }
 .user-info { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; color: #4a3728; }
 .main { background: #faf6ef; padding: 24px; }
 </style>

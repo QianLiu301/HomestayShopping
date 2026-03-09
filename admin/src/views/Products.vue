@@ -2,47 +2,47 @@
   <div>
     <div class="page-header">
       <div class="header-filters">
-        <el-input v-model="keyword" placeholder="Search products..." clearable style="width:240px" @keyup.enter="loadData" />
-        <el-select v-model="categoryFilter" placeholder="Category" clearable style="width:160px" @change="loadData">
+        <el-input v-model="keyword" :placeholder="$t('products.searchPlaceholder')" clearable style="width:240px" @keyup.enter="loadData" />
+        <el-select v-model="categoryFilter" :placeholder="$t('products.category')" clearable style="width:160px" @change="loadData">
           <el-option v-for="c in categories" :key="c.id" :label="c.name_en || c.name_zh" :value="c.id" />
         </el-select>
       </div>
       <el-button type="primary" @click="openDialog()">
-        <el-icon><Plus /></el-icon> Add Product
+        <el-icon><Plus /></el-icon> {{ $t('products.addProduct') }}
       </el-button>
     </div>
 
     <el-card shadow="hover">
       <el-table :data="list" v-loading="loading" stripe>
-        <el-table-column label="Image" width="80">
+        <el-table-column :label="$t('common.image')" width="80">
           <template #default="{ row }">
             <el-image v-if="row.images?.length" :src="row.images[0]" style="width:50px;height:50px;border-radius:8px" fit="cover" />
             <div v-else style="width:50px;height:50px;border-radius:8px;background:#f5efe6;display:flex;align-items:center;justify-content:center;color:#c8a97e;font-weight:700">{{ (row.name_en || row.name_zh || '?').charAt(0) }}</div>
           </template>
         </el-table-column>
-        <el-table-column prop="name_en" label="Name (EN)" min-width="160" show-overflow-tooltip />
-        <el-table-column prop="name_zh" label="Name (ZH)" min-width="120" show-overflow-tooltip />
-        <el-table-column label="Category" width="120">
+        <el-table-column prop="name_en" :label="$t('products.nameEn')" min-width="160" show-overflow-tooltip />
+        <el-table-column prop="name_zh" :label="$t('products.nameZh')" min-width="120" show-overflow-tooltip />
+        <el-table-column :label="$t('products.category')" width="120">
           <template #default="{ row }">{{ getCategoryName(row.category_id) }}</template>
         </el-table-column>
-        <el-table-column prop="price" label="Price" width="100">
+        <el-table-column prop="price" :label="$t('products.price')" width="100">
           <template #default="{ row }">¥{{ row.price }}</template>
         </el-table-column>
-        <el-table-column label="Featured" width="90" align="center">
+        <el-table-column :label="$t('products.featured')" width="90" align="center">
           <template #default="{ row }">
-            <el-tag v-if="row.is_featured" type="warning" size="small">Yes</el-tag>
+            <el-tag v-if="row.is_featured" type="warning" size="small">{{ $t('common.yes') }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="Status" width="90">
+        <el-table-column :label="$t('common.status')" width="90">
           <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">{{ row.status === 1 ? 'Active' : 'Hidden' }}</el-tag>
+            <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">{{ row.status === 1 ? $t('common.active') : $t('common.hidden') }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="Actions" width="160" fixed="right">
+        <el-table-column :label="$t('common.actions')" width="160" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="openDialog(row)">Edit</el-button>
-            <el-popconfirm title="Delete this product?" @confirm="onDelete(row.id)">
-              <template #reference><el-button link type="danger">Delete</el-button></template>
+            <el-button link type="primary" @click="openDialog(row)">{{ $t('common.edit') }}</el-button>
+            <el-popconfirm :title="$t('common.delete') + '?'" @confirm="onDelete(row.id)">
+              <template #reference><el-button link type="danger">{{ $t('common.delete') }}</el-button></template>
             </el-popconfirm>
           </template>
         </el-table-column>
@@ -52,32 +52,32 @@
       </div>
     </el-card>
 
-    <el-dialog v-model="dialogVisible" :title="isEdit ? 'Edit Product' : 'Add Product'" width="700px" destroy-on-close>
+    <el-dialog v-model="dialogVisible" :title="isEdit ? $t('products.editProduct') : $t('products.addProduct')" width="700px" destroy-on-close>
       <el-form :model="form" label-width="120px" label-position="top">
         <el-row :gutter="16">
           <el-col :span="12">
-            <el-form-item label="Name (EN)" required>
+            <el-form-item :label="$t('products.nameEn')" required>
               <el-input v-model="form.name_en" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Name (ZH)">
+            <el-form-item :label="$t('products.nameZh')">
               <el-input v-model="form.name_zh" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Name (RU)">
+            <el-form-item :label="$t('products.nameRu')">
               <el-input v-model="form.name_ru" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Name (ES)">
+            <el-form-item :label="$t('products.nameEs')">
               <el-input v-model="form.name_es" />
             </el-form-item>
           </el-col>
         </el-row>
 
-        <el-form-item label="Category" required>
+        <el-form-item :label="$t('products.category')" required>
           <el-select v-model="form.category_id" style="width:100%">
             <el-option v-for="c in categories" :key="c.id" :label="c.name_en || c.name_zh" :value="c.id" />
           </el-select>
@@ -85,17 +85,17 @@
 
         <el-row :gutter="16">
           <el-col :span="8">
-            <el-form-item label="Price" required>
+            <el-form-item :label="$t('products.price')" required>
               <el-input-number v-model="form.price" :min="0" :precision="2" style="width:100%" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="Original Price">
+            <el-form-item :label="$t('products.originalPrice')">
               <el-input-number v-model="form.original_price" :min="0" :precision="2" style="width:100%" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="Sort Order">
+            <el-form-item :label="$t('products.sortOrder')">
               <el-input-number v-model="form.sort_order" :min="0" style="width:100%" />
             </el-form-item>
           </el-col>
@@ -103,18 +103,18 @@
 
         <el-row :gutter="16">
           <el-col :span="12">
-            <el-form-item label="Description (EN)">
+            <el-form-item :label="$t('products.descEn')">
               <el-input v-model="form.desc_en" type="textarea" :rows="3" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Description (ZH)">
+            <el-form-item :label="$t('products.descZh')">
               <el-input v-model="form.desc_zh" type="textarea" :rows="3" />
             </el-form-item>
           </el-col>
         </el-row>
 
-        <el-form-item label="Product Images">
+        <el-form-item :label="$t('products.productImages')">
           <el-upload
             :file-list="fileList"
             :http-request="handleUpload"
@@ -130,23 +130,23 @@
 
         <el-row :gutter="16">
           <el-col :span="12">
-            <el-form-item label="Featured">
+            <el-form-item :label="$t('products.featured')">
               <el-switch v-model="form.is_featured" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Status">
+            <el-form-item :label="$t('common.status')">
               <el-radio-group v-model="form.status">
-                <el-radio :value="1">Active</el-radio>
-                <el-radio :value="0">Hidden</el-radio>
+                <el-radio :value="1">{{ $t('common.active') }}</el-radio>
+                <el-radio :value="0">{{ $t('common.hidden') }}</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
         </el-row>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">Cancel</el-button>
-        <el-button type="primary" :loading="saving" @click="onSave">Save</el-button>
+        <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="saving" @click="onSave">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -154,10 +154,12 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getProducts, createProduct, updateProduct, deleteProduct, getCategories, uploadFile } from '../api'
 
+const { t } = useI18n()
 const list = ref([])
 const categories = ref([])
 const loading = ref(false)
@@ -214,11 +216,9 @@ function openDialog(row) {
   if (row) {
     isEdit.value = true
     editId.value = row.id
-    // Populate form fields from row data
     Object.keys(form).forEach(k => {
       if (row[k] !== undefined && row[k] !== null) form[k] = row[k]
     })
-    // Populate image list for display
     const images = row.images || []
     uploadedImages.value = [...images]
     fileList.value = images.map((url, idx) => ({
@@ -236,11 +236,11 @@ function beforeUpload(file) {
   const isImage = file.type.startsWith('image/')
   const isLt10M = file.size / 1024 / 1024 < 10
   if (!isImage) {
-    ElMessage.error('Only image files are allowed')
+    ElMessage.error(t('products.imageError'))
     return false
   }
   if (!isLt10M) {
-    ElMessage.error('Image must be less than 10MB')
+    ElMessage.error(t('products.imageSizeError'))
     return false
   }
   return true
@@ -254,7 +254,7 @@ async function handleUpload(options) {
       uploadedImages.value.push(url)
       options.onSuccess(res)
     } else {
-      options.onError(new Error('Upload failed'))
+      options.onError(new Error(t('common.uploadFailed')))
     }
   } catch (err) {
     options.onError(err)
@@ -262,7 +262,6 @@ async function handleUpload(options) {
 }
 
 function handleRemove(file) {
-  // Find and remove the corresponding URL
   const url = file.url || file.response?.data?.url
   if (url) {
     const idx = uploadedImages.value.indexOf(url)
@@ -271,19 +270,19 @@ function handleRemove(file) {
 }
 
 async function onSave() {
-  if (!form.name_en && !form.name_zh) return ElMessage.warning('Name is required')
-  if (!form.category_id) return ElMessage.warning('Category is required')
-  if (!form.price) return ElMessage.warning('Price is required')
+  if (!form.name_en && !form.name_zh) return ElMessage.warning(t('common.nameRequired'))
+  if (!form.category_id) return ElMessage.warning(t('products.categoryRequired'))
+  if (!form.price) return ElMessage.warning(t('products.priceRequired'))
 
   saving.value = true
   const data = { ...form, images: [...uploadedImages.value] }
   try {
     if (isEdit.value) {
       await updateProduct(editId.value, data)
-      ElMessage.success('Product updated')
+      ElMessage.success(t('common.updated'))
     } else {
       await createProduct(data)
-      ElMessage.success('Product created')
+      ElMessage.success(t('common.created'))
     }
     dialogVisible.value = false
     loadData()
@@ -294,7 +293,7 @@ async function onSave() {
 async function onDelete(id) {
   try {
     await deleteProduct(id)
-    ElMessage.success('Deleted')
+    ElMessage.success(t('common.deleted'))
     loadData()
   } catch {}
 }

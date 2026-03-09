@@ -3,39 +3,41 @@
     <div class="login-card">
       <div class="login-header">
         <h1>HOMESTAY</h1>
-        <p>Admin Dashboard</p>
+        <p>{{ $t('login.title') }}</p>
       </div>
       <el-form :model="form" :rules="rules" ref="formRef" @submit.prevent="onLogin">
         <el-form-item prop="username">
-          <el-input v-model="form.username" placeholder="Username" :prefix-icon="User" size="large" />
+          <el-input v-model="form.username" :placeholder="$t('login.usernamePlaceholder')" :prefix-icon="User" size="large" />
         </el-form-item>
         <el-form-item prop="password">
-          <el-input v-model="form.password" type="password" placeholder="Password" :prefix-icon="Lock" size="large" show-password @keyup.enter="onLogin" />
+          <el-input v-model="form.password" type="password" :placeholder="$t('login.passwordPlaceholder')" :prefix-icon="Lock" size="large" show-password @keyup.enter="onLogin" />
         </el-form-item>
-        <el-button type="primary" size="large" :loading="loading" style="width:100%" @click="onLogin">Login</el-button>
+        <el-button type="primary" size="large" :loading="loading" style="width:100%" @click="onLogin">{{ $t('login.submit') }}</el-button>
       </el-form>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { User, Lock } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { login } from '../api'
 import { useAuthStore } from '../stores/auth'
 
+const { t } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
 const formRef = ref()
 const loading = ref(false)
 
 const form = reactive({ username: '', password: '' })
-const rules = {
-  username: [{ required: true, message: 'Please enter username', trigger: 'blur' }],
-  password: [{ required: true, message: 'Please enter password', trigger: 'blur' }]
-}
+const rules = computed(() => ({
+  username: [{ required: true, message: t('login.usernameRequired'), trigger: 'blur' }],
+  password: [{ required: true, message: t('login.passwordRequired'), trigger: 'blur' }]
+}))
 
 async function onLogin() {
   await formRef.value.validate()
@@ -44,7 +46,7 @@ async function onLogin() {
     const res = await login(form)
     auth.setToken(res.data.token)
     await auth.fetchUser()
-    ElMessage.success('Login successful')
+    ElMessage.success(t('login.success'))
     router.push('/')
   } catch (e) {
     // error handled by interceptor

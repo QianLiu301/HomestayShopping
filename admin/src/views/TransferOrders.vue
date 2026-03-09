@@ -2,42 +2,42 @@
   <div>
     <div class="page-header">
       <div class="header-filters">
-        <el-input v-model="keyword" placeholder="Search order no / customer..." clearable style="width:260px" @keyup.enter="loadData" />
-        <el-select v-model="statusFilter" placeholder="Status" clearable style="width:140px" @change="loadData">
-          <el-option label="Pending" :value="0" /><el-option label="Confirmed" :value="1" /><el-option label="Completed" :value="2" /><el-option label="Cancelled" :value="3" />
+        <el-input v-model="keyword" :placeholder="$t('orders.searchPlaceholder')" clearable style="width:260px" @keyup.enter="loadData" />
+        <el-select v-model="statusFilter" :placeholder="$t('common.status')" clearable style="width:140px" @change="loadData">
+          <el-option :label="$t('orders.pending')" :value="0" /><el-option :label="$t('orders.confirmed')" :value="1" /><el-option :label="$t('orders.completed')" :value="2" /><el-option :label="$t('orders.cancelled')" :value="3" />
         </el-select>
       </div>
     </div>
 
     <el-card shadow="hover">
       <el-table :data="list" v-loading="loading" stripe>
-        <el-table-column prop="order_no" label="Order No" width="190" />
-        <el-table-column prop="contact_name" label="Customer" width="120" />
-        <el-table-column label="Type" width="100">
+        <el-table-column prop="order_no" :label="$t('orders.orderNo')" width="190" />
+        <el-table-column prop="contact_name" :label="$t('orders.customer')" width="120" />
+        <el-table-column :label="$t('orders.serviceType')" width="100">
           <template #default="{ row }">
             <el-tag size="small">{{ row.service_type }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="flight_no" label="Flight" width="100" />
-        <el-table-column label="Total" width="100">
+        <el-table-column prop="flight_no" :label="$t('orders.flightNo')" width="100" />
+        <el-table-column :label="$t('orders.total')" width="100">
           <template #default="{ row }">¥{{ row.total_price }}</template>
         </el-table-column>
-        <el-table-column label="Payment" width="110">
+        <el-table-column :label="$t('orders.payment')" width="110">
           <template #default="{ row }">
             <el-tag :type="row.payment_status === 1 ? 'success' : 'warning'" size="small">
-              {{ row.payment_status === 1 ? 'Paid' : 'Unpaid' }}
+              {{ row.payment_status === 1 ? $t('orders.paid') : $t('orders.unpaid') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="Status" width="110">
+        <el-table-column :label="$t('orders.status')" width="110">
           <template #default="{ row }">
-            <el-tag :type="statusTypes[row.status]" size="small">{{ statusLabels[row.status] }}</el-tag>
+            <el-tag :type="statusTypes[row.status]" size="small">{{ statusLabel(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="created_at" label="Created" width="170" />
-        <el-table-column label="Actions" width="120" fixed="right">
+        <el-table-column prop="created_at" :label="$t('orders.created')" width="170" />
+        <el-table-column :label="$t('common.actions')" width="120" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="openDetail(row)">Manage</el-button>
+            <el-button link type="primary" @click="openDetail(row)">{{ $t('common.manage') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -46,51 +46,50 @@
       </div>
     </el-card>
 
-    <el-dialog v-model="dialogVisible" title="Transfer Order Detail" width="550px">
+    <el-dialog v-model="dialogVisible" :title="$t('orders.transferOrderDetail')" width="550px">
       <el-descriptions :column="1" border v-if="current">
-        <el-descriptions-item label="Order No">{{ current.order_no }}</el-descriptions-item>
-        <el-descriptions-item label="Service Type">{{ current.service_type }}</el-descriptions-item>
-        <el-descriptions-item label="Customer">{{ current.contact_name }}</el-descriptions-item>
-        <el-descriptions-item label="Phone">{{ current.contact_phone }}</el-descriptions-item>
-        <el-descriptions-item label="Email">{{ current.contact_email }}</el-descriptions-item>
-        <el-descriptions-item label="Flight No">{{ current.flight_no }}</el-descriptions-item>
-        <el-descriptions-item label="Flight Time">{{ current.flight_time }}</el-descriptions-item>
-        <el-descriptions-item label="Base Price">¥{{ current.base_price }}</el-descriptions-item>
-        <el-descriptions-item label="Vehicle Extra">¥{{ current.vehicle_extra || 0 }}</el-descriptions-item>
-        <el-descriptions-item label="Discount">-¥{{ current.discount_amount || 0 }}</el-descriptions-item>
-        <el-descriptions-item label="Total">¥{{ current.total_price }}</el-descriptions-item>
-        <el-descriptions-item label="Payment Method">{{ paymentMethodLabel(current.payment_method) }}</el-descriptions-item>
-        <el-descriptions-item label="Payment Status">
+        <el-descriptions-item :label="$t('orders.orderNo')">{{ current.order_no }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.serviceType')">{{ current.service_type }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.customer')">{{ current.contact_name }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.phone')">{{ current.contact_phone }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.email')">{{ current.contact_email }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.flightNo')">{{ current.flight_no }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.flightTime')">{{ current.flight_time }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.basePrice')">¥{{ current.base_price }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.vehicleExtra')">¥{{ current.vehicle_extra || 0 }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.discount')">-¥{{ current.discount_amount || 0 }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.total')">¥{{ current.total_price }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.paymentMethod')">{{ paymentMethodLabel(current.payment_method) }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.paymentStatus')">
           <el-tag :type="current.payment_status === 1 ? 'success' : 'warning'" size="small">
-            {{ current.payment_status === 1 ? 'Paid' : 'Unpaid' }}
+            {{ current.payment_status === 1 ? $t('orders.paid') : $t('orders.unpaid') }}
           </el-tag>
         </el-descriptions-item>
       </el-descriptions>
 
-      <!-- Confirm Payment Button -->
       <div v-if="current && current.payment_status !== 1" style="margin-top:16px;padding:12px;background:#fff7e6;border-radius:8px;text-align:center">
-        <p style="margin:0 0 10px;color:#e6a23c;font-size:13px">Customer selected: {{ paymentMethodLabel(current.payment_method) }}. Please verify payment received before confirming.</p>
+        <p style="margin:0 0 10px;color:#e6a23c;font-size:13px">{{ $t('orders.confirmPaymentTip', { method: paymentMethodLabel(current.payment_method) }) }}</p>
         <el-button type="warning" :loading="confirmingPayment" @click="onConfirmPayment">
-          Confirm Payment Received
+          {{ $t('orders.confirmPayment') }}
         </el-button>
       </div>
       <div v-else-if="current && current.payment_status === 1" style="margin-top:16px;padding:12px;background:#f0f9eb;border-radius:8px;text-align:center">
-        <p style="margin:0;color:#67c23a;font-size:13px">Payment confirmed ✓</p>
+        <p style="margin:0;color:#67c23a;font-size:13px">{{ $t('orders.paymentConfirmed') }}</p>
       </div>
 
       <el-form style="margin-top:20px" label-position="top">
-        <el-form-item label="Update Status">
+        <el-form-item :label="$t('orders.updateStatus')">
           <el-select v-model="updateForm.status" style="width:100%">
-            <el-option label="Pending" :value="0" /><el-option label="Confirmed" :value="1" /><el-option label="Completed" :value="2" /><el-option label="Cancelled" :value="3" />
+            <el-option :label="$t('orders.pending')" :value="0" /><el-option :label="$t('orders.confirmed')" :value="1" /><el-option :label="$t('orders.completed')" :value="2" /><el-option :label="$t('orders.cancelled')" :value="3" />
           </el-select>
         </el-form-item>
-        <el-form-item label="Remark">
+        <el-form-item :label="$t('orders.remark')">
           <el-input v-model="updateForm.remark" type="textarea" :rows="2" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">Close</el-button>
-        <el-button type="primary" :loading="saving" @click="onUpdate">Update</el-button>
+        <el-button @click="dialogVisible = false">{{ $t('common.close') }}</el-button>
+        <el-button type="primary" :loading="saving" @click="onUpdate">{{ $t('common.update') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -98,9 +97,11 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { getTransferOrders, updateTransferOrder, confirmTransferPayment } from '../api'
 
+const { t } = useI18n()
 const list = ref([])
 const loading = ref(false)
 const saving = ref(false)
@@ -114,12 +115,12 @@ const keyword = ref('')
 const statusFilter = ref('')
 const updateForm = reactive({ status: 0, remark: '' })
 
-const statusLabels = { 0: 'Pending', 1: 'Confirmed', 2: 'Completed', 3: 'Cancelled' }
 const statusTypes = { 0: 'warning', 1: 'primary', 2: 'success', 3: 'info' }
-const paymentMethods = { wechat: 'WeChat Pay', alipay: 'Alipay', credit_card: 'Credit Card' }
+const statusLabel = s => t(`orders.${['pending','confirmed','completed','cancelled'][s] || 'unknown'}`)
 
 function paymentMethodLabel(method) {
-  return paymentMethods[method] || method || '-'
+  const map = { wechat: t('orders.wechat'), alipay: t('orders.alipay'), credit_card: t('orders.creditCard') }
+  return map[method] || method || '-'
 }
 
 async function loadData() {
@@ -146,7 +147,7 @@ async function onUpdate() {
   saving.value = true
   try {
     await updateTransferOrder(current.value.id, updateForm)
-    ElMessage.success('Updated')
+    ElMessage.success(t('common.updated'))
     dialogVisible.value = false
     loadData()
   } catch {}
@@ -157,7 +158,7 @@ async function onConfirmPayment() {
   confirmingPayment.value = true
   try {
     await confirmTransferPayment(current.value.id)
-    ElMessage.success('Payment confirmed')
+    ElMessage.success(t('orders.paymentConfirmedMsg'))
     current.value.payment_status = 1
     loadData()
   } catch {}
