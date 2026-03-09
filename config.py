@@ -7,8 +7,8 @@ class Config:
     """基础配置"""
     SECRET_KEY = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
     
-    # 数据库配置 - Neon PostgreSQL
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
+    # 数据库配置 - Neon PostgreSQL (fallback to SQLite for local dev)
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///' + os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dev.db'))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,

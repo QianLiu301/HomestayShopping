@@ -50,4 +50,20 @@ def create_app(config_name='default'):
     def health_check():
         return {'status': 'ok', 'message': 'Homestay API is running'}
 
+    # 提供 admin 前端静态文件
+    admin_dist = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'admin', 'dist')
+
+    @app.route('/assets/<path:filename>')
+    def admin_assets(filename):
+        return send_from_directory(os.path.join(admin_dist, 'assets'), filename)
+
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def serve_admin(path):
+        """SPA catch-all: serve index.html for all non-API routes"""
+        file_path = os.path.join(admin_dist, path)
+        if path and os.path.isfile(file_path):
+            return send_from_directory(admin_dist, path)
+        return send_from_directory(admin_dist, 'index.html')
+
     return app
