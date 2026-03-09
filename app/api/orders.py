@@ -181,6 +181,8 @@ def create_shop_order():
     contact_phone = data.get('contact_phone')
     contact_email = data.get('contact_email')
     
+    if not room_number:
+        return error_response('请填写房间号')
     if not contact_name:
         return error_response('请填写收件人姓名')
     if not contact_phone and not contact_email:

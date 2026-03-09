@@ -40,12 +40,14 @@
             :placeholder="t('checkout.selectLocation')"
             readonly
             is-link
+            required
             @click="showLocationPicker = true"
           />
           <van-field
             v-model="form.room_number"
             :label="t('checkout.roomNumber')"
             :placeholder="t('checkout.roomPlaceholder')"
+            required
           />
         </div>
 
@@ -55,6 +57,7 @@
             :placeholder="t('transfer.selectDistrict')"
             readonly
             is-link
+            required
             @click="showDistrictPicker = true"
           />
           <van-field
@@ -63,11 +66,13 @@
             type="textarea"
             rows="2"
             autosize
+            required
           />
           <van-field
             v-model="form.room_number"
             :label="t('checkout.roomNumber')"
             :placeholder="t('checkout.roomPlaceholder')"
+            required
           />
         </div>
       </div>
@@ -257,6 +262,18 @@ async function onVerifyCoupon() {
 }
 
 async function onSubmit() {
+  // Validate address
+  if (addressType.value === 'homestay') {
+    if (!form.location_id) return showToast(t('checkout.selectLocation'))
+  } else {
+    if (!form.custom_district) return showToast(t('transfer.selectDistrict'))
+    if (!form.custom_address) return showToast(t('transfer.inputAddress'))
+  }
+
+  // Room number is required
+  if (!form.room_number) return showToast(t('checkout.roomRequired'))
+
+  // Validate contact info
   if (!form.contact_name) return showToast(t('transfer.contactName'))
   if (!form.contact_phone && !form.contact_email) return showToast(t('checkout.phoneOrEmail'))
 
@@ -275,11 +292,8 @@ async function onSubmit() {
   }
 
   if (addressType.value === 'homestay') {
-    if (!form.location_id) return showToast(t('checkout.selectLocation'))
     data.location_id = form.location_id
   } else {
-    if (!form.custom_district) return showToast(t('transfer.selectDistrict'))
-    if (!form.custom_address) return showToast(t('transfer.inputAddress'))
     data.custom_address = form.custom_address
     data.custom_district = form.custom_district
   }
