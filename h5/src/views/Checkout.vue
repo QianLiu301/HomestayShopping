@@ -262,52 +262,52 @@ async function onVerifyCoupon() {
 }
 
 async function onSubmit() {
-  // Validate address
-  if (addressType.value === 'homestay') {
-    if (!form.location_id) return showToast(t('checkout.selectLocation'))
-  } else {
-    if (!form.custom_district) return showToast(t('transfer.selectDistrict'))
-    if (!form.custom_address) return showToast(t('transfer.inputAddress'))
-  }
-
-  // Room number is required
-  if (!form.room_number) return showToast(t('checkout.roomRequired'))
-
-  // Validate contact info
-  if (!form.contact_name) return showToast(t('transfer.contactName'))
-  if (!form.contact_phone && !form.contact_email) return showToast(t('checkout.phoneOrEmail'))
-
-  const data = {
-    contact_name: form.contact_name,
-    contact_phone: form.contact_phone,
-    contact_email: form.contact_email,
-    room_number: form.room_number,
-    remark: form.remark,
-    payment_method: form.payment_method,
-    items: cart.items.map(item => ({
-      product_id: item.productId,
-      quantity: item.quantity,
-      spec_name: item.specName || undefined
-    }))
-  }
-
-  if (addressType.value === 'homestay') {
-    data.location_id = form.location_id
-  } else {
-    data.custom_address = form.custom_address
-    data.custom_district = form.custom_district
-  }
-
-  if (couponCode.value && couponDiscount.value > 0) {
-    data.coupon_code = couponCode.value
-  }
-
-  submitting.value = true
   try {
+    // Validate address
+    if (addressType.value === 'homestay') {
+      if (!form.location_id) { showToast(t('checkout.selectLocation')); return }
+    } else {
+      if (!form.custom_district) { showToast(t('transfer.selectDistrict')); return }
+      if (!form.custom_address) { showToast(t('transfer.inputAddress')); return }
+    }
+
+    // Room number is required
+    if (!form.room_number) { showToast(t('checkout.roomRequired')); return }
+
+    // Validate contact info
+    if (!form.contact_name) { showToast(t('transfer.contactName')); return }
+    if (!form.contact_phone && !form.contact_email) { showToast(t('checkout.phoneOrEmail')); return }
+
+    const data = {
+      contact_name: form.contact_name,
+      contact_phone: form.contact_phone,
+      contact_email: form.contact_email,
+      room_number: form.room_number,
+      remark: form.remark,
+      payment_method: form.payment_method,
+      items: cart.items.map(item => ({
+        product_id: item.productId,
+        quantity: item.quantity,
+        spec_name: item.specName || undefined
+      }))
+    }
+
+    if (addressType.value === 'homestay') {
+      data.location_id = form.location_id
+    } else {
+      data.custom_address = form.custom_address
+      data.custom_district = form.custom_district
+    }
+
+    if (couponCode.value && couponDiscount.value > 0) {
+      data.coupon_code = couponCode.value
+    }
+
+    submitting.value = true
     const res = await createShopOrder(data)
     cart.clear()
-    pendingOrderNo.value = res.data.order_no
-    pendingAmount.value = res.data.total_price
+    pendingOrderNo.value = res.data?.order_no || res.order_no || ''
+    pendingAmount.value = res.data?.total_price || res.total_price || ''
 
     // For wechat/alipay show QR payment popup; for credit_card go directly to result
     if (form.payment_method === 'wechat' || form.payment_method === 'alipay') {
@@ -316,7 +316,8 @@ async function onSubmit() {
       goToResult()
     }
   } catch (e) {
-    showToast(e.message)
+    console.error('Submit order error:', e)
+    showToast(e.message || String(e))
   } finally {
     submitting.value = false
   }
