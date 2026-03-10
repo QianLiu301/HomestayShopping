@@ -262,23 +262,30 @@ async function onVerifyCoupon() {
   }
 }
 
+function validationFail(msg) {
+  console.warn('Validation failed:', msg)
+  showToast({ message: msg, position: 'top', duration: 3000 })
+  // Scroll to top so user can see which field is missing
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
 async function onSubmit() {
   console.log('onSubmit called', { addressType: addressType.value, form: JSON.parse(JSON.stringify(form)), cartItems: cart.items.length })
   try {
     // Validate address
     if (addressType.value === 'homestay') {
-      if (!form.location_id) { showToast(t('checkout.selectLocation')); return }
+      if (!form.location_id) { validationFail(t('checkout.selectLocation')); return }
     } else {
-      if (!form.custom_district) { showToast(t('transfer.selectDistrict')); return }
-      if (!form.custom_address) { showToast(t('transfer.inputAddress')); return }
+      if (!form.custom_district) { validationFail(t('transfer.selectDistrict')); return }
+      if (!form.custom_address) { validationFail(t('transfer.inputAddress')); return }
     }
 
     // Room number is required
-    if (!form.room_number) { showToast(t('checkout.roomRequired')); return }
+    if (!form.room_number) { validationFail(t('checkout.roomRequired')); return }
 
     // Validate contact info
-    if (!form.contact_name) { showToast(t('transfer.contactName')); return }
-    if (!form.contact_phone && !form.contact_email) { showToast(t('checkout.phoneOrEmail')); return }
+    if (!form.contact_name) { validationFail(t('transfer.contactName')); return }
+    if (!form.contact_phone && !form.contact_email) { validationFail(t('checkout.phoneOrEmail')); return }
 
     const data = {
       contact_name: form.contact_name,
