@@ -317,11 +317,12 @@ class TransferOrder(db.Model):
     payment_status = db.Column(db.SmallInteger, default=0)
     payment_time = db.Column(db.DateTime)
     transaction_id = db.Column(db.String(64))
+    payment_screenshot = db.Column(db.String(255))
     status = db.Column(db.SmallInteger, default=0)
     remark = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # 关联
     vehicle = db.relationship('Vehicle', backref='orders')
     location = db.relationship('Location', backref='transfer_orders')
@@ -347,6 +348,8 @@ class TransferOrder(db.Model):
             'total_price': float(self.total_price),
             'payment_method': self.payment_method,
             'payment_status': self.payment_status,
+            'transaction_id': self.transaction_id,
+            'payment_screenshot': self.payment_screenshot,
             'status': self.status,
             'remark': self.remark,
             'created_at': self.created_at.isoformat() if self.created_at else None
@@ -374,11 +377,12 @@ class ShopOrder(db.Model):
     payment_status = db.Column(db.SmallInteger, default=0)
     payment_time = db.Column(db.DateTime)
     transaction_id = db.Column(db.String(64))
+    payment_screenshot = db.Column(db.String(255))
     status = db.Column(db.SmallInteger, default=0)
     remark = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # 关联
     location = db.relationship('Location', backref='shop_orders')
     coupon = db.relationship('Coupon', backref='shop_orders')
@@ -400,6 +404,8 @@ class ShopOrder(db.Model):
             'total_price': float(self.total_price),
             'payment_method': self.payment_method,
             'payment_status': self.payment_status,
+            'transaction_id': self.transaction_id,
+            'payment_screenshot': self.payment_screenshot,
             'status': self.status,
             'items': [item.to_dict() for item in self.items],
             'remark': self.remark,

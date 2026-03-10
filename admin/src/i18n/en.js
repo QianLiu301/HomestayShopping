@@ -174,6 +174,8 @@ export default {
     confirmPaymentTip: 'Customer selected: {method}. Please verify payment received before confirming.',
     paymentConfirmed: 'Payment confirmed ✓',
     paymentConfirmedMsg: 'Payment confirmed',
+    transactionId: 'Transaction ID',
+    paymentScreenshot: 'Payment Screenshot',
     wechat: 'WeChat Pay',
     alipay: 'Alipay',
     creditCard: 'Credit Card',

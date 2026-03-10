@@ -59,6 +59,12 @@
             {{ current.payment_status === 1 ? $t('orders.paid') : $t('orders.unpaid') }}
           </el-tag>
         </el-descriptions-item>
+        <el-descriptions-item v-if="current.transaction_id" :label="$t('orders.transactionId')">
+          <span style="font-family:monospace">{{ current.transaction_id }}</span>
+        </el-descriptions-item>
+        <el-descriptions-item v-if="current.payment_screenshot" :label="$t('orders.paymentScreenshot')">
+          <el-image :src="current.payment_screenshot" style="max-width:200px;max-height:200px;border-radius:8px" :preview-src-list="[current.payment_screenshot]" fit="contain" />
+        </el-descriptions-item>
       </el-descriptions>
 
       <div v-if="current && current.payment_status !== 1" style="margin-top:16px;padding:12px;background:#fff7e6;border-radius:8px;text-align:center">

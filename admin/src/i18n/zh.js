@@ -174,6 +174,8 @@ export default {
     confirmPaymentTip: '客户选择了: {method}。请确认已收到款项后再点击确认。',
     paymentConfirmed: '已确认收款 ✓',
     paymentConfirmedMsg: '已确认收款',
+    transactionId: '交易单号',
+    paymentScreenshot: '付款截图',
     wechat: '微信支付',
     alipay: '支付宝',
     creditCard: '信用卡',

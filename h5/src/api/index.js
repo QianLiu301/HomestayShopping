@@ -50,6 +50,11 @@ export const queryOrder = (data) => api.post('/orders/query', data)
 // ==================== Payment ====================
 export const getPaymentQRCodes = () => api.get('/payment/qrcodes')
 export const confirmPaid = (data) => api.post('/orders/confirm-paid', data)
+export const uploadFile = (file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  return api.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+}
 
 // ==================== Coupons ====================
 export const verifyCoupon = (data) => api.post('/coupons/verify', data)

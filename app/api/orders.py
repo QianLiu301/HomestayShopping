@@ -1,5 +1,7 @@
+import os
+import uuid
 from datetime import datetime
-from flask import request
+from flask import request, current_app
 from app.api import api_bp
 from app.models import (
     Product, Vehicle, Location, Setting, Coupon, CouponUsage,
@@ -7,6 +9,29 @@ from app.models import (
 )
 from app import db
 from app.utils import success_response, error_response, generate_order_no, get_lang
+
+
+@api_bp.route('/upload', methods=['POST'])
+def guest_upload_file():
+    """公开上传接口 - 用于买家上传付款截图"""
+    if 'file' not in request.files:
+        return error_response('没有选择文件')
+
+    file = request.files['file']
+    if file.filename == '':
+        return error_response('没有选择文件')
+
+    allowed = current_app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif', 'webp'})
+    if '.' not in file.filename or file.filename.rsplit('.', 1)[1].lower() not in allowed:
+        return error_response('不支持的文件格式')
+
+    ext = file.filename.rsplit('.', 1)[1].lower()
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    file.save(os.path.join(upload_folder, filename))
+
+    url = f"/uploads/{filename}"
+    return success_response({'url': url}, '上传成功')
 
 
 # ==================== 接送机订单 ====================
@@ -353,6 +378,14 @@ def confirm_paid():
 
     if not order:
         return error_response('订单不存在', 404)
+
+    # 保存支付凭证（交易单号或付款截图，二选一）
+    transaction_id = data.get('transaction_id', '').strip()
+    payment_screenshot = data.get('payment_screenshot', '').strip()
+    if transaction_id:
+        order.transaction_id = transaction_id
+    if payment_screenshot:
+        order.payment_screenshot = payment_screenshot
 
     # 标记为"用户已点击支付"（payment_status=0仍为未确认，status改为1待确认）
     if order.status == 0:
