@@ -97,15 +97,17 @@ watch(() => props.show, async (val) => {
     loading.value = true
     try {
       const res = await getPaymentQRCodes()
+      console.log('PaymentQRCodes API response:', JSON.stringify(res))
       wechatQr.value = res.data?.wechat_qr_url || ''
       alipayQr.value = res.data?.alipay_qr_url || ''
+      console.log('QR URLs - wechat:', wechatQr.value, 'alipay:', alipayQr.value)
     } catch (e) {
       console.error('Failed to load QR codes', e)
     } finally {
       loading.value = false
     }
   }
-})
+}, { immediate: true })
 
 function onClickOverlay() {
   // don't close on overlay click

@@ -166,7 +166,7 @@
       v-if="showPaymentPopup"
       v-model:show="showPaymentPopup"
       :method="form.payment_method"
-      :amount="finalPrice"
+      :amount="pendingAmount"
       :order-no="pendingOrderNo"
       @paid="onPaymentConfirmed"
       @cancel="onPaymentCancel"
