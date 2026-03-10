@@ -68,6 +68,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { showToast } from 'vant'
 import { getPaymentQRCodes, confirmPaid } from '../api'
 
 const { t } = useI18n()
@@ -116,15 +117,26 @@ function onClickOverlay() {
 async function onConfirmPaid() {
   if (!props.orderNo) return
   confirming.value = true
-  try {
-    await confirmPaid({ order_no: props.orderNo })
-    emit('paid')
-    emit('update:show', false)
-  } catch (e) {
-    console.error(e)
-  } finally {
-    confirming.value = false
+  // Retry up to 3 times for network errors
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await confirmPaid({ order_no: props.orderNo })
+      emit('paid')
+      emit('update:show', false)
+      return
+    } catch (e) {
+      console.error(`confirmPaid attempt ${attempt} failed:`, e)
+      if (attempt < 3) {
+        await new Promise(r => setTimeout(r, 1000 * attempt))
+      } else {
+        // All retries failed — still let user proceed since they already paid
+        showToast({ message: t('payment.confirmFailed'), position: 'top', duration: 3000 })
+        emit('paid')
+        emit('update:show', false)
+      }
+    }
   }
+  confirming.value = false
 }
 
 function onCancel() {
