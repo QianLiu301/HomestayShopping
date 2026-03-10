@@ -90,12 +90,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { showToast } from 'vant'
 import { queryOrder } from '../api'
 
 const { t } = useI18n()
+const route = useRoute()
 
 const orderNo = ref('')
 const contact = ref('')
@@ -135,6 +137,26 @@ async function onQuery() {
     loading.value = false
   }
 }
+
+onMounted(() => {
+  // If navigated from home page with pre-fetched data
+  if (route.query.data) {
+    try {
+      result.value = JSON.parse(route.query.data)
+      searched.value = true
+      // Pre-fill form fields from the result
+      if (result.value?.order) {
+        orderNo.value = result.value.order.order_no || ''
+        contact.value = result.value.order.contact_email || result.value.order.contact_phone || ''
+      }
+    } catch (e) {
+      console.error('Failed to parse query data', e)
+    }
+  }
+  // If navigated with orderNo and contact as query params
+  if (route.query.orderNo) orderNo.value = route.query.orderNo
+  if (route.query.contact) contact.value = route.query.contact
+})
 </script>
 
 <style scoped>
