@@ -161,8 +161,9 @@
       />
     </van-popup>
 
-    <!-- Payment QR popup -->
+    <!-- Payment QR popup (v-if ensures overlay is not in DOM until needed) -->
     <PaymentPopup
+      v-if="showPaymentPopup"
       v-model:show="showPaymentPopup"
       :method="form.payment_method"
       :amount="finalPrice"
@@ -262,6 +263,7 @@ async function onVerifyCoupon() {
 }
 
 async function onSubmit() {
+  console.log('onSubmit called', { addressType: addressType.value, form: JSON.parse(JSON.stringify(form)), cartItems: cart.items.length })
   try {
     // Validate address
     if (addressType.value === 'homestay') {
