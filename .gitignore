@@ -36,5 +36,8 @@ h5/node_modules/
 admin/dist/
 admin/node_modules/
 
+# Database
+*.db
+
 # Uploads
 uploads/
