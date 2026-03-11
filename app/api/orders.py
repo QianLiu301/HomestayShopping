@@ -164,53 +164,60 @@ def create_transfer_order():
         dropoff_flight_time = data.get('dropoff_flight_time')
 
     # 创建订单
-    order = TransferOrder(
-        order_no=generate_order_no('TR'),
-        service_type=service_type,
-        vehicle_id=vehicle.id,
-        pickup_airport=pickup_airport,
-        flight_no=flight_no,
-        flight_time=flight_time,
-        dropoff_airport=dropoff_airport_val,
-        dropoff_flight_no=dropoff_flight_no,
-        dropoff_flight_time=dropoff_flight_time,
-        location_id=location_id,
-        custom_address=custom_address,
-        custom_district=custom_district,
-        contact_name=data.get('contact_name'),
-        contact_phone=contact_phone,
-        contact_email=contact_email,
-        base_price=base_price,
-        vehicle_extra=vehicle_extra,
-        discount_amount=discount_amount,
-        coupon_id=coupon_id,
-        total_price=total_price,
-        payment_method=data.get('payment_method'),
-        remark=data.get('remark'),
-        status=0
-    )
-
-    db.session.add(order)
-
-    # 记录优惠券使用
-    if coupon_id:
-        usage = CouponUsage(
-            coupon_id=coupon_id,
-            order_type='transfer',
-            order_id=order.id,
-            contact_email=contact_email,
+    try:
+        order = TransferOrder(
+            order_no=generate_order_no('TR'),
+            service_type=service_type,
+            vehicle_id=vehicle.id,
+            pickup_airport=pickup_airport,
+            flight_no=flight_no,
+            flight_time=flight_time,
+            dropoff_airport=dropoff_airport_val,
+            dropoff_flight_no=dropoff_flight_no,
+            dropoff_flight_time=dropoff_flight_time,
+            location_id=location_id,
+            custom_address=custom_address,
+            custom_district=custom_district,
+            contact_name=data.get('contact_name'),
             contact_phone=contact_phone,
-            discount_amount=discount_amount
+            contact_email=contact_email,
+            base_price=base_price,
+            vehicle_extra=vehicle_extra,
+            discount_amount=discount_amount,
+            coupon_id=coupon_id,
+            total_price=total_price,
+            payment_method=data.get('payment_method'),
+            remark=data.get('remark'),
+            status=0
         )
-        db.session.add(usage)
-        coupon.used_count += 1
 
-    db.session.commit()
+        db.session.add(order)
+        db.session.flush()  # 获取 order.id
 
-    return success_response({
-        'order_no': order.order_no,
-        'total_price': float(order.total_price)
-    }, '订单创建成功')
+        # 记录优惠券使用
+        if coupon_id:
+            usage = CouponUsage(
+                coupon_id=coupon_id,
+                order_type='transfer',
+                order_id=order.id,
+                contact_email=contact_email,
+                contact_phone=contact_phone,
+                discount_amount=discount_amount
+            )
+            db.session.add(usage)
+            coupon.used_count += 1
+
+        db.session.commit()
+
+        return success_response({
+            'order_no': order.order_no,
+            'total_price': float(order.total_price)
+        }, '订单创建成功')
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        traceback.print_exc()
+        return error_response(f'订单创建失败: {str(e)}', 500)
 
 
 # ==================== 商城订单 ====================

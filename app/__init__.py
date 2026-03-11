@@ -11,16 +11,21 @@ bcrypt = Bcrypt()
 
 
 def _auto_migrate(app):
-    """自动检查并添加缺失的数据库列"""
+    """自动检查并添加缺失的数据库列，确保表存在"""
     columns_to_ensure = [
         ('transfer_orders', 'pickup_airport', 'VARCHAR(10)'),
         ('transfer_orders', 'dropoff_airport', 'VARCHAR(10)'),
         ('transfer_orders', 'dropoff_flight_no', 'VARCHAR(20)'),
         ('transfer_orders', 'dropoff_flight_time', 'DATETIME'),
         ('transfer_orders', 'payment_screenshot', 'VARCHAR(255)'),
+        ('transfer_orders', 'transaction_id', 'VARCHAR(64)'),
         ('shop_orders', 'payment_screenshot', 'VARCHAR(255)'),
+        ('shop_orders', 'transaction_id', 'VARCHAR(64)'),
     ]
     with app.app_context():
+        # 先确保所有表都存在
+        db.create_all()
+        # 再添加可能缺失的列
         for table, column, col_type in columns_to_ensure:
             try:
                 db.session.execute(db.text(
