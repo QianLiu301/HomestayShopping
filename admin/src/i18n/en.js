@@ -6,6 +6,7 @@ export default {
     products: 'Products',
     categories: 'Categories',
     transfer: 'Transfer',
+    transferPricing: 'Pricing',
     vehicles: 'Vehicles',
     locations: 'Locations',
     orders: 'Orders',

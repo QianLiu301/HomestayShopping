@@ -6,6 +6,7 @@ export default {
     products: '商品管理',
     categories: '分类管理',
     transfer: '接送服务',
+    transferPricing: '定价设置',
     vehicles: '车辆管理',
     locations: '地点管理',
     orders: '订单管理',

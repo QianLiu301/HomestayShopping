@@ -32,6 +32,7 @@
             <el-icon><Van /></el-icon>
             <span>{{ $t('nav.transfer') }}</span>
           </template>
+          <el-menu-item index="/transfer/pricing">{{ $t('nav.transferPricing') }}</el-menu-item>
           <el-menu-item index="/vehicles">{{ $t('nav.vehicles') }}</el-menu-item>
           <el-menu-item index="/locations">{{ $t('nav.locations') }}</el-menu-item>
         </el-sub-menu>
@@ -53,11 +54,6 @@
         <el-menu-item index="/payment">
           <el-icon><CreditCard /></el-icon>
           <template #title>{{ $t('nav.payment') }}</template>
-        </el-menu-item>
-
-        <el-menu-item index="/settings">
-          <el-icon><Setting /></el-icon>
-          <template #title>{{ $t('nav.settings') }}</template>
         </el-menu-item>
       </el-menu>
     </el-aside>
@@ -109,7 +105,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
-import { DataAnalysis, ShoppingBag, Van, List, Ticket, Setting, CreditCard, Fold, Expand, UserFilled, ArrowDown } from '@element-plus/icons-vue'
+import { DataAnalysis, ShoppingBag, Van, List, Ticket, CreditCard, Fold, Expand, UserFilled, ArrowDown } from '@element-plus/icons-vue'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
@@ -121,12 +117,12 @@ const titleMap = {
   '/dashboard': 'nav.dashboard',
   '/products': 'nav.products',
   '/categories': 'nav.categories',
+  '/transfer/pricing': 'nav.transferPricing',
   '/vehicles': 'nav.vehicles',
   '/locations': 'nav.locations',
   '/orders/shop': 'nav.shopOrders',
   '/orders/transfer': 'nav.transferOrders',
   '/coupons': 'nav.coupons',
-  '/settings': 'nav.settings',
   '/payment': 'nav.payment'
 }
 
