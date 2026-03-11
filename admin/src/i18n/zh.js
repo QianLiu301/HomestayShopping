@@ -182,6 +182,15 @@ export default {
     serviceType: '服务类型',
     flightNo: '航班号',
     flightTime: '航班时间',
+    pickupAirport: '接机机场',
+    pickupFlightNo: '接机航班号',
+    pickupFlightTime: '接机航班时间',
+    dropoffAirport: '送机机场',
+    dropoffFlightNo: '送机航班号',
+    dropoffFlightTime: '送机航班时间',
+    pudongAirport: '上海浦东国际机场',
+    hongqiaoAirport: '上海虹桥国际机场',
+    homestayAddress: '民宿地址',
     basePrice: '基础价格',
     vehicleExtra: '车辆加价',
     discount: '优惠'
@@ -224,6 +233,7 @@ export default {
     dropoffPrice: '送机价格 (¥)',
     comboDiscount: '套餐折扣 (%)',
     comboTip: '套餐价格 = (接机价 + 送机价) × (1 - 折扣%/100)',
+    comboPreview: '套餐预计价格',
     settingsSaved: '设置已保存'
   },
 

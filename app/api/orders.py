@@ -41,13 +41,14 @@ def get_transfer_price():
     """获取接送机价格配置"""
     pickup_price = float(Setting.get_value('pickup_price', 300))
     dropoff_price = float(Setting.get_value('dropoff_price', 300))
-    combo_discount = float(Setting.get_value('combo_discount', 0.9))
-    
+    combo_discount_pct = float(Setting.get_value('combo_discount', 10))
+    combo_factor = 1 - combo_discount_pct / 100
+
     return success_response({
         'pickup_price': pickup_price,
         'dropoff_price': dropoff_price,
-        'combo_price': round((pickup_price + dropoff_price) * combo_discount, 2),
-        'combo_discount': combo_discount
+        'combo_price': round((pickup_price + dropoff_price) * combo_factor, 2),
+        'combo_discount': combo_discount_pct
     })
 
 
@@ -55,31 +56,45 @@ def get_transfer_price():
 def create_transfer_order():
     """创建接送机订单"""
     data = request.get_json()
-    
+
     if not data:
         return error_response('请求数据为空')
-    
+
     # 验证必填字段
     required_fields = ['service_type', 'vehicle_id', 'contact_name']
     for field in required_fields:
         if not data.get(field):
             return error_response(f'缺少必填字段: {field}')
-    
+
     # 验证服务类型
     service_type = data.get('service_type')
     if service_type not in ['pickup', 'dropoff', 'combo']:
         return error_response('无效的服务类型')
-    
+
+    # 验证航班信息（必填）
+    if service_type in ['pickup', 'combo']:
+        if not data.get('flight_no'):
+            return error_response('请填写接机航班号')
+        if not data.get('pickup_airport'):
+            return error_response('请选择接机机场')
+    if service_type in ['dropoff', 'combo']:
+        dropoff_fn = data.get('dropoff_flight_no') if service_type == 'combo' else data.get('flight_no')
+        if not dropoff_fn:
+            return error_response('请填写送机航班号')
+        dropoff_ap = data.get('dropoff_airport') if service_type == 'combo' else data.get('dropoff_airport')
+        if not dropoff_ap:
+            return error_response('请选择送机机场')
+
     # 验证车型
     vehicle = Vehicle.query.filter_by(id=data.get('vehicle_id'), status=1).first()
     if not vehicle:
         return error_response('车型不存在')
-    
-    # 验证地址
+
+    # 验证民宿地址
     location_id = data.get('location_id')
     custom_address = data.get('custom_address')
     custom_district = data.get('custom_district')
-    
+
     if location_id:
         location = Location.query.filter_by(id=location_id, status=1).first()
         if not location:
@@ -88,30 +103,31 @@ def create_transfer_order():
         if not custom_district:
             return error_response('请选择所在区')
     else:
-        return error_response('请选择或填写地址')
-    
+        return error_response('请选择或填写民宿地址')
+
     # 验证联系方式
     contact_phone = data.get('contact_phone')
     contact_email = data.get('contact_email')
     if not contact_phone and not contact_email:
         return error_response('请填写手机号或邮箱')
-    
+
     # 计算价格
     pickup_price = float(Setting.get_value('pickup_price', 300))
     dropoff_price = float(Setting.get_value('dropoff_price', 300))
-    combo_discount = float(Setting.get_value('combo_discount', 0.9))
-    
+    combo_discount_pct = float(Setting.get_value('combo_discount', 10))
+    combo_factor = 1 - combo_discount_pct / 100
+
     if service_type == 'pickup':
         base_price = pickup_price
     elif service_type == 'dropoff':
         base_price = dropoff_price
     else:  # combo
-        base_price = round((pickup_price + dropoff_price) * combo_discount, 2)
-    
+        base_price = round((pickup_price + dropoff_price) * combo_factor, 2)
+
     vehicle_extra = float(vehicle.extra_price) if vehicle.extra_price else 0
     discount_amount = 0
     coupon_id = None
-    
+
     # 验证优惠券
     coupon_code = data.get('coupon_code')
     if coupon_code:
@@ -121,16 +137,43 @@ def create_transfer_order():
             if is_valid and coupon.apply_to in ['all', 'transfer']:
                 discount_amount = coupon.calculate_discount(base_price + vehicle_extra)
                 coupon_id = coupon.id
-    
+
     total_price = base_price + vehicle_extra - discount_amount
-    
+
+    # 处理航班信息
+    if service_type == 'pickup':
+        flight_no = data.get('flight_no')
+        flight_time = data.get('flight_time')
+        pickup_airport = data.get('pickup_airport')
+        dropoff_airport_val = None
+        dropoff_flight_no = None
+        dropoff_flight_time = None
+    elif service_type == 'dropoff':
+        flight_no = data.get('flight_no')
+        flight_time = data.get('flight_time')
+        pickup_airport = None
+        dropoff_airport_val = data.get('dropoff_airport')
+        dropoff_flight_no = None
+        dropoff_flight_time = None
+    else:  # combo
+        flight_no = data.get('flight_no')
+        flight_time = data.get('flight_time')
+        pickup_airport = data.get('pickup_airport')
+        dropoff_airport_val = data.get('dropoff_airport')
+        dropoff_flight_no = data.get('dropoff_flight_no')
+        dropoff_flight_time = data.get('dropoff_flight_time')
+
     # 创建订单
     order = TransferOrder(
         order_no=generate_order_no('TR'),
         service_type=service_type,
         vehicle_id=vehicle.id,
-        flight_no=data.get('flight_no'),
-        flight_time=data.get('flight_time'),
+        pickup_airport=pickup_airport,
+        flight_no=flight_no,
+        flight_time=flight_time,
+        dropoff_airport=dropoff_airport_val,
+        dropoff_flight_no=dropoff_flight_no,
+        dropoff_flight_time=dropoff_flight_time,
         location_id=location_id,
         custom_address=custom_address,
         custom_district=custom_district,
@@ -144,11 +187,11 @@ def create_transfer_order():
         total_price=total_price,
         payment_method=data.get('payment_method'),
         remark=data.get('remark'),
-        status=0  # 待确认
+        status=0
     )
-    
+
     db.session.add(order)
-    
+
     # 记录优惠券使用
     if coupon_id:
         usage = CouponUsage(
@@ -161,9 +204,9 @@ def create_transfer_order():
         )
         db.session.add(usage)
         coupon.used_count += 1
-    
+
     db.session.commit()
-    
+
     return success_response({
         'order_no': order.order_no,
         'total_price': float(order.total_price)

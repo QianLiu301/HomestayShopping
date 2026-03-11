@@ -16,13 +16,13 @@
           <van-radio name="combo">{{ t('transfer.combo') }}</van-radio>
         </van-radio-group>
         <div v-if="form.service_type === 'combo' && pricing" class="combo-tip">
-          {{ t('transfer.comboDiscount', { discount: pricing.combo_discount * 100 }) }}
+          {{ t('transfer.comboDiscount', { discount: pricing.combo_discount }) }}
         </div>
       </div>
 
       <!-- Vehicle selection -->
       <div class="card">
-        <div class="card-title">{{ t('transfer.selectVehicle') }}</div>
+        <div class="card-title">{{ t('transfer.selectVehicle') }} <span class="required">*</span></div>
         <div class="vehicle-list">
           <div
             v-for="v in vehicles"
@@ -47,12 +47,30 @@
         </div>
       </div>
 
-      <!-- Flight info -->
-      <div class="card">
+      <!-- ============ PICKUP SECTION ============ -->
+      <div v-if="form.service_type === 'pickup' || form.service_type === 'combo'" class="card">
+        <div class="card-title section-title pickup-title">
+          <van-icon name="guide-o" size="18" />
+          {{ t('transfer.pickupInfo') }}
+        </div>
+
+        <!-- Airport selection -->
+        <div class="field-label">{{ t('transfer.selectAirport') }} <span class="required">*</span></div>
+        <van-radio-group v-model="form.pickup_airport" direction="horizontal" class="airport-radios">
+          <van-radio name="PVG">
+            <div class="airport-label">{{ t('transfer.pudongAirport') }} <span class="airport-code">PVG</span></div>
+          </van-radio>
+          <van-radio name="SHA">
+            <div class="airport-label">{{ t('transfer.hongqiaoAirport') }} <span class="airport-code">SHA</span></div>
+          </van-radio>
+        </van-radio-group>
+
+        <!-- Flight info -->
         <van-field
           v-model="form.flight_no"
           :label="t('transfer.flightNo')"
-          :placeholder="t('transfer.flightNo')"
+          :placeholder="t('transfer.flightNoPlaceholder')"
+          required
         />
         <van-field
           :label="t('transfer.flightTime')"
@@ -60,15 +78,76 @@
           :placeholder="t('transfer.flightTime')"
           readonly
           is-link
-          @click="showDatePicker = true"
+          @click="activeDatePicker = 'pickup'; showDatePicker = true"
         />
+
+        <!-- Route display -->
+        <div class="route-display" v-if="form.pickup_airport">
+          <div class="route-point from">
+            <van-icon name="location-o" color="#1a73e8" />
+            <span>{{ airportName(form.pickup_airport) }}</span>
+          </div>
+          <div class="route-arrow">→</div>
+          <div class="route-point to">
+            <van-icon name="wap-home-o" color="#8b6f47" />
+            <span>{{ homestayLabel || t('transfer.homestayAddress') }}</span>
+          </div>
+        </div>
       </div>
 
-      <!-- Address -->
+      <!-- ============ DROPOFF SECTION ============ -->
+      <div v-if="form.service_type === 'dropoff' || form.service_type === 'combo'" class="card">
+        <div class="card-title section-title dropoff-title">
+          <van-icon name="logistics" size="18" />
+          {{ t('transfer.dropoffInfo') }}
+        </div>
+
+        <!-- Airport selection -->
+        <div class="field-label">{{ t('transfer.selectAirport') }} <span class="required">*</span></div>
+        <van-radio-group v-model="dropoffAirport" direction="horizontal" class="airport-radios">
+          <van-radio name="PVG">
+            <div class="airport-label">{{ t('transfer.pudongAirport') }} <span class="airport-code">PVG</span></div>
+          </van-radio>
+          <van-radio name="SHA">
+            <div class="airport-label">{{ t('transfer.hongqiaoAirport') }} <span class="airport-code">SHA</span></div>
+          </van-radio>
+        </van-radio-group>
+
+        <!-- Flight info -->
+        <van-field
+          v-model="dropoffFlightNo"
+          :label="t('transfer.flightNo')"
+          :placeholder="t('transfer.flightNoPlaceholder')"
+          required
+        />
+        <van-field
+          :label="t('transfer.flightTime')"
+          :model-value="dropoffFlightTime ? formatDate(dropoffFlightTime) : ''"
+          :placeholder="t('transfer.flightTime')"
+          readonly
+          is-link
+          @click="activeDatePicker = 'dropoff'; showDatePicker = true"
+        />
+
+        <!-- Route display -->
+        <div class="route-display" v-if="dropoffAirport">
+          <div class="route-point from">
+            <van-icon name="wap-home-o" color="#8b6f47" />
+            <span>{{ homestayLabel || t('transfer.homestayAddress') }}</span>
+          </div>
+          <div class="route-arrow">→</div>
+          <div class="route-point to">
+            <van-icon name="location-o" color="#1a73e8" />
+            <span>{{ airportName(dropoffAirport) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ HOMESTAY ADDRESS ============ -->
       <div class="card">
-        <div class="card-title">{{ t('transfer.selectAddress') }}</div>
+        <div class="card-title">{{ t('transfer.homestayAddress') }} <span class="required">*</span></div>
         <van-radio-group v-model="addressType" class="address-radios">
-          <van-radio name="homestay">{{ t('transfer.homestayAddress') }}</van-radio>
+          <van-radio name="homestay">{{ t('transfer.selectHomestay') }}</van-radio>
           <van-radio name="custom">{{ t('transfer.customAddress') }}</van-radio>
         </van-radio-group>
 
@@ -104,8 +183,18 @@
       <div class="card">
         <div class="card-title">{{ t('transfer.contactInfo') }}</div>
         <van-field v-model="form.contact_name" :label="t('transfer.contactName')" :placeholder="t('transfer.contactName')" required />
-        <van-field v-model="form.contact_phone" :label="t('transfer.contactPhone')" :placeholder="t('transfer.contactPhone')" type="tel" />
-        <van-field v-model="form.contact_email" :label="t('transfer.contactEmail')" :placeholder="t('transfer.contactEmail')" type="email" />
+        <van-field v-model="form.contact_phone" :label="t('transfer.contactPhone')" :placeholder="t('transfer.contactPhone')" type="tel">
+          <template #label>
+            <span>{{ t('transfer.contactPhone') }}</span>
+            <span class="field-hint">{{ t('transfer.phoneOrEmailHint') }}</span>
+          </template>
+        </van-field>
+        <van-field v-model="form.contact_email" :label="t('transfer.contactEmail')" :placeholder="t('transfer.contactEmail')" type="email">
+          <template #label>
+            <span>{{ t('transfer.contactEmail') }}</span>
+            <span class="field-hint">{{ t('transfer.phoneOrEmailHint') }}</span>
+          </template>
+        </van-field>
         <van-field v-model="form.remark" :label="t('transfer.remark')" :placeholder="t('transfer.remarkPlaceholder')" type="textarea" rows="2" autosize />
       </div>
 
@@ -144,7 +233,7 @@
 
       <!-- Payment -->
       <div class="card">
-        <div class="card-title">{{ t('checkout.payment') }}</div>
+        <div class="card-title">{{ t('checkout.payment') }} <span class="required">*</span></div>
         <van-radio-group v-model="form.payment_method">
           <van-cell-group :border="false">
             <van-cell :title="t('checkout.wechat')" clickable @click="form.payment_method = 'wechat'">
@@ -213,7 +302,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { showToast } from 'vant'
@@ -233,6 +322,7 @@ const pricing = ref(null)
 const form = reactive({
   service_type: 'pickup',
   vehicle_id: null,
+  pickup_airport: 'PVG',
   flight_no: '',
   flight_time: null,
   location_id: null,
@@ -245,12 +335,18 @@ const form = reactive({
   payment_method: 'wechat'
 })
 
+// Dropoff fields (separate for combo, shared for single dropoff)
+const dropoffAirport = ref('PVG')
+const dropoffFlightNo = ref('')
+const dropoffFlightTime = ref(null)
+
 const addressType = ref('homestay')
 const couponCode = ref('')
 const couponDiscount = ref(0)
 const couponLoading = ref(false)
 
 const showDatePicker = ref(false)
+const activeDatePicker = ref('pickup') // 'pickup' or 'dropoff'
 const showLocationPicker = ref(false)
 const showDistrictPicker = ref(false)
 const showPaymentPopup = ref(false)
@@ -277,6 +373,16 @@ const selectedLocationName = computed(() => {
   return locations.value.find(l => l.id === form.location_id)?.name || ''
 })
 
+const homestayLabel = computed(() => {
+  if (addressType.value === 'homestay' && form.location_id) {
+    return selectedLocationName.value
+  }
+  if (addressType.value === 'custom' && form.custom_address) {
+    return form.custom_address
+  }
+  return ''
+})
+
 const selectedVehicle = computed(() => vehicles.value.find(v => v.id === form.vehicle_id))
 
 const basePrice = computed(() => {
@@ -292,6 +398,12 @@ const totalPrice = computed(() =>
   Math.max(0, basePrice.value + vehicleExtra.value - couponDiscount.value)
 )
 
+function airportName(code) {
+  if (code === 'PVG') return t('transfer.pudongAirport') + ' (PVG)'
+  if (code === 'SHA') return t('transfer.hongqiaoAirport') + ' (SHA)'
+  return code
+}
+
 function formatDate(d) {
   if (!d) return ''
   const date = new Date(d)
@@ -300,7 +412,12 @@ function formatDate(d) {
 
 function onDateConfirm({ selectedValues }) {
   const [y, m, d] = selectedValues
-  form.flight_time = `${y}-${m}-${d}T00:00:00`
+  const val = `${y}-${m}-${d}T00:00:00`
+  if (activeDatePicker.value === 'dropoff') {
+    dropoffFlightTime.value = val
+  } else {
+    form.flight_time = val
+  }
   showDatePicker.value = false
 }
 
@@ -339,21 +456,78 @@ async function onVerifyCoupon() {
 }
 
 async function onSubmit() {
-  if (!form.vehicle_id) return showToast(t('transfer.selectVehicle'))
-  if (!form.contact_name) return showToast(t('transfer.contactName'))
-  if (!form.contact_phone && !form.contact_email) return showToast(t('checkout.phoneOrEmail'))
+  const st = form.service_type
 
-  const data = { ...form }
+  // Vehicle
+  if (!form.vehicle_id) return showToast(t('transfer.selectVehicle'))
+
+  // Pickup validation
+  if (st === 'pickup' || st === 'combo') {
+    if (!form.pickup_airport) return showToast(t('transfer.selectAirportTip'))
+    if (!form.flight_no.trim()) return showToast(t('transfer.flightNoRequired'))
+  }
+
+  // Dropoff validation
+  if (st === 'dropoff') {
+    if (!dropoffAirport.value) return showToast(t('transfer.selectAirportTip'))
+    if (!dropoffFlightNo.value.trim()) return showToast(t('transfer.flightNoRequired'))
+  }
+  if (st === 'combo') {
+    if (!dropoffAirport.value) return showToast(t('transfer.selectAirportTip'))
+    if (!dropoffFlightNo.value.trim()) return showToast(t('transfer.flightNoRequired'))
+  }
+
+  // Address
   if (addressType.value === 'homestay') {
     if (!form.location_id) return showToast(t('transfer.selectAddress'))
-    delete data.custom_address
-    delete data.custom_district
   } else {
     if (!form.custom_district) return showToast(t('transfer.selectDistrict'))
     if (!form.custom_address) return showToast(t('transfer.inputAddress'))
-    delete data.location_id
   }
 
+  // Contact
+  if (!form.contact_name.trim()) return showToast(t('transfer.contactNameRequired'))
+  if (!form.contact_phone.trim() && !form.contact_email.trim()) return showToast(t('checkout.phoneOrEmail'))
+
+  // Build payload
+  const data = {
+    service_type: st,
+    vehicle_id: form.vehicle_id,
+    contact_name: form.contact_name,
+    contact_phone: form.contact_phone,
+    contact_email: form.contact_email,
+    payment_method: form.payment_method,
+    remark: form.remark
+  }
+
+  // Address
+  if (addressType.value === 'homestay') {
+    data.location_id = form.location_id
+  } else {
+    data.custom_address = form.custom_address
+    data.custom_district = form.custom_district
+  }
+
+  // Flight info per service type
+  if (st === 'pickup') {
+    data.pickup_airport = form.pickup_airport
+    data.flight_no = form.flight_no
+    data.flight_time = form.flight_time
+  } else if (st === 'dropoff') {
+    data.dropoff_airport = dropoffAirport.value
+    data.flight_no = dropoffFlightNo.value
+    data.flight_time = dropoffFlightTime.value
+  } else {
+    // combo
+    data.pickup_airport = form.pickup_airport
+    data.flight_no = form.flight_no
+    data.flight_time = form.flight_time
+    data.dropoff_airport = dropoffAirport.value
+    data.dropoff_flight_no = dropoffFlightNo.value
+    data.dropoff_flight_time = dropoffFlightTime.value
+  }
+
+  // Coupon
   if (couponCode.value && couponDiscount.value > 0) {
     data.coupon_code = couponCode.value
   }
@@ -421,6 +595,92 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.required {
+  color: #ee0a24;
+  font-weight: bold;
+}
+
+.field-hint {
+  font-size: 11px;
+  color: #999;
+  margin-left: 4px;
+}
+
+.field-label {
+  font-size: 14px;
+  color: #333;
+  padding: 8px 0 6px;
+  font-weight: 500;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pickup-title {
+  color: #1a73e8;
+}
+
+.dropoff-title {
+  color: #e6a23c;
+}
+
+.airport-radios {
+  display: flex;
+  gap: 12px;
+  padding: 4px 0 12px;
+}
+
+.airport-label {
+  font-size: 14px;
+}
+
+.airport-code {
+  display: inline-block;
+  background: #f0f0f0;
+  color: #666;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: 2px;
+  font-family: monospace;
+}
+
+.route-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8f7f5;
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 12px;
+}
+
+.route-point {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #333;
+  flex: 1;
+  min-width: 0;
+}
+
+.route-point span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.route-arrow {
+  font-size: 18px;
+  color: #bbb;
+  flex-shrink: 0;
+}
+
 .service-radios {
   gap: 12px;
 }

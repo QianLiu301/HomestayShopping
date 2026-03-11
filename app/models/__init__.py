@@ -300,8 +300,15 @@ class TransferOrder(db.Model):
     order_no = db.Column(db.String(32), unique=True, nullable=False)
     service_type = db.Column(db.String(20), nullable=False)  # pickup, dropoff, combo
     vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicles.id'))
+    # Pickup leg (接机)
+    pickup_airport = db.Column(db.String(10))   # PVG or SHA
     flight_no = db.Column(db.String(20))
     flight_time = db.Column(db.DateTime)
+    # Dropoff leg (送机)
+    dropoff_airport = db.Column(db.String(10))   # PVG or SHA
+    dropoff_flight_no = db.Column(db.String(20))
+    dropoff_flight_time = db.Column(db.DateTime)
+    # Homestay address
     location_id = db.Column(db.Integer, db.ForeignKey('locations.id'))
     custom_address = db.Column(db.String(255))
     custom_district = db.Column(db.String(50))
@@ -334,8 +341,12 @@ class TransferOrder(db.Model):
             'order_no': self.order_no,
             'service_type': self.service_type,
             'vehicle': self.vehicle.to_dict() if self.vehicle else None,
+            'pickup_airport': self.pickup_airport,
             'flight_no': self.flight_no,
             'flight_time': self.flight_time.isoformat() if self.flight_time else None,
+            'dropoff_airport': self.dropoff_airport,
+            'dropoff_flight_no': self.dropoff_flight_no,
+            'dropoff_flight_time': self.dropoff_flight_time.isoformat() if self.dropoff_flight_time else None,
             'location': self.location.to_dict() if self.location else None,
             'custom_address': self.custom_address,
             'custom_district': self.custom_district,

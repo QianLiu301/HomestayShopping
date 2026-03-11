@@ -182,6 +182,15 @@ export default {
     serviceType: 'Service Type',
     flightNo: 'Flight No',
     flightTime: 'Flight Time',
+    pickupAirport: 'Pickup Airport',
+    pickupFlightNo: 'Pickup Flight No',
+    pickupFlightTime: 'Pickup Flight Time',
+    dropoffAirport: 'Dropoff Airport',
+    dropoffFlightNo: 'Dropoff Flight No',
+    dropoffFlightTime: 'Dropoff Flight Time',
+    pudongAirport: 'Shanghai Pudong Intl Airport',
+    hongqiaoAirport: 'Shanghai Hongqiao Intl Airport',
+    homestayAddress: 'Homestay Address',
     basePrice: 'Base Price',
     vehicleExtra: 'Vehicle Extra',
     discount: 'Discount'
@@ -224,6 +233,7 @@ export default {
     dropoffPrice: 'Dropoff Price (¥)',
     comboDiscount: 'Combo Discount (%)',
     comboTip: 'Combo price = (pickup + dropoff) × (1 - discount%/100)',
+    comboPreview: 'Combo estimated price',
     settingsSaved: 'Settings saved'
   },
 

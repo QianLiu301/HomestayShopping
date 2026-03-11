@@ -18,6 +18,9 @@
         <el-form-item :label="$t('settings.comboDiscount')">
           <el-input-number v-model="form.combo_discount" :min="0" :max="100" :precision="0" style="width:240px" />
           <div style="font-size:12px;color:#8a7b6b;margin-top:4px">{{ $t('settings.comboTip') }}</div>
+          <div style="font-size:12px;color:#1a73e8;margin-top:2px">
+            {{ $t('settings.comboPreview') }}: ¥{{ comboPreview }}
+          </div>
         </el-form-item>
       </el-form>
     </el-card>
@@ -25,7 +28,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { getSettings, updateSettings } from '../api'
@@ -37,6 +40,11 @@ const form = reactive({
   pickup_price: 0,
   dropoff_price: 0,
   combo_discount: 0
+})
+
+const comboPreview = computed(() => {
+  const total = form.pickup_price + form.dropoff_price
+  return Math.round(total * (1 - form.combo_discount / 100) * 100) / 100
 })
 
 async function loadData() {

@@ -53,8 +53,27 @@
         <el-descriptions-item :label="$t('orders.customer')">{{ current.contact_name }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.phone')">{{ current.contact_phone }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.email')">{{ current.contact_email }}</el-descriptions-item>
-        <el-descriptions-item :label="$t('orders.flightNo')">{{ current.flight_no }}</el-descriptions-item>
-        <el-descriptions-item :label="$t('orders.flightTime')">{{ current.flight_time }}</el-descriptions-item>
+        <!-- Pickup leg -->
+        <el-descriptions-item v-if="current.service_type === 'pickup' || current.service_type === 'combo'" :label="$t('orders.pickupAirport')">
+          {{ airportLabel(current.pickup_airport) }}
+        </el-descriptions-item>
+        <el-descriptions-item v-if="current.service_type === 'pickup' || current.service_type === 'combo'" :label="$t('orders.pickupFlightNo')">{{ current.flight_no }}</el-descriptions-item>
+        <el-descriptions-item v-if="current.service_type === 'pickup' || current.service_type === 'combo'" :label="$t('orders.pickupFlightTime')">{{ current.flight_time }}</el-descriptions-item>
+        <!-- Dropoff leg -->
+        <el-descriptions-item v-if="current.service_type === 'dropoff'" :label="$t('orders.dropoffAirport')">
+          {{ airportLabel(current.dropoff_airport) }}
+        </el-descriptions-item>
+        <el-descriptions-item v-if="current.service_type === 'dropoff'" :label="$t('orders.flightNo')">{{ current.flight_no }}</el-descriptions-item>
+        <el-descriptions-item v-if="current.service_type === 'dropoff'" :label="$t('orders.flightTime')">{{ current.flight_time }}</el-descriptions-item>
+        <el-descriptions-item v-if="current.service_type === 'combo'" :label="$t('orders.dropoffAirport')">
+          {{ airportLabel(current.dropoff_airport) }}
+        </el-descriptions-item>
+        <el-descriptions-item v-if="current.service_type === 'combo' && current.dropoff_flight_no" :label="$t('orders.dropoffFlightNo')">{{ current.dropoff_flight_no }}</el-descriptions-item>
+        <el-descriptions-item v-if="current.service_type === 'combo' && current.dropoff_flight_time" :label="$t('orders.dropoffFlightTime')">{{ current.dropoff_flight_time }}</el-descriptions-item>
+        <!-- Homestay -->
+        <el-descriptions-item :label="$t('orders.homestayAddress')">
+          {{ current.location ? current.location.name : (current.custom_address || '-') }}
+        </el-descriptions-item>
         <el-descriptions-item :label="$t('orders.basePrice')">¥{{ current.base_price }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.vehicleExtra')">¥{{ current.vehicle_extra || 0 }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.discount')">-¥{{ current.discount_amount || 0 }}</el-descriptions-item>
@@ -127,6 +146,11 @@ const statusLabel = s => t(`orders.${['pending','confirmed','completed','cancell
 function paymentMethodLabel(method) {
   const map = { wechat: t('orders.wechat'), alipay: t('orders.alipay'), credit_card: t('orders.creditCard') }
   return map[method] || method || '-'
+}
+
+function airportLabel(code) {
+  const map = { PVG: t('orders.pudongAirport'), SHA: t('orders.hongqiaoAirport') }
+  return code ? `${map[code] || code} (${code})` : '-'
 }
 
 async function loadData() {
