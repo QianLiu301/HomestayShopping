@@ -52,7 +52,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, markRaw, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ShoppingCart, Van, Goods, Ticket } from '@element-plus/icons-vue'
 import { getShopOrders, getTransferOrders, getProducts, getCoupons } from '../api'
@@ -60,10 +60,10 @@ import { getShopOrders, getTransferOrders, getProducts, getCoupons } from '../ap
 const { t } = useI18n()
 
 const statCards = ref([
-  { key: 'products', value: '-', icon: Goods, bg: '#e6f7ff' },
-  { key: 'shopOrders', value: '-', icon: ShoppingCart, bg: '#f6ffed' },
-  { key: 'transferOrders', value: '-', icon: Van, bg: '#fff7e6' },
-  { key: 'coupons', value: '-', icon: Ticket, bg: '#fff1f0' }
+  { key: 'products', value: '-', icon: markRaw(Goods), bg: '#e6f7ff' },
+  { key: 'shopOrders', value: '-', icon: markRaw(ShoppingCart), bg: '#f6ffed' },
+  { key: 'transferOrders', value: '-', icon: markRaw(Van), bg: '#fff7e6' },
+  { key: 'coupons', value: '-', icon: markRaw(Ticket), bg: '#fff1f0' }
 ])
 
 const recentShopOrders = ref([])
@@ -87,7 +87,9 @@ onMounted(async () => {
     statCards.value[3].value = couponRes.data?.total ?? couponRes.data?.length ?? 0
     recentShopOrders.value = shopRes.data?.list || shopRes.data?.items || []
     recentTransferOrders.value = transRes.data?.list || transRes.data?.items || []
-  } catch {}
+  } catch (e) {
+    console.error('Dashboard load error:', e)
+  }
 })
 </script>
 

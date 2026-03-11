@@ -10,6 +10,28 @@ db = SQLAlchemy()
 bcrypt = Bcrypt()
 
 
+def _auto_migrate(app):
+    """自动检查并添加缺失的数据库列"""
+    columns_to_ensure = [
+        ('transfer_orders', 'pickup_airport', 'VARCHAR(10)'),
+        ('transfer_orders', 'dropoff_airport', 'VARCHAR(10)'),
+        ('transfer_orders', 'dropoff_flight_no', 'VARCHAR(20)'),
+        ('transfer_orders', 'dropoff_flight_time', 'DATETIME'),
+        ('transfer_orders', 'payment_screenshot', 'VARCHAR(255)'),
+        ('shop_orders', 'payment_screenshot', 'VARCHAR(255)'),
+    ]
+    with app.app_context():
+        for table, column, col_type in columns_to_ensure:
+            try:
+                db.session.execute(db.text(
+                    f'ALTER TABLE {table} ADD COLUMN {column} {col_type}'
+                ))
+                db.session.commit()
+                app.logger.info(f'Auto-migrate: added {table}.{column}')
+            except Exception:
+                db.session.rollback()
+
+
 def create_app(config_name='default'):
     """应用工厂函数"""
     app = Flask(__name__)
@@ -65,5 +87,8 @@ def create_app(config_name='default'):
         if path and os.path.isfile(file_path):
             return send_from_directory(admin_dist, path)
         return send_from_directory(admin_dist, 'index.html')
+
+    # 自动迁移：确保所有新列存在
+    _auto_migrate(app)
 
     return app
