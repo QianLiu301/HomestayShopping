@@ -132,9 +132,21 @@
         </div>
       </div>
 
+      <!-- Agree to terms -->
+      <div class="card agree-card">
+        <van-checkbox v-model="agreeTerms" icon-size="16">
+          <span class="agree-text">
+            {{ t('legal.agreePrefix') }}
+            <router-link to="/privacy" class="agree-link">{{ t('legal.privacyPolicy') }}</router-link>
+            {{ t('legal.agreeAnd') }}
+            <router-link to="/terms" class="agree-link">{{ t('legal.termsOfService') }}</router-link>
+          </span>
+        </van-checkbox>
+      </div>
+
       <!-- Submit -->
       <div style="padding: 16px;">
-        <van-button round block type="danger" size="large" :loading="submitting" @click="onSubmit">
+        <van-button round block type="danger" size="large" :loading="submitting" :disabled="!agreeTerms" @click="onSubmit">
           {{ t('checkout.placeOrder') }} ¥{{ finalPrice }}
         </van-button>
       </div>
@@ -214,6 +226,7 @@ const showDistrictPicker = ref(false)
 const showPaymentPopup = ref(false)
 const pendingOrderNo = ref('')
 const pendingAmount = ref('')
+const agreeTerms = ref(false)
 
 const locationColumns = computed(() =>
   locations.value.map(l => ({ text: l.name, value: l.id }))
@@ -482,4 +495,8 @@ onMounted(async () => {
   font-size: 20px;
   color: var(--accent);
 }
+
+.agree-card { padding: 12px 16px; }
+.agree-text { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+.agree-link { color: var(--accent); text-decoration: underline; }
 </style>

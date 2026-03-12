@@ -40,6 +40,16 @@ const routes = [
     path: '/order-query',
     name: 'OrderQuery',
     component: () => import('../views/OrderQuery.vue')
+  },
+  {
+    path: '/privacy',
+    name: 'Privacy',
+    component: () => import('../views/Privacy.vue')
+  },
+  {
+    path: '/terms',
+    name: 'Terms',
+    component: () => import('../views/Terms.vue')
   }
 ]
 

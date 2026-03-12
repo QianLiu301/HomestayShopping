@@ -134,6 +134,11 @@
             <p>Shanghai, China</p>
             <p>info@homestay.com</p>
           </div>
+          <div class="footer-links">
+            <h4>{{ t('legal.termsTitle') }}</h4>
+            <router-link to="/privacy">{{ t('legal.privacyPolicy') }}</router-link>
+            <router-link to="/terms">{{ t('legal.termsOfService') }}</router-link>
+          </div>
         </div>
         <div class="footer-bottom"><p>© 2024 Homestay. All rights reserved.</p></div>
       </div>
@@ -268,7 +273,7 @@ onMounted(async () => {
 
 /* ===== FOOTER ===== */
 .footer-section { background: var(--dark-bg); color: #fff; padding: 80px 0 30px; }
-.footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 60px; margin-bottom: 60px; }
+.footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 60px; margin-bottom: 60px; }
 .footer-logo { font-family: var(--font-display); font-size: 24px; font-weight: 700; letter-spacing: 2px; margin-bottom: 12px; color: var(--accent); }
 .footer-tagline { color: rgba(255,255,255,0.6); font-size: 14px; line-height: 1.7; max-width: 300px; }
 .footer-links h4 { font-size: 14px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 20px; color: var(--accent); }
