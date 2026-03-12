@@ -140,28 +140,39 @@ def create_transfer_order():
 
     total_price = base_price + vehicle_extra - discount_amount
 
+    # 解析日期时间字符串为 datetime 对象
+    def parse_dt(val):
+        if not val:
+            return None
+        if isinstance(val, datetime):
+            return val
+        try:
+            return datetime.fromisoformat(val.replace('Z', '+00:00'))
+        except (ValueError, AttributeError):
+            return None
+
     # 处理航班信息
     if service_type == 'pickup':
         flight_no = data.get('flight_no')
-        flight_time = data.get('flight_time')
+        flight_time = parse_dt(data.get('flight_time'))
         pickup_airport = data.get('pickup_airport')
         dropoff_airport_val = None
         dropoff_flight_no = None
         dropoff_flight_time = None
     elif service_type == 'dropoff':
         flight_no = data.get('flight_no')
-        flight_time = data.get('flight_time')
+        flight_time = parse_dt(data.get('flight_time'))
         pickup_airport = None
         dropoff_airport_val = data.get('dropoff_airport')
         dropoff_flight_no = None
         dropoff_flight_time = None
     else:  # combo
         flight_no = data.get('flight_no')
-        flight_time = data.get('flight_time')
+        flight_time = parse_dt(data.get('flight_time'))
         pickup_airport = data.get('pickup_airport')
         dropoff_airport_val = data.get('dropoff_airport')
         dropoff_flight_no = data.get('dropoff_flight_no')
-        dropoff_flight_time = data.get('dropoff_flight_time')
+        dropoff_flight_time = parse_dt(data.get('dropoff_flight_time'))
 
     # 创建订单
     try:
