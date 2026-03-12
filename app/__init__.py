@@ -16,7 +16,7 @@ def _auto_migrate(app):
         ('transfer_orders', 'pickup_airport', 'VARCHAR(10)'),
         ('transfer_orders', 'dropoff_airport', 'VARCHAR(10)'),
         ('transfer_orders', 'dropoff_flight_no', 'VARCHAR(20)'),
-        ('transfer_orders', 'dropoff_flight_time', 'DATETIME'),
+        ('transfer_orders', 'dropoff_flight_time', 'TIMESTAMP'),
         ('transfer_orders', 'payment_screenshot', 'VARCHAR(255)'),
         ('transfer_orders', 'transaction_id', 'VARCHAR(64)'),
         ('shop_orders', 'payment_screenshot', 'VARCHAR(255)'),
@@ -25,14 +25,26 @@ def _auto_migrate(app):
     with app.app_context():
         # 先确保所有表都存在
         db.create_all()
+
+        # 检测数据库类型
+        db_url = str(db.engine.url)
+        is_pg = 'postgresql' in db_url or 'postgres' in db_url
+
         # 再添加可能缺失的列
         for table, column, col_type in columns_to_ensure:
             try:
-                db.session.execute(db.text(
-                    f'ALTER TABLE {table} ADD COLUMN {column} {col_type}'
-                ))
+                if is_pg:
+                    # PostgreSQL 支持 IF NOT EXISTS
+                    db.session.execute(db.text(
+                        f'ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {column} {col_type}'
+                    ))
+                else:
+                    # SQLite 不支持 IF NOT EXISTS，靠异常跳过
+                    db.session.execute(db.text(
+                        f'ALTER TABLE {table} ADD COLUMN {column} {col_type}'
+                    ))
                 db.session.commit()
-                app.logger.info(f'Auto-migrate: added {table}.{column}')
+                app.logger.info(f'Auto-migrate: ensured {table}.{column}')
             except Exception:
                 db.session.rollback()
 
