@@ -41,7 +41,7 @@ body {
 }
 
 .section { padding: 100px 0; }
-@media (max-width: 768px) { .section { padding: 60px 0; } }
+@media (max-width: 768px) { .section { padding: 48px 0; } .section-container { padding: 0 16px; } }
 
 .section-container {
   max-width: 1200px;

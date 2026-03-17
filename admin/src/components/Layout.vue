@@ -1,6 +1,7 @@
 <template>
   <el-container class="layout">
-    <el-aside :width="isCollapse ? '64px' : '220px'" class="aside">
+    <div v-if="isMobile && !isCollapse" class="aside-overlay" @click="isCollapse = true"></div>
+    <el-aside :width="isCollapse ? '64px' : '220px'" class="aside" :class="{ 'aside-mobile-open': isMobile && !isCollapse }">
       <div class="logo" @click="$router.push('/')">
         <span v-if="!isCollapse">HOMESTAY</span>
         <span v-else>H</span>
@@ -101,7 +102,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
@@ -111,7 +112,14 @@ const { t, locale } = useI18n()
 const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
-const isCollapse = ref(false)
+const isMobile = ref(window.innerWidth <= 768)
+const isCollapse = ref(isMobile.value)
+
+function onResize() {
+  isMobile.value = window.innerWidth <= 768
+  if (isMobile.value) isCollapse.value = true
+}
+
 
 const titleMap = {
   '/dashboard': 'nav.dashboard',
@@ -131,7 +139,8 @@ const pageTitle = computed(() => {
   return key ? t(key) : (route.meta.title || '')
 })
 
-onMounted(() => auth.fetchUser())
+onMounted(() => { auth.fetchUser(); window.addEventListener('resize', onResize) })
+onUnmounted(() => window.removeEventListener('resize', onResize))
 
 function switchLang(lang) {
   locale.value = lang
@@ -183,4 +192,19 @@ function onCommand(cmd) {
 .lang-btn:hover { border-color: #c8a97e; color: #c8a97e; }
 .user-info { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; color: #4a3728; }
 .main { background: #faf6ef; padding: 24px; }
+
+/* Mobile overlay */
+.aside-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999; }
+
+@media (max-width: 768px) {
+  .aside { position: fixed !important; left: 0; top: 0; bottom: 0; z-index: 1000; transform: translateX(-100%); transition: transform 0.3s ease; width: 220px !important; }
+  .aside.aside-mobile-open { transform: translateX(0); width: 220px !important; }
+  .header { padding: 0 12px; }
+  .header-left { gap: 8px; }
+  .page-title { font-size: 15px; }
+  .header-right { gap: 8px; }
+  .lang-btn { font-size: 12px; padding: 3px 6px; }
+  .user-info { font-size: 12px; }
+  .main { padding: 12px; }
+}
 </style>

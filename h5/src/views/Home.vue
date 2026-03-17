@@ -283,14 +283,44 @@ onMounted(async () => {
 .empty-placeholder { text-align: center; padding: 60px 20px; color: var(--text-light); font-size: 15px; }
 
 @media (max-width: 768px) {
-  .hero-actions { flex-direction: column; align-items: center; }
-  .orders-card { flex-direction: column; padding: 36px 24px; gap: 32px; }
-  .oc-right { flex: none; width: 100%; }
-  .footer-grid { grid-template-columns: 1fr; gap: 32px; }
+  /* Hero mobile */
+  .hero { background-image: url('/images/hero-bg-mobile.jpg'); background-position: center top; min-height: 100vh; }
+  .hero-content { padding: 0 20px; max-width: 100%; }
+  .hero-title { font-size: 32px; }
+  .hero-subtitle { font-size: 15px; margin-bottom: 28px; }
+  .hero-actions { flex-direction: column; align-items: center; gap: 12px; }
+  .hero-actions .btn { width: 200px; padding: 12px 28px; font-size: 13px; }
+
+  /* Services mobile */
+  .service-types { flex-direction: column; gap: 10px; margin: 24px 0 20px; }
+  .service-type { min-width: unset; padding: 16px; display: flex; align-items: center; gap: 12px; text-align: left; border-radius: 12px; }
+  .service-type .svc-icon { font-size: 24px; margin-bottom: 0; }
+  .service-type .svc-name { font-size: 14px; flex: 1; }
+  .service-type .svc-price { font-size: 16px; margin-top: 0; }
   .vehicle-grid { grid-template-columns: 1fr; }
+  .vc-image { height: 140px; }
+
+  /* Shop mobile */
   .shop-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .si-info { padding: 12px; }
   .si-info h3 { font-size: 13px; }
   .si-price { font-size: 15px; }
+  .shop-cta { margin-top: 32px; }
+
+  /* Steps mobile - 2 columns */
+  .steps-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 32px; }
+  .step { padding: 16px 12px; }
+  .step-number { font-size: 36px; margin-bottom: 10px; }
+  .step-title { font-size: 15px; margin-bottom: 6px; }
+  .step-desc { font-size: 13px; }
+
+  /* Orders mobile */
+  .orders-section { padding: 48px 0; }
+  .orders-card { flex-direction: column; padding: 32px 20px; gap: 24px; border-radius: 16px; }
+  .oc-right { flex: none; width: 100%; }
+
+  /* Footer mobile */
+  .footer-section { padding: 48px 0 24px; }
+  .footer-grid { grid-template-columns: 1fr; gap: 28px; margin-bottom: 32px; }
 }
 </style>

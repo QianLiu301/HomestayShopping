@@ -14,8 +14,16 @@
       </div>
 
       <div class="nav-right">
-        <div class="lang-btn" @click.stop="showLang = !showLang">
+        <div class="lang-btn desktop-lang" @click.stop="showLang = !showLang">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span>{{ langLabels[currentLang] }}</span>
+          <div v-if="showLang" class="lang-dropdown">
+            <div v-for="l in langs" :key="l.value" class="lang-item" :class="{ active: currentLang === l.value }" @click.stop="switchLang(l.value)">{{ l.name }}</div>
+          </div>
+        </div>
+
+        <div class="lang-btn mobile-lang-btn" @click.stop="showLang = !showLang">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
           <span>{{ langLabels[currentLang] }}</span>
           <div v-if="showLang" class="lang-dropdown">
             <div v-for="l in langs" :key="l.value" class="lang-item" :class="{ active: currentLang === l.value }" @click.stop="switchLang(l.value)">{{ l.name }}</div>
@@ -120,6 +128,7 @@ onUnmounted(() => { window.removeEventListener('scroll', onScroll); document.rem
 
 .nav-right { display: flex; align-items: center; gap: 16px; }
 .lang-btn { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 500; color: inherit; position: relative; }
+.mobile-lang-btn { display: none; }
 .lang-dropdown { position: absolute; top: 100%; right: 0; margin-top: 12px; background: var(--white); border-radius: 10px; box-shadow: 0 8px 30px rgba(74,55,40,0.12); overflow: hidden; min-width: 140px; }
 .lang-item { padding: 12px 20px; font-size: 14px; color: var(--text); cursor: pointer; transition: background 0.2s; }
 .lang-item:hover, .lang-item.active { background: var(--accent-light); color: var(--accent-dark); }
@@ -143,6 +152,9 @@ onUnmounted(() => { window.removeEventListener('scroll', onScroll); document.rem
   .mobile-lang { display: block; position: relative; }
   .mobile-lang .lang-dropdown { position: relative; margin-top: 8px; box-shadow: none; background: var(--bg); border-radius: 8px; }
   .hamburger { display: block; }
-  .lang-btn { display: none; }
+  .desktop-lang { display: none; }
+  .mobile-lang-btn { display: flex; font-size: 12px; gap: 4px; padding: 4px 8px; border-radius: 16px; background: rgba(0,0,0,0.05); }
+  .navbar.dark-mode .mobile-lang-btn { background: rgba(255,255,255,0.15); }
+  .navbar.scrolled .mobile-lang-btn { background: rgba(0,0,0,0.05); }
 }
 </style>
