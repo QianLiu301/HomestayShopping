@@ -122,7 +122,7 @@ body {
 
 .placeholder-img { width: 100%; aspect-ratio: 1; background: linear-gradient(135deg, #f3ece0, #e8dfd4); display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 14px; }
 
-.page-container { min-height: 100vh; background: var(--bg); }
+.page-container { min-height: 100vh; background: var(--bg); padding-top: var(--nav-height); }
 .page-with-tabbar { padding-bottom: 60px; }
 .van-nav-bar { background: var(--white) !important; }
 
