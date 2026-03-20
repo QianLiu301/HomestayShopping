@@ -205,24 +205,6 @@
         </div>
       </div>
 
-      <!-- Payment -->
-      <div class="card">
-        <div class="card-title">{{ t('checkout.payment') }} <span class="required">*</span></div>
-        <van-radio-group v-model="form.payment_method">
-          <van-cell-group :border="false">
-            <van-cell :title="t('checkout.wechat')" clickable @click="form.payment_method = 'wechat'">
-              <template #right-icon><van-radio name="wechat" /></template>
-            </van-cell>
-            <van-cell :title="t('checkout.alipay')" clickable @click="form.payment_method = 'alipay'">
-              <template #right-icon><van-radio name="alipay" /></template>
-            </van-cell>
-            <van-cell :title="t('checkout.creditCard')" clickable @click="form.payment_method = 'credit_card'">
-              <template #right-icon><van-radio name="credit_card" /></template>
-            </van-cell>
-          </van-cell-group>
-        </van-radio-group>
-      </div>
-
       <!-- Agree to terms -->
       <div class="card agree-card">
         <van-checkbox v-model="agreeTerms" icon-size="16">
@@ -255,15 +237,6 @@
       />
     </van-popup>
 
-    <!-- Payment QR popup -->
-    <PaymentPopup
-      v-model:show="showPaymentPopup"
-      :method="form.payment_method"
-      :amount="totalPrice"
-      :order-no="pendingOrderNo"
-      @paid="onPaymentConfirmed"
-      @cancel="onPaymentCancel"
-    />
   </div>
 </template>
 
@@ -273,7 +246,6 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { showToast } from 'vant'
 import { getVehicles, getTransferPrice, createTransferOrder, verifyCoupon } from '../api'
-import PaymentPopup from '../components/PaymentPopup.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -293,8 +265,7 @@ const form = reactive({
   contact_name: '',
   contact_phone: '',
   contact_email: '',
-  remark: '',
-  payment_method: 'wechat'
+  remark: ''
 })
 
 // Dropoff fields (separate for combo, shared for single dropoff)
@@ -308,7 +279,6 @@ const couponLoading = ref(false)
 
 const showDatePicker = ref(false)
 const activeDatePicker = ref('pickup') // 'pickup' or 'dropoff'
-const showPaymentPopup = ref(false)
 const pendingOrderNo = ref('')
 const pendingAmount = ref('')
 const agreeTerms = ref(false)
@@ -413,7 +383,6 @@ async function onSubmit() {
     contact_name: form.contact_name,
     contact_phone: form.contact_phone,
     contact_email: form.contact_email,
-    payment_method: form.payment_method,
     remark: form.remark
   }
 
@@ -446,12 +415,7 @@ async function onSubmit() {
     const res = await createTransferOrder(data)
     pendingOrderNo.value = res.data.order_no
     pendingAmount.value = res.data.total_price
-
-    if (form.payment_method === 'wechat' || form.payment_method === 'alipay') {
-      showPaymentPopup.value = true
-    } else {
-      goToResult()
-    }
+    goToResult()
   } catch (e) {
     showToast(e.message)
   } finally {
@@ -468,15 +432,6 @@ function goToResult() {
       type: 'transfer'
     }
   })
-}
-
-function onPaymentConfirmed() {
-  showToast(t('payment.paymentSubmitted'))
-  goToResult()
-}
-
-function onPaymentCancel() {
-  goToResult()
 }
 
 onMounted(async () => {

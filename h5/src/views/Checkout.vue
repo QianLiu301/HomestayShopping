@@ -98,24 +98,6 @@
         </div>
       </div>
 
-      <!-- Payment -->
-      <div class="card">
-        <div class="card-title">{{ t('checkout.payment') }}</div>
-        <van-radio-group v-model="form.payment_method">
-          <van-cell-group :border="false">
-            <van-cell :title="t('checkout.wechat')" clickable @click="form.payment_method = 'wechat'">
-              <template #right-icon><van-radio name="wechat" /></template>
-            </van-cell>
-            <van-cell :title="t('checkout.alipay')" clickable @click="form.payment_method = 'alipay'">
-              <template #right-icon><van-radio name="alipay" /></template>
-            </van-cell>
-            <van-cell :title="t('checkout.creditCard')" clickable @click="form.payment_method = 'credit_card'">
-              <template #right-icon><van-radio name="credit_card" /></template>
-            </van-cell>
-          </van-cell-group>
-        </van-radio-group>
-      </div>
-
       <!-- Price summary -->
       <div class="card">
         <div class="price-line">
@@ -173,16 +155,6 @@
       />
     </van-popup>
 
-    <!-- Payment QR popup (v-if ensures overlay is not in DOM until needed) -->
-    <PaymentPopup
-      v-if="showPaymentPopup"
-      v-model:show="showPaymentPopup"
-      :method="form.payment_method"
-      :amount="pendingAmount"
-      :order-no="pendingOrderNo"
-      @paid="onPaymentConfirmed"
-      @cancel="onPaymentCancel"
-    />
   </div>
 </template>
 
@@ -193,7 +165,6 @@ import { useI18n } from 'vue-i18n'
 import { showToast } from 'vant'
 import { getLocations, getDistricts, createShopOrder, verifyCoupon } from '../api'
 import { useCartStore } from '../stores/cart'
-import PaymentPopup from '../components/PaymentPopup.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -212,8 +183,7 @@ const form = reactive({
   contact_name: '',
   contact_phone: '',
   contact_email: '',
-  remark: '',
-  payment_method: 'wechat'
+  remark: ''
 })
 
 const addressType = ref('homestay')
@@ -223,7 +193,6 @@ const couponLoading = ref(false)
 
 const showLocationPicker = ref(false)
 const showDistrictPicker = ref(false)
-const showPaymentPopup = ref(false)
 const pendingOrderNo = ref('')
 const pendingAmount = ref('')
 const agreeTerms = ref(false)
@@ -306,7 +275,6 @@ async function onSubmit() {
       contact_email: form.contact_email,
       room_number: form.room_number,
       remark: form.remark,
-      payment_method: form.payment_method,
       items: cart.items.map(item => ({
         product_id: item.productId,
         quantity: item.quantity,
@@ -330,13 +298,7 @@ async function onSubmit() {
     cart.clear()
     pendingOrderNo.value = res.data?.order_no || res.order_no || ''
     pendingAmount.value = res.data?.total_price || res.total_price || ''
-
-    // For wechat/alipay show QR payment popup; for credit_card go directly to result
-    if (form.payment_method === 'wechat' || form.payment_method === 'alipay') {
-      showPaymentPopup.value = true
-    } else {
-      goToResult()
-    }
+    goToResult()
   } catch (e) {
     console.error('Submit order error:', e)
     showToast(e.message || String(e))
@@ -354,16 +316,6 @@ function goToResult() {
       type: 'shop'
     }
   })
-}
-
-function onPaymentConfirmed() {
-  showToast(t('payment.paymentSubmitted'))
-  goToResult()
-}
-
-function onPaymentCancel() {
-  // Order already created, still go to result page
-  goToResult()
 }
 
 onMounted(async () => {
