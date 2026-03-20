@@ -21,6 +21,8 @@ def _auto_migrate(app):
         ('transfer_orders', 'transaction_id', 'VARCHAR(64)'),
         ('shop_orders', 'payment_screenshot', 'VARCHAR(255)'),
         ('shop_orders', 'transaction_id', 'VARCHAR(64)'),
+        ('transfer_orders', 'booking_no', 'VARCHAR(100)'),
+        ('transfer_orders', 'resolved_address', 'VARCHAR(255)'),
     ]
     with app.app_context():
         # 先确保所有表都存在
