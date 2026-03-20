@@ -18,6 +18,7 @@
             <el-tag size="small">{{ row.service_type }}</el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="booking_no" :label="$t('orders.bookingNo')" width="140" />
         <el-table-column prop="flight_no" :label="$t('orders.flightNo')" width="100" />
         <el-table-column :label="$t('orders.total')" width="100">
           <template #default="{ row }">¥{{ row.total_price }}</template>
@@ -70,8 +71,15 @@
         </el-descriptions-item>
         <el-descriptions-item v-if="current.service_type === 'combo' && current.dropoff_flight_no" :label="$t('orders.dropoffFlightNo')">{{ current.dropoff_flight_no }}</el-descriptions-item>
         <el-descriptions-item v-if="current.service_type === 'combo' && current.dropoff_flight_time" :label="$t('orders.dropoffFlightTime')">{{ current.dropoff_flight_time }}</el-descriptions-item>
-        <!-- Homestay -->
-        <el-descriptions-item :label="$t('orders.homestayAddress')">
+        <!-- Booking Number -->
+        <el-descriptions-item :label="$t('orders.bookingNo')">
+          {{ current.booking_no || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.resolvedAddress')">
+          {{ current.resolved_address || '-' }}
+        </el-descriptions-item>
+        <!-- Legacy Homestay (for old orders) -->
+        <el-descriptions-item v-if="current.location || current.custom_address" :label="$t('orders.homestayAddress')">
           {{ current.location ? current.location.name : (current.custom_address || '-') }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('orders.basePrice')">¥{{ current.base_price }}</el-descriptions-item>
@@ -103,6 +111,12 @@
       </div>
 
       <el-form style="margin-top:20px" label-position="top">
+        <el-form-item :label="$t('orders.bookingNo')">
+          <el-input v-model="updateForm.booking_no" :placeholder="$t('orders.bookingNoPlaceholder')" />
+        </el-form-item>
+        <el-form-item :label="$t('orders.resolvedAddress')">
+          <el-input v-model="updateForm.resolved_address" :placeholder="$t('orders.resolvedAddressPlaceholder')" />
+        </el-form-item>
         <el-form-item :label="$t('orders.updateStatus')">
           <el-select v-model="updateForm.status" style="width:100%">
             <el-option :label="$t('orders.pending')" :value="0" /><el-option :label="$t('orders.confirmed')" :value="1" /><el-option :label="$t('orders.completed')" :value="2" /><el-option :label="$t('orders.cancelled')" :value="3" />
@@ -138,7 +152,7 @@ const pageSize = 15
 const total = ref(0)
 const keyword = ref('')
 const statusFilter = ref('')
-const updateForm = reactive({ status: 0, remark: '' })
+const updateForm = reactive({ status: 0, remark: '', booking_no: '', resolved_address: '' })
 
 const statusTypes = { 0: 'warning', 1: 'primary', 2: 'success', 3: 'info' }
 const statusLabel = s => t(`orders.${['pending','confirmed','completed','cancelled'][s] || 'unknown'}`)
@@ -170,6 +184,8 @@ function openDetail(row) {
   current.value = row
   updateForm.status = row.status
   updateForm.remark = row.remark || ''
+  updateForm.booking_no = row.booking_no || ''
+  updateForm.resolved_address = row.resolved_address || ''
   dialogVisible.value = true
 }
 

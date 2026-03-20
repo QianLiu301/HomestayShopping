@@ -90,7 +90,7 @@
           <div class="route-arrow">→</div>
           <div class="route-point to">
             <van-icon name="wap-home-o" color="#8b6f47" />
-            <span>{{ homestayLabel || t('transfer.homestayAddress') }}</span>
+            <span>{{ form.booking_no || t('transfer.bookingNo') }}</span>
           </div>
         </div>
       </div>
@@ -133,7 +133,7 @@
         <div class="route-display" v-if="dropoffAirport">
           <div class="route-point from">
             <van-icon name="wap-home-o" color="#8b6f47" />
-            <span>{{ homestayLabel || t('transfer.homestayAddress') }}</span>
+            <span>{{ form.booking_no || t('transfer.bookingNo') }}</span>
           </div>
           <div class="route-arrow">→</div>
           <div class="route-point to">
@@ -143,40 +143,14 @@
         </div>
       </div>
 
-      <!-- ============ HOMESTAY ADDRESS ============ -->
+      <!-- ============ BOOKING NUMBER ============ -->
       <div class="card">
-        <div class="card-title">{{ t('transfer.homestayAddress') }} <span class="required">*</span></div>
-        <van-radio-group v-model="addressType" class="address-radios">
-          <van-radio name="homestay">{{ t('transfer.selectHomestay') }}</van-radio>
-          <van-radio name="custom">{{ t('transfer.customAddress') }}</van-radio>
-        </van-radio-group>
-
-        <div v-if="addressType === 'homestay'" style="margin-top: 12px;">
-          <van-field
-            :model-value="selectedLocationName"
-            :placeholder="t('transfer.selectAddress')"
-            readonly
-            is-link
-            @click="showLocationPicker = true"
-          />
-        </div>
-
-        <div v-else style="margin-top: 12px;">
-          <van-field
-            :model-value="form.custom_district"
-            :placeholder="t('transfer.selectDistrict')"
-            readonly
-            is-link
-            @click="showDistrictPicker = true"
-          />
-          <van-field
-            v-model="form.custom_address"
-            :placeholder="t('transfer.inputAddress')"
-            type="textarea"
-            rows="2"
-            autosize
-          />
-        </div>
+        <div class="card-title">{{ t('transfer.bookingNo') }} <span class="required">*</span></div>
+        <van-field
+          v-model="form.booking_no"
+          :placeholder="t('transfer.bookingNoPlaceholder')"
+        />
+        <div class="booking-tip">{{ t('transfer.bookingNoTip') }}</div>
       </div>
 
       <!-- Contact info -->
@@ -281,26 +255,6 @@
       />
     </van-popup>
 
-    <!-- Location picker popup -->
-    <van-popup v-model:show="showLocationPicker" position="bottom" round>
-      <van-picker
-        :title="t('transfer.homestayAddress')"
-        :columns="locationColumns"
-        @confirm="onLocationConfirm"
-        @cancel="showLocationPicker = false"
-      />
-    </van-popup>
-
-    <!-- District picker popup -->
-    <van-popup v-model:show="showDistrictPicker" position="bottom" round>
-      <van-picker
-        :title="t('transfer.selectDistrict')"
-        :columns="districtColumns"
-        @confirm="onDistrictConfirm"
-        @cancel="showDistrictPicker = false"
-      />
-    </van-popup>
-
     <!-- Payment QR popup -->
     <PaymentPopup
       v-model:show="showPaymentPopup"
@@ -318,7 +272,7 @@ import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { showToast } from 'vant'
-import { getVehicles, getLocations, getDistricts, getTransferPrice, createTransferOrder, verifyCoupon } from '../api'
+import { getVehicles, getTransferPrice, createTransferOrder, verifyCoupon } from '../api'
 import PaymentPopup from '../components/PaymentPopup.vue'
 
 const { t } = useI18n()
@@ -327,8 +281,6 @@ const router = useRouter()
 const pageLoading = ref(true)
 const submitting = ref(false)
 const vehicles = ref([])
-const locations = ref([])
-const districts = ref([])
 const pricing = ref(null)
 
 const form = reactive({
@@ -337,9 +289,7 @@ const form = reactive({
   pickup_airport: 'PVG',
   flight_no: '',
   flight_time: null,
-  location_id: null,
-  custom_address: '',
-  custom_district: '',
+  booking_no: '',
   contact_name: '',
   contact_phone: '',
   contact_email: '',
@@ -352,15 +302,12 @@ const dropoffAirport = ref('PVG')
 const dropoffFlightNo = ref('')
 const dropoffFlightTime = ref(null)
 
-const addressType = ref('homestay')
 const couponCode = ref('')
 const couponDiscount = ref(0)
 const couponLoading = ref(false)
 
 const showDatePicker = ref(false)
 const activeDatePicker = ref('pickup') // 'pickup' or 'dropoff'
-const showLocationPicker = ref(false)
-const showDistrictPicker = ref(false)
 const showPaymentPopup = ref(false)
 const pendingOrderNo = ref('')
 const pendingAmount = ref('')
@@ -372,29 +319,6 @@ const datePickerValue = ref([
   String(now.getMonth() + 1).padStart(2, '0'),
   String(now.getDate()).padStart(2, '0')
 ])
-
-const locationColumns = computed(() =>
-  locations.value.map(l => ({ text: l.name, value: l.id }))
-)
-
-const districtColumns = computed(() =>
-  districts.value.map(d => ({ text: d.label, value: d.value }))
-)
-
-const selectedLocationName = computed(() => {
-  if (!form.location_id) return ''
-  return locations.value.find(l => l.id === form.location_id)?.name || ''
-})
-
-const homestayLabel = computed(() => {
-  if (addressType.value === 'homestay' && form.location_id) {
-    return selectedLocationName.value
-  }
-  if (addressType.value === 'custom' && form.custom_address) {
-    return form.custom_address
-  }
-  return ''
-})
 
 const selectedVehicle = computed(() => vehicles.value.find(v => v.id === form.vehicle_id))
 
@@ -432,22 +356,6 @@ function onDateConfirm({ selectedValues }) {
     form.flight_time = val
   }
   showDatePicker.value = false
-}
-
-function onLocationConfirm({ selectedOptions }) {
-  const sel = selectedOptions[0]
-  if (sel) {
-    form.location_id = sel.value
-  }
-  showLocationPicker.value = false
-}
-
-function onDistrictConfirm({ selectedOptions }) {
-  const sel = selectedOptions[0]
-  if (sel) {
-    form.custom_district = sel.value
-  }
-  showDistrictPicker.value = false
 }
 
 async function onVerifyCoupon() {
@@ -490,13 +398,8 @@ async function onSubmit() {
     if (!dropoffFlightNo.value.trim()) return showToast(t('transfer.flightNoRequired'))
   }
 
-  // Address
-  if (addressType.value === 'homestay') {
-    if (!form.location_id) return showToast(t('transfer.selectAddress'))
-  } else {
-    if (!form.custom_district) return showToast(t('transfer.selectDistrict'))
-    if (!form.custom_address) return showToast(t('transfer.inputAddress'))
-  }
+  // Booking number
+  if (!form.booking_no.trim()) return showToast(t('transfer.bookingNoRequired'))
 
   // Contact
   if (!form.contact_name.trim()) return showToast(t('transfer.contactNameRequired'))
@@ -506,19 +409,12 @@ async function onSubmit() {
   const data = {
     service_type: st,
     vehicle_id: form.vehicle_id,
+    booking_no: form.booking_no,
     contact_name: form.contact_name,
     contact_phone: form.contact_phone,
     contact_email: form.contact_email,
     payment_method: form.payment_method,
     remark: form.remark
-  }
-
-  // Address
-  if (addressType.value === 'homestay') {
-    data.location_id = form.location_id
-  } else {
-    data.custom_address = form.custom_address
-    data.custom_district = form.custom_district
   }
 
   // Flight info per service type
@@ -585,15 +481,11 @@ function onPaymentCancel() {
 
 onMounted(async () => {
   try {
-    const [vRes, lRes, dRes, pRes] = await Promise.all([
+    const [vRes, pRes] = await Promise.all([
       getVehicles(),
-      getLocations(),
-      getDistricts(),
       getTransferPrice()
     ])
     vehicles.value = vRes.data || []
-    locations.value = lRes.data || []
-    districts.value = dRes.data || []
     pricing.value = pRes.data
 
     if (vehicles.value.length) {
@@ -764,9 +656,11 @@ onMounted(async () => {
   font-weight: 500;
 }
 
-.address-radios {
-  display: flex;
-  gap: 16px;
+.booking-tip {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #999;
+  line-height: 1.5;
 }
 
 .coupon-row {

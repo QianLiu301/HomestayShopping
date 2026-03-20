@@ -90,20 +90,19 @@ def create_transfer_order():
     if not vehicle:
         return error_response('车型不存在')
 
-    # 验证民宿地址
+    # 验证民宿预订单号
+    booking_no = data.get('booking_no')
     location_id = data.get('location_id')
     custom_address = data.get('custom_address')
     custom_district = data.get('custom_district')
+
+    if not booking_no and not location_id and not custom_address:
+        return error_response('请填写民宿预订单号')
 
     if location_id:
         location = Location.query.filter_by(id=location_id, status=1).first()
         if not location:
             return error_response('民宿点不存在')
-    elif custom_address:
-        if not custom_district:
-            return error_response('请选择所在区')
-    else:
-        return error_response('请选择或填写民宿地址')
 
     # 验证联系方式
     contact_phone = data.get('contact_phone')
@@ -186,6 +185,7 @@ def create_transfer_order():
             dropoff_airport=dropoff_airport_val,
             dropoff_flight_no=dropoff_flight_no,
             dropoff_flight_time=dropoff_flight_time,
+            booking_no=booking_no,
             location_id=location_id,
             custom_address=custom_address,
             custom_district=custom_district,
