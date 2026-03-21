@@ -244,7 +244,7 @@
 import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { showToast, showFailToast } from 'vant'
+import { showToast } from 'vant'
 import { getVehicles, getTransferPrice, createTransferOrder, verifyCoupon } from '../api'
 
 const { t } = useI18n()
@@ -346,37 +346,42 @@ async function onVerifyCoupon() {
   }
 }
 
+function validationFail(msg) {
+  showToast({ message: msg, position: 'top', duration: 3000 })
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
 async function onSubmit() {
   const st = form.service_type
 
   // Vehicle
-  if (!form.vehicle_id) return showFailToast(t('transfer.selectVehicle'))
+  if (!form.vehicle_id) { validationFail(t('transfer.selectVehicle')); return }
 
   // Pickup validation
   if (st === 'pickup' || st === 'combo') {
-    if (!form.pickup_airport) return showFailToast(t('transfer.selectAirportTip'))
-    if (!form.flight_no.trim()) return showFailToast(t('transfer.flightNoRequired'))
+    if (!form.pickup_airport) { validationFail(t('transfer.selectAirportTip')); return }
+    if (!form.flight_no.trim()) { validationFail(t('transfer.flightNoRequired')); return }
   }
 
   // Dropoff validation
   if (st === 'dropoff') {
-    if (!dropoffAirport.value) return showFailToast(t('transfer.selectAirportTip'))
-    if (!dropoffFlightNo.value.trim()) return showFailToast(t('transfer.flightNoRequired'))
+    if (!dropoffAirport.value) { validationFail(t('transfer.selectAirportTip')); return }
+    if (!dropoffFlightNo.value.trim()) { validationFail(t('transfer.flightNoRequired')); return }
   }
   if (st === 'combo') {
-    if (!dropoffAirport.value) return showFailToast(t('transfer.selectAirportTip'))
-    if (!dropoffFlightNo.value.trim()) return showFailToast(t('transfer.flightNoRequired'))
+    if (!dropoffAirport.value) { validationFail(t('transfer.selectAirportTip')); return }
+    if (!dropoffFlightNo.value.trim()) { validationFail(t('transfer.flightNoRequired')); return }
   }
 
   // Booking number
-  if (!form.booking_no.trim()) return showFailToast(t('transfer.bookingNoRequired'))
+  if (!form.booking_no.trim()) { validationFail(t('transfer.bookingNoRequired')); return }
 
   // Contact
-  if (!form.contact_name.trim()) return showFailToast(t('transfer.contactNameRequired'))
-  if (!form.contact_phone.trim() && !form.contact_email.trim()) return showFailToast(t('checkout.phoneOrEmail'))
+  if (!form.contact_name.trim()) { validationFail(t('transfer.contactNameRequired')); return }
+  if (!form.contact_phone.trim() && !form.contact_email.trim()) { validationFail(t('checkout.phoneOrEmail')); return }
 
   // Terms agreement
-  if (!agreeTerms.value) return showFailToast(t('transfer.agreeRequired'))
+  if (!agreeTerms.value) { validationFail(t('transfer.agreeRequired')); return }
 
   // Build payload
   const data = {
