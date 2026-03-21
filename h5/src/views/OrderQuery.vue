@@ -5,15 +5,16 @@
     <!-- Search form -->
     <div class="card">
       <van-field
-        v-model="orderNo"
-        :label="t('order.orderNo')"
-        :placeholder="t('order.inputOrderNo')"
+        v-model="contact"
+        :label="t('order.contactLabel')"
+        :placeholder="t('order.inputContact')"
         clearable
+        required
       />
       <van-field
-        v-model="contact"
-        :label="t('checkout.contact')"
-        :placeholder="t('order.inputContact')"
+        v-model="orderNo"
+        :label="t('order.orderNo')"
+        :placeholder="t('order.orderNoOptional')"
         clearable
       />
       <div style="padding: 12px 0 4px;">
@@ -23,69 +24,83 @@
       </div>
     </div>
 
-    <!-- Result -->
-    <template v-if="result">
-      <div class="card">
-        <div class="order-type-tag" :class="result.type">
-          {{ t(`order.type.${result.type}`) }}
+    <!-- Error banner -->
+    <div v-if="errorMsg" class="error-banner">
+      <van-icon name="warning-o" size="18" />
+      <span>{{ errorMsg }}</span>
+    </div>
+
+    <!-- Results list -->
+    <template v-if="results.length">
+      <div class="results-header">{{ t('order.foundOrders', { count: results.length }) }}</div>
+      <div v-for="(item, idx) in results" :key="idx" class="card order-card" @click="toggleDetail(idx)">
+        <div class="order-card-header">
+          <span class="order-type-tag" :class="item.type">
+            {{ t(`order.type.${item.type}`) }}
+          </span>
+          <van-tag :type="statusTagType(item.order.status)" size="medium">
+            {{ t(`order.statusMap.${item.order.status}`) }}
+          </van-tag>
         </div>
 
-        <div class="order-detail">
-          <div class="detail-row">
-            <span>{{ t('order.orderNo') }}</span>
-            <span class="mono">{{ result.order.order_no }}</span>
-          </div>
-          <div class="detail-row">
-            <span>{{ t('order.status') }}</span>
-            <van-tag :type="statusTagType(result.order.status)" size="medium">
-              {{ t(`order.statusMap.${result.order.status}`) }}
-            </van-tag>
-          </div>
-          <div class="detail-row">
-            <span>{{ t('order.amount') }}</span>
-            <span class="amount">¥{{ result.order.total_price }}</span>
-          </div>
+        <div class="order-card-main">
+          <div class="order-card-no">{{ item.order.order_no }}</div>
+          <div class="order-card-amount">¥{{ item.order.total_price }}</div>
+        </div>
 
+        <div class="order-card-meta">
+          <span>{{ formatTime(item.order.created_at) }}</span>
+          <van-tag :type="item.order.payment_status === 1 ? 'success' : 'warning'" size="small" plain>
+            {{ t(`order.paymentStatus.${item.order.payment_status}`) }}
+          </van-tag>
+        </div>
+
+        <!-- Expandable detail -->
+        <div v-if="expandedIdx === idx" class="order-detail">
           <!-- Transfer specific -->
-          <template v-if="result.type === 'transfer'">
-            <div v-if="result.order.service_type" class="detail-row">
+          <template v-if="item.type === 'transfer'">
+            <div v-if="item.order.service_type" class="detail-row">
               <span>{{ t('transfer.title') }}</span>
-              <span>{{ t(`transfer.${result.order.service_type}`) }}</span>
+              <span>{{ t(`transfer.${item.order.service_type}`) }}</span>
             </div>
-            <div v-if="result.order.flight_no" class="detail-row">
+            <div v-if="item.order.flight_no" class="detail-row">
               <span>{{ t('transfer.flightNo') }}</span>
-              <span>{{ result.order.flight_no }}</span>
+              <span>{{ item.order.flight_no }}</span>
             </div>
-            <div v-if="result.order.vehicle" class="detail-row">
+            <div v-if="item.order.vehicle" class="detail-row">
               <span>{{ t('transfer.selectVehicle') }}</span>
-              <span>{{ result.order.vehicle.name }}</span>
+              <span>{{ item.order.vehicle.name }}</span>
             </div>
           </template>
 
           <!-- Shop specific -->
-          <template v-if="result.type === 'shop' && result.order.items?.length">
+          <template v-if="item.type === 'shop' && item.order.items?.length">
             <div class="items-section">
-              <div v-for="item in result.order.items" :key="item.id" class="query-item">
-                <span class="qi-name">{{ item.product_name }}</span>
-                <span class="qi-qty">x{{ item.quantity }}</span>
-                <span class="qi-price">¥{{ item.subtotal }}</span>
+              <div v-for="si in item.order.items" :key="si.id" class="query-item">
+                <span class="qi-name">{{ si.product_name }}</span>
+                <span class="qi-qty">x{{ si.quantity }}</span>
+                <span class="qi-price">¥{{ si.subtotal }}</span>
               </div>
             </div>
           </template>
 
           <div class="detail-row">
-            <span>{{ t('transfer.contactName') }}</span>
-            <span>{{ result.order.contact_name }}</span>
+            <span>{{ t('order.contactLabel') }}</span>
+            <span>{{ item.order.contact_name }}</span>
           </div>
-          <div v-if="result.order.created_at" class="detail-row">
-            <span>{{ t('common.home') }}</span>
-            <span>{{ formatTime(result.order.created_at) }}</span>
+          <div v-if="item.order.booking_no" class="detail-row">
+            <span>{{ t('checkout.bookingNo') }}</span>
+            <span>{{ item.order.booking_no }}</span>
           </div>
+        </div>
+
+        <div class="expand-hint">
+          <van-icon :name="expandedIdx === idx ? 'arrow-up' : 'arrow-down'" size="14" />
         </div>
       </div>
     </template>
 
-    <van-empty v-if="searched && !result" :description="t('common.noData')" />
+    <van-empty v-if="searched && !results.length && !errorMsg" :description="t('common.noData')" />
   </div>
 </template>
 
@@ -93,7 +108,6 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { showToast } from 'vant'
 import { queryOrder } from '../api'
 
 const { t } = useI18n()
@@ -102,8 +116,10 @@ const route = useRoute()
 const orderNo = ref('')
 const contact = ref('')
 const loading = ref(false)
-const result = ref(null)
+const results = ref([])
 const searched = ref(false)
+const errorMsg = ref('')
+const expandedIdx = ref(-1)
 
 function statusTagType(status) {
   const map = { 0: 'warning', 1: 'primary', 2: 'primary', 3: 'success', 4: 'default' }
@@ -113,60 +129,77 @@ function statusTagType(status) {
 function formatTime(iso) {
   if (!iso) return ''
   const d = new Date(iso)
-  return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  if (isNaN(d.getTime())) return iso
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function toggleDetail(idx) {
+  expandedIdx.value = expandedIdx.value === idx ? -1 : idx
 }
 
 async function onQuery() {
-  if (!orderNo.value || !contact.value) {
-    return showToast(t('order.inputOrderNo'))
+  if (!contact.value.trim()) {
+    errorMsg.value = t('order.inputContact')
+    setTimeout(() => { errorMsg.value = '' }, 3000)
+    return
   }
 
   loading.value = true
   searched.value = true
-  result.value = null
+  results.value = []
+  errorMsg.value = ''
+  expandedIdx.value = -1
 
   try {
-    const res = await queryOrder({
-      order_no: orderNo.value.trim(),
-      contact: contact.value.trim()
-    })
-    result.value = res.data
+    const payload = { contact: contact.value.trim() }
+    if (orderNo.value.trim()) payload.order_no = orderNo.value.trim()
+    const res = await queryOrder(payload)
+    results.value = res.data?.orders || []
   } catch (e) {
-    showToast(e.message)
+    errorMsg.value = e.message || t('common.noData')
   } finally {
     loading.value = false
   }
 }
 
 onMounted(() => {
-  // If navigated from home page with pre-fetched data
-  if (route.query.data) {
-    try {
-      result.value = JSON.parse(route.query.data)
-      searched.value = true
-      // Pre-fill form fields from the result
-      if (result.value?.order) {
-        orderNo.value = result.value.order.order_no || ''
-        contact.value = result.value.order.contact_email || result.value.order.contact_phone || ''
-      }
-    } catch (e) {
-      console.error('Failed to parse query data', e)
-    }
-  }
-  // If navigated with orderNo and contact as query params
   if (route.query.orderNo) orderNo.value = route.query.orderNo
   if (route.query.contact) contact.value = route.query.contact
+  // Auto-query if params provided
+  if (contact.value) onQuery()
 })
 </script>
 
 <style scoped>
+.results-header {
+  padding: 12px 16px 4px;
+  font-size: 13px;
+  color: var(--text-light);
+}
+
+.order-card {
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+
+.order-card:active {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.order-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
 .order-type-tag {
   display: inline-block;
-  padding: 4px 12px;
-  border-radius: 12px;
+  padding: 3px 10px;
+  border-radius: 10px;
   font-size: 12px;
   font-weight: 500;
-  margin-bottom: 12px;
 }
 
 .order-type-tag.shop {
@@ -179,18 +212,47 @@ onMounted(() => {
   color: #ff6b35;
 }
 
-.order-detail {
+.order-card-main {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.order-card-no {
+  font-family: monospace;
+  font-size: 13px;
+  color: var(--text-secondary);
+  letter-spacing: 0.3px;
+}
+
+.order-card-amount {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.order-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.order-detail {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
 }
 
 .detail-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid #f5f5f5;
-  font-size: 14px;
+  padding: 8px 0;
+  font-size: 13px;
+  border-bottom: 1px solid #f8f8f8;
 }
 
 .detail-row:last-child {
@@ -201,41 +263,39 @@ onMounted(() => {
   color: var(--text-secondary);
 }
 
-.mono {
-  font-family: monospace;
-  letter-spacing: 0.5px;
-}
-
-.amount {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--accent);
-}
-
 .items-section {
-  padding: 8px 0;
-  border-bottom: 1px solid #f5f5f5;
+  padding: 4px 0;
+  border-bottom: 1px solid #f8f8f8;
 }
 
 .query-item {
   display: flex;
-  padding: 6px 0;
+  padding: 4px 0;
   font-size: 13px;
   color: var(--text-secondary);
 }
 
-.qi-name {
-  flex: 1;
-}
+.qi-name { flex: 1; }
+.qi-qty { width: 40px; text-align: center; }
+.qi-price { width: 60px; text-align: right; color: var(--text); }
 
-.qi-qty {
-  width: 40px;
+.expand-hint {
   text-align: center;
+  padding-top: 6px;
+  color: var(--text-light);
 }
 
-.qi-price {
-  width: 60px;
-  text-align: right;
-  color: var(--text);
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 16px;
+  padding: 12px 16px;
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+  border-radius: 8px;
+  color: #ff4d4f;
+  font-size: 14px;
+  font-weight: 500;
 }
 </style>

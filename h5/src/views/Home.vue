@@ -106,8 +106,8 @@
           </div>
           <div class="oc-right">
             <div class="oc-form">
-              <input v-model="queryOrderNo" type="text" :placeholder="t('order.inputOrderNo')" class="oc-input" />
               <input v-model="queryContact" type="text" :placeholder="t('order.inputContact')" class="oc-input" />
+              <input v-model="queryOrderNo" type="text" :placeholder="t('order.orderNoOptional')" class="oc-input" />
               <button class="btn btn-primary" style="width:100%" @click="onQueryOrder">{{ t('order.query') }}</button>
             </div>
           </div>
@@ -181,11 +181,10 @@ const steps = [
 ]
 
 async function onQueryOrder() {
-  if (!queryOrderNo.value || !queryContact.value) return showToast(t('order.inputOrderNo'))
-  try {
-    const res = await queryOrder({ order_no: queryOrderNo.value.trim(), contact: queryContact.value.trim() })
-    router.push({ path: '/order-query', query: { data: JSON.stringify(res.data) } })
-  } catch (e) { showToast(e.message) }
+  if (!queryContact.value) return showToast(t('order.inputContact'))
+  const query = { contact: queryContact.value.trim() }
+  if (queryOrderNo.value.trim()) query.orderNo = queryOrderNo.value.trim()
+  router.push({ path: '/order-query', query })
 }
 
 onMounted(async () => {

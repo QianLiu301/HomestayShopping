@@ -381,41 +381,62 @@ def create_shop_order():
 
 @api_bp.route('/orders/query', methods=['POST'])
 def query_order():
-    """查询订单（通过订单号+邮箱/手机号）"""
+    """查询订单（通过联系方式查询所有关联订单，或通过订单号+联系方式查询单个订单）"""
     data = request.get_json()
-    
+
     if not data:
         return error_response('请求数据为空')
-    
-    order_no = data.get('order_no')
-    contact = data.get('contact')  # 邮箱或手机号
-    
-    if not order_no or not contact:
-        return error_response('请填写订单号和联系方式')
-    
-    # 先查商城订单
-    shop_order = ShopOrder.query.filter_by(order_no=order_no).first()
-    if shop_order:
-        if shop_order.contact_email == contact or shop_order.contact_phone == contact:
-            return success_response({
-                'type': 'shop',
-                'order': shop_order.to_dict()
-            })
-        else:
-            return error_response('联系方式不匹配')
-    
-    # 再查接送机订单
-    transfer_order = TransferOrder.query.filter_by(order_no=order_no).first()
-    if transfer_order:
-        if transfer_order.contact_email == contact or transfer_order.contact_phone == contact:
-            return success_response({
-                'type': 'transfer',
-                'order': transfer_order.to_dict()
-            })
-        else:
-            return error_response('联系方式不匹配')
-    
-    return error_response('订单不存在', 404)
+
+    order_no = data.get('order_no', '').strip()
+    contact = data.get('contact', '').strip()
+
+    if not contact:
+        return error_response('请填写手机号或邮箱')
+
+    # 如果提供了订单号，精确查询单个订单
+    if order_no:
+        shop_order = ShopOrder.query.filter_by(order_no=order_no).first()
+        if shop_order:
+            if shop_order.contact_email == contact or shop_order.contact_phone == contact:
+                return success_response({
+                    'orders': [{'type': 'shop', 'order': shop_order.to_dict()}]
+                })
+            else:
+                return error_response('联系方式不匹配')
+
+        transfer_order = TransferOrder.query.filter_by(order_no=order_no).first()
+        if transfer_order:
+            if transfer_order.contact_email == contact or transfer_order.contact_phone == contact:
+                return success_response({
+                    'orders': [{'type': 'transfer', 'order': transfer_order.to_dict()}]
+                })
+            else:
+                return error_response('联系方式不匹配')
+
+        return error_response('订单不存在', 404)
+
+    # 没有订单号，通过联系方式查询所有关联订单
+    results = []
+
+    shop_orders = ShopOrder.query.filter(
+        (ShopOrder.contact_phone == contact) | (ShopOrder.contact_email == contact)
+    ).order_by(ShopOrder.created_at.desc()).limit(50).all()
+    for o in shop_orders:
+        results.append({'type': 'shop', 'order': o.to_dict()})
+
+    transfer_orders = TransferOrder.query.filter(
+        (TransferOrder.contact_phone == contact) | (TransferOrder.contact_email == contact)
+    ).order_by(TransferOrder.created_at.desc()).limit(50).all()
+    for o in transfer_orders:
+        results.append({'type': 'transfer', 'order': o.to_dict()})
+
+    # 按创建时间排序
+    results.sort(key=lambda x: x['order'].get('created_at', ''), reverse=True)
+
+    if not results:
+        return error_response('未找到相关订单', 404)
+
+    return success_response({'orders': results})
 
 
 # ==================== 用户确认已支付 ====================
