@@ -2,7 +2,11 @@
   <div>
     <div class="page-header">
       <div class="header-filters">
-        <el-input v-model="keyword" :placeholder="$t('orders.searchPlaceholder')" clearable style="width:260px" @keyup.enter="loadData" />
+        <el-input v-model="keyword" :placeholder="$t('orders.searchPlaceholder')" clearable style="width:260px" @keyup.enter="loadData" @clear="loadData">
+          <template #append>
+            <el-button :icon="Search" @click="loadData" />
+          </template>
+        </el-input>
         <el-select v-model="statusFilter" :placeholder="$t('common.status')" clearable style="width:140px" @change="loadData">
           <el-option :label="$t('orders.pending')" :value="0" /><el-option :label="$t('orders.confirmed')" :value="1" /><el-option :label="$t('orders.completed')" :value="2" /><el-option :label="$t('orders.cancelled')" :value="3" />
         </el-select>
@@ -99,6 +103,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
+import { Search } from '@element-plus/icons-vue'
 import { getShopOrders, updateShopOrder, confirmShopPayment } from '../api'
 
 const { t } = useI18n()

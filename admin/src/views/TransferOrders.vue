@@ -2,7 +2,11 @@
   <div>
     <div class="page-header">
       <div class="header-filters">
-        <el-input v-model="keyword" :placeholder="$t('orders.searchPlaceholder')" clearable style="width:260px" @keyup.enter="loadData" />
+        <el-input v-model="keyword" :placeholder="$t('orders.searchPlaceholder')" clearable style="width:260px" @keyup.enter="loadData" @clear="loadData">
+          <template #append>
+            <el-button :icon="Search" @click="loadData" />
+          </template>
+        </el-input>
         <el-select v-model="statusFilter" :placeholder="$t('common.status')" clearable style="width:140px" @change="loadData">
           <el-option :label="$t('orders.pending')" :value="0" /><el-option :label="$t('orders.confirmed')" :value="1" /><el-option :label="$t('orders.completed')" :value="2" /><el-option :label="$t('orders.cancelled')" :value="3" />
         </el-select>
@@ -15,7 +19,7 @@
         <el-table-column prop="contact_name" :label="$t('orders.customer')" width="120" />
         <el-table-column :label="$t('orders.serviceType')" width="100">
           <template #default="{ row }">
-            <el-tag size="small">{{ row.service_type }}</el-tag>
+            <el-tag size="small">{{ serviceTypeLabel(row.service_type) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="booking_no" :label="$t('orders.bookingNo')" width="140">
@@ -55,7 +59,7 @@
     <el-dialog v-model="dialogVisible" :title="$t('orders.transferOrderDetail')" width="550px">
       <el-descriptions :column="1" border v-if="current">
         <el-descriptions-item :label="$t('orders.orderNo')">{{ current.order_no }}</el-descriptions-item>
-        <el-descriptions-item :label="$t('orders.serviceType')">{{ current.service_type }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.serviceType')">{{ serviceTypeLabel(current.service_type) }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.customer')">{{ current.contact_name }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.phone')">{{ current.contact_phone }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.email')">{{ current.contact_email }}</el-descriptions-item>
@@ -143,6 +147,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
+import { Search } from '@element-plus/icons-vue'
 import { getTransferOrders, updateTransferOrder, confirmTransferPayment } from '../api'
 
 const { t } = useI18n()
@@ -161,6 +166,10 @@ const updateForm = reactive({ status: 0, remark: '', booking_no: '', resolved_ad
 
 const statusTypes = { 0: 'warning', 1: 'primary', 2: 'success', 3: 'info' }
 const statusLabel = s => t(`orders.${['pending','confirmed','completed','cancelled'][s] || 'unknown'}`)
+const serviceTypeLabel = s => {
+  const map = { pickup: t('orders.pickup'), dropoff: t('orders.dropoff'), combo: t('orders.combo') }
+  return map[s] || s
+}
 
 function paymentMethodLabel(method) {
   const map = { wechat: t('orders.wechat'), alipay: t('orders.alipay'), credit_card: t('orders.creditCard') }
