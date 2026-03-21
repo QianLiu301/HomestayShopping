@@ -47,6 +47,9 @@ export const createShopOrder = (data) => api.post('/shop/orders', data)
 // ==================== Order Query ====================
 export const queryOrder = (data) => api.post('/orders/query', data)
 
+// ==================== Contact Info ====================
+export const getContactInfo = () => api.get('/contact-info')
+
 // ==================== Payment ====================
 export const getPaymentQRCodes = () => api.get('/payment/qrcodes')
 export const confirmPaid = (data) => api.post('/orders/confirm-paid', data)

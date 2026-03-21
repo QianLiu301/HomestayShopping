@@ -191,7 +191,7 @@ export default {
     dropoffFlightTime: '送机航班时间',
     pudongAirport: '上海浦东国际机场',
     hongqiaoAirport: '上海虹桥国际机场',
-    bookingNo: '预订单号',
+    bookingNo: '民宿预订单号',
     bookingNoPlaceholder: '客户的第三方平台预订单号',
     resolvedAddress: '实际地址',
     resolvedAddressPlaceholder: '查询预订单号后填写实际民宿地址',
@@ -239,7 +239,20 @@ export default {
     comboDiscount: '套餐折扣 (%)',
     comboTip: '套餐价格 = (接机价 + 送机价) × (1 - 折扣%/100)',
     comboPreview: '套餐预计价格',
-    settingsSaved: '设置已保存'
+    settingsSaved: '设置已保存',
+    contactSettings: '联系方式设置',
+    contactTip: '设置客户下单后看到的联系方式，用于联系管家完成付款。',
+    wechatId: '微信号',
+    wechatIdPlaceholder: '输入微信号',
+    whatsapp: 'WhatsApp',
+    whatsappPlaceholder: '输入WhatsApp号码（含国际区号）',
+    wechatQr: '微信二维码',
+    uploadWechatQr: '上传微信二维码',
+    whatsappQr: 'WhatsApp二维码',
+    uploadWhatsappQr: '上传WhatsApp二维码',
+    clickToReplace: '点击替换',
+    remove: '移除',
+    contactSaved: '联系方式已保存'
   },
 
   // Payment Settings

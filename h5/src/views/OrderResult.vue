@@ -31,32 +31,46 @@
           <span class="contact-title">{{ t('order.contactToPayTitle') }}</span>
         </div>
         <p class="contact-tip">{{ t('order.contactToPayTip') }}</p>
-        <div class="contact-methods">
-          <div class="contact-item">
+
+        <div v-if="contactLoading" style="text-align:center;padding:20px">
+          <van-loading size="20" />
+        </div>
+
+        <div v-else class="contact-methods">
+          <!-- WeChat -->
+          <div v-if="contactInfo.contact_wechat_id" class="contact-item">
             <van-icon name="chat-o" size="20" color="#07c160" />
             <div class="contact-detail">
               <span class="contact-label">{{ t('order.wechatLabel') }}</span>
-              <span class="contact-value">homestay_shanghai</span>
+              <span class="contact-value">{{ contactInfo.contact_wechat_id }}</span>
             </div>
-            <van-button size="mini" plain type="success" @click="copyText('homestay_shanghai')">{{ t('order.copy') }}</van-button>
+            <van-button size="mini" plain type="success" @click="copyText(contactInfo.contact_wechat_id)">{{ t('order.copy') }}</van-button>
           </div>
-          <div class="contact-item">
-            <van-icon name="phone-o" size="20" color="#1a73e8" />
-            <div class="contact-detail">
-              <span class="contact-label">{{ t('order.phoneLabel') }}</span>
-              <span class="contact-value">+86 138-0000-0000</span>
-            </div>
-            <van-button size="mini" plain type="primary" @click="copyText('+8613800000000')">{{ t('order.copy') }}</van-button>
+          <!-- WeChat QR -->
+          <div v-if="contactInfo.contact_wechat_qr" class="contact-qr">
+            <img :src="contactInfo.contact_wechat_qr" class="qr-image" :alt="t('order.wechatLabel')" />
           </div>
-          <div class="contact-item">
-            <van-icon name="envelop-o" size="20" color="#e6a23c" />
+
+          <!-- WhatsApp -->
+          <div v-if="contactInfo.contact_whatsapp" class="contact-item">
+            <van-icon name="phone-o" size="20" color="#25d366" />
             <div class="contact-detail">
-              <span class="contact-label">{{ t('order.emailLabel') }}</span>
-              <span class="contact-value">info@homestay.com</span>
+              <span class="contact-label">WhatsApp</span>
+              <span class="contact-value">{{ contactInfo.contact_whatsapp }}</span>
             </div>
-            <van-button size="mini" plain type="warning" @click="copyText('info@homestay.com')">{{ t('order.copy') }}</van-button>
+            <van-button size="mini" plain type="success" @click="copyText(contactInfo.contact_whatsapp)">{{ t('order.copy') }}</van-button>
+          </div>
+          <!-- WhatsApp QR -->
+          <div v-if="contactInfo.contact_whatsapp_qr" class="contact-qr">
+            <img :src="contactInfo.contact_whatsapp_qr" class="qr-image" :alt="'WhatsApp'" />
+          </div>
+
+          <!-- Fallback if nothing configured -->
+          <div v-if="!contactInfo.contact_wechat_id && !contactInfo.contact_whatsapp" class="contact-empty">
+            {{ t('order.contactNotSet') }}
           </div>
         </div>
+
         <p class="contact-note">{{ t('order.contactNote', { orderNo }) }}</p>
       </div>
 
@@ -73,15 +87,38 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { showToast } from 'vant'
+import { getContactInfo } from '../api'
 
 const { t } = useI18n()
 const route = useRoute()
 
 const orderNo = route.query.orderNo || ''
 const amount = route.query.amount || '0'
+
+const contactLoading = ref(true)
+const contactInfo = ref({
+  contact_wechat_id: '',
+  contact_whatsapp: '',
+  contact_wechat_qr: '',
+  contact_whatsapp_qr: ''
+})
+
+onMounted(async () => {
+  try {
+    const res = await getContactInfo()
+    if (res.data) {
+      contactInfo.value = res.data
+    }
+  } catch (e) {
+    console.error('Failed to load contact info', e)
+  } finally {
+    contactLoading.value = false
+  }
+})
 
 function copyText(text) {
   if (navigator.clipboard) {
@@ -234,6 +271,28 @@ function fallbackCopy(text) {
   font-weight: 600;
   color: #333;
   word-break: break-all;
+}
+
+.contact-qr {
+  display: flex;
+  justify-content: center;
+  padding: 8px;
+  background: #fff;
+  border-radius: 10px;
+}
+
+.qr-image {
+  width: 180px;
+  height: 180px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.contact-empty {
+  text-align: center;
+  padding: 16px;
+  color: #999;
+  font-size: 13px;
 }
 
 .contact-note {

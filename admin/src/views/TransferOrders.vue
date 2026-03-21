@@ -18,7 +18,12 @@
             <el-tag size="small">{{ row.service_type }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="booking_no" :label="$t('orders.bookingNo')" width="140" />
+        <el-table-column prop="booking_no" :label="$t('orders.bookingNo')" width="140">
+          <template #default="{ row }">
+            <el-button v-if="row.booking_no" link type="primary" @click="openDetail(row)">{{ row.booking_no }}</el-button>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="flight_no" :label="$t('orders.flightNo')" width="100" />
         <el-table-column :label="$t('orders.total')" width="100">
           <template #default="{ row }">¥{{ row.total_price }}</template>

@@ -5,6 +5,17 @@ from app import db
 from app.utils import success_response, error_response, admin_required
 
 
+@api_bp.route('/contact-info', methods=['GET'])
+def get_contact_info():
+    """获取联系方式（公开接口，供前端OrderResult页面使用）"""
+    return success_response({
+        'contact_wechat_id': Setting.get_value('contact_wechat_id', ''),
+        'contact_whatsapp': Setting.get_value('contact_whatsapp', ''),
+        'contact_wechat_qr': Setting.get_value('contact_wechat_qr', ''),
+        'contact_whatsapp_qr': Setting.get_value('contact_whatsapp_qr', '')
+    })
+
+
 @api_bp.route('/payment/qrcodes', methods=['GET'])
 def get_payment_qrcodes():
     """获取支付收款二维码（公开接口）"""

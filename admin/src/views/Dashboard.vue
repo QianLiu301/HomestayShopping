@@ -19,7 +19,11 @@
         <el-card shadow="hover">
           <template #header>{{ $t('dashboard.recentShopOrders') }}</template>
           <el-table :data="recentShopOrders" size="small" stripe>
-            <el-table-column prop="order_no" :label="$t('dashboard.orderNo')" width="180" />
+            <el-table-column prop="order_no" :label="$t('dashboard.orderNo')" width="180">
+              <template #default="{ row }">
+                <el-button link type="primary" @click="router.push('/orders/shop')">{{ row.order_no }}</el-button>
+              </template>
+            </el-table-column>
             <el-table-column prop="contact_name" :label="$t('dashboard.customer')" />
             <el-table-column prop="total_price" :label="$t('dashboard.total')" width="100">
               <template #default="{ row }">¥{{ row.total_price }}</template>
@@ -36,7 +40,11 @@
         <el-card shadow="hover">
           <template #header>{{ $t('dashboard.recentTransferOrders') }}</template>
           <el-table :data="recentTransferOrders" size="small" stripe>
-            <el-table-column prop="order_no" :label="$t('dashboard.orderNo')" width="180" />
+            <el-table-column prop="order_no" :label="$t('dashboard.orderNo')" width="180">
+              <template #default="{ row }">
+                <el-button link type="primary" @click="router.push('/orders/transfer')">{{ row.order_no }}</el-button>
+              </template>
+            </el-table-column>
             <el-table-column prop="contact_name" :label="$t('dashboard.customer')" />
             <el-table-column prop="service_type" :label="$t('dashboard.type')" width="90" />
             <el-table-column prop="status" :label="$t('common.status')" width="100">
@@ -53,10 +61,12 @@
 
 <script setup>
 import { ref, markRaw, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ShoppingCart, Van, Goods, Ticket } from '@element-plus/icons-vue'
 import { getShopOrders, getTransferOrders, getProducts, getCoupons } from '../api'
 
+const router = useRouter()
 const { t } = useI18n()
 
 const statCards = ref([

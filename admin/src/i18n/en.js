@@ -191,7 +191,7 @@ export default {
     dropoffFlightTime: 'Dropoff Flight Time',
     pudongAirport: 'Shanghai Pudong Intl Airport',
     hongqiaoAirport: 'Shanghai Hongqiao Intl Airport',
-    bookingNo: 'Booking No.',
+    bookingNo: 'Homestay Booking No.',
     bookingNoPlaceholder: 'Third-party platform booking number',
     resolvedAddress: 'Resolved Address',
     resolvedAddressPlaceholder: 'Fill in the actual address after looking up the booking',
@@ -239,7 +239,20 @@ export default {
     comboDiscount: 'Combo Discount (%)',
     comboTip: 'Combo price = (pickup + dropoff) × (1 - discount%/100)',
     comboPreview: 'Combo estimated price',
-    settingsSaved: 'Settings saved'
+    settingsSaved: 'Settings saved',
+    contactSettings: 'Contact Settings',
+    contactTip: 'Set the contact methods customers see after placing an order to reach the manager for payment.',
+    wechatId: 'WeChat ID',
+    wechatIdPlaceholder: 'Enter WeChat ID',
+    whatsapp: 'WhatsApp',
+    whatsappPlaceholder: 'Enter WhatsApp number (with country code)',
+    wechatQr: 'WeChat QR Code',
+    uploadWechatQr: 'Upload WeChat QR',
+    whatsappQr: 'WhatsApp QR Code',
+    uploadWhatsappQr: 'Upload WhatsApp QR',
+    clickToReplace: 'Click to replace',
+    remove: 'Remove',
+    contactSaved: 'Contact settings saved'
   },
 
   // Payment Settings
