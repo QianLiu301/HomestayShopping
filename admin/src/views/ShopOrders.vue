@@ -17,7 +17,12 @@
       <el-table :data="list" v-loading="loading" stripe>
         <el-table-column prop="order_no" :label="$t('orders.orderNo')" width="190" />
         <el-table-column prop="contact_name" :label="$t('orders.customer')" width="120" />
-        <el-table-column prop="contact_phone" :label="$t('orders.phone')" width="130" />
+        <el-table-column :label="$t('orders.bookingNo')" width="150">
+          <template #default="{ row }">
+            <el-button v-if="row.booking_no" link type="primary" @click="openDetail(row)">{{ row.booking_no }}</el-button>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('orders.items')" min-width="200">
           <template #default="{ row }">
             <span v-for="(item, i) in (row.items || [])" :key="i">{{ item.product_name }} x{{ item.quantity }}<span v-if="i < row.items.length - 1">, </span></span>
@@ -38,7 +43,9 @@
             <el-tag :type="statusTypes[row.status]" size="small">{{ statusLabel(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="created_at" :label="$t('orders.created')" width="170" />
+        <el-table-column :label="$t('orders.created')" width="170">
+          <template #default="{ row }">{{ formatDateTime(row.created_at) }}</template>
+        </el-table-column>
         <el-table-column :label="$t('common.actions')" width="120" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="openDetail(row)">{{ $t('common.manage') }}</el-button>
@@ -53,9 +60,15 @@
     <el-dialog v-model="dialogVisible" :title="$t('orders.orderDetail')" width="500px">
       <el-descriptions :column="1" border v-if="current">
         <el-descriptions-item :label="$t('orders.orderNo')">{{ current.order_no }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.bookingNo')">{{ current.booking_no || '-' }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.customer')">{{ current.contact_name }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.phone')">{{ current.contact_phone }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.email')">{{ current.contact_email }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.items')">
+          <span v-for="(item, i) in (current.items || [])" :key="i">
+            {{ item.product_name }}<span v-if="item.spec_name"> ({{ item.spec_name }})</span> x{{ item.quantity }} ¥{{ item.subtotal }}<br v-if="i < current.items.length - 1" />
+          </span>
+        </el-descriptions-item>
         <el-descriptions-item :label="$t('orders.total')">¥{{ current.total_price }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.paymentMethod')">{{ paymentMethodLabel(current.payment_method) }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.paymentStatus')">
@@ -69,10 +82,12 @@
         <el-descriptions-item v-if="current.payment_screenshot" :label="$t('orders.paymentScreenshot')">
           <el-image :src="current.payment_screenshot" style="max-width:200px;max-height:200px;border-radius:8px" :preview-src-list="[current.payment_screenshot]" fit="contain" />
         </el-descriptions-item>
+        <el-descriptions-item v-if="current.remark" :label="$t('orders.remark')">{{ current.remark }}</el-descriptions-item>
       </el-descriptions>
 
       <div v-if="current && current.payment_status !== 1" style="margin-top:16px;padding:12px;background:#fff7e6;border-radius:8px;text-align:center">
-        <p style="margin:0 0 10px;color:#e6a23c;font-size:13px">{{ $t('orders.confirmPaymentTip', { method: paymentMethodLabel(current.payment_method) }) }}</p>
+        <p v-if="current.payment_method" style="margin:0 0 10px;color:#e6a23c;font-size:13px">{{ $t('orders.confirmPaymentTip', { method: paymentMethodLabel(current.payment_method) }) }}</p>
+        <p v-else style="margin:0 0 10px;color:#e6a23c;font-size:13px">{{ $t('orders.notYetPaid') }}</p>
         <el-button type="warning" :loading="confirmingPayment" @click="onConfirmPayment">
           {{ $t('orders.confirmPayment') }}
         </el-button>
@@ -88,7 +103,7 @@
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('orders.remark')">
-          <el-input v-model="updateForm.remark" type="textarea" :rows="2" />
+          <el-input v-model="updateForm.remark" type="textarea" :rows="2" :placeholder="$t('orders.remarkPlaceholder')" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -120,12 +135,21 @@ const keyword = ref('')
 const statusFilter = ref('')
 const updateForm = reactive({ status: 0, remark: '' })
 
+function formatDateTime(val) {
+  if (!val) return '-'
+  const d = new Date(val)
+  if (isNaN(d.getTime())) return val
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
 const statusTypes = { 0: 'warning', 1: 'primary', 2: 'success', 3: 'info' }
 const statusLabel = s => t(`orders.${['pending','confirmed','completed','cancelled'][s] || 'unknown'}`)
 
 function paymentMethodLabel(method) {
+  if (!method) return '-'
   const map = { wechat: t('orders.wechat'), alipay: t('orders.alipay'), credit_card: t('orders.creditCard') }
-  return map[method] || method || '-'
+  return map[method] || method
 }
 
 async function loadData() {

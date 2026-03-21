@@ -430,7 +430,8 @@ def admin_get_shop_orders():
     if keyword:
         query = query.filter(
             (ShopOrder.order_no.ilike(f'%{keyword}%')) |
-            (ShopOrder.contact_name.ilike(f'%{keyword}%'))
+            (ShopOrder.contact_name.ilike(f'%{keyword}%')) |
+            (ShopOrder.booking_no.ilike(f'%{keyword}%'))
         )
     
     query = query.order_by(ShopOrder.created_at.desc())

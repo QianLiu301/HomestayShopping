@@ -246,29 +246,27 @@ def create_shop_order():
     if not items_data:
         return error_response('购物车为空')
     
-    # 验证地址
+    # 验证预订单号
+    booking_no = data.get('booking_no')
+    if not booking_no:
+        return error_response('请填写民宿预订单号')
+
+    # 地址信息（可选，保留兼容）
     location_id = data.get('location_id')
     custom_address = data.get('custom_address')
     custom_district = data.get('custom_district')
     room_number = data.get('room_number')
-    
+
     if location_id:
         location = Location.query.filter_by(id=location_id, status=1).first()
         if not location:
-            return error_response('民宿点不存在')
-    elif custom_address:
-        if not custom_district:
-            return error_response('请选择所在区')
-    else:
-        return error_response('请选择或填写地址')
+            location_id = None
     
     # 验证联系信息
     contact_name = data.get('contact_name')
     contact_phone = data.get('contact_phone')
     contact_email = data.get('contact_email')
     
-    if not room_number:
-        return error_response('请填写房间号')
     if not contact_name:
         return error_response('请填写收件人姓名')
     if not contact_phone and not contact_email:
@@ -325,6 +323,7 @@ def create_shop_order():
     # 创建订单
     order = ShopOrder(
         order_no=generate_order_no('SH'),
+        booking_no=booking_no,
         location_id=location_id,
         custom_address=custom_address,
         custom_district=custom_district,

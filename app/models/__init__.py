@@ -379,6 +379,7 @@ class ShopOrder(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     order_no = db.Column(db.String(32), unique=True, nullable=False)
+    booking_no = db.Column(db.String(100))
     location_id = db.Column(db.Integer, db.ForeignKey('locations.id'))
     custom_address = db.Column(db.String(255))
     custom_district = db.Column(db.String(50))
@@ -409,6 +410,7 @@ class ShopOrder(db.Model):
         return {
             'id': self.id,
             'order_no': self.order_no,
+            'booking_no': self.booking_no,
             'location': self.location.to_dict() if self.location else None,
             'custom_address': self.custom_address,
             'custom_district': self.custom_district,

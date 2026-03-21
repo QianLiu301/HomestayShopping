@@ -171,6 +171,7 @@ export default {
     transferOrderDetail: 'Transfer Order Detail',
     updateStatus: 'Update Status',
     remark: 'Remark',
+    remarkPlaceholder: 'Enter admin notes (e.g. delivery address, special requests)',
     confirmPayment: 'Confirm Payment Received',
     confirmPaymentTip: 'Customer selected: {method}. Please verify payment received before confirming.',
     notYetPaid: 'Customer has not selected a payment method. Order is unpaid.',

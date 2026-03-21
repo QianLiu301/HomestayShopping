@@ -26,64 +26,25 @@
         </div>
       </div>
 
-      <!-- Address -->
+      <!-- Booking info -->
       <div class="card">
-        <div class="card-title">{{ t('checkout.address') }}</div>
-        <van-radio-group v-model="addressType" class="address-radios">
-          <van-radio name="homestay">{{ t('transfer.homestayAddress') }}</van-radio>
-          <van-radio name="custom">{{ t('transfer.customAddress') }}</van-radio>
-        </van-radio-group>
-
-        <div v-if="addressType === 'homestay'" style="margin-top: 12px;">
-          <van-field
-            :model-value="selectedLocationName"
-            :placeholder="t('checkout.selectLocation')"
-            readonly
-            is-link
-            required
-            @click="showLocationPicker = true"
-          />
-          <van-field
-            v-model="form.room_number"
-            :label="t('checkout.roomNumber')"
-            :placeholder="t('checkout.roomPlaceholder')"
-            required
-          />
-        </div>
-
-        <div v-else style="margin-top: 12px;">
-          <van-field
-            :model-value="form.custom_district"
-            :placeholder="t('transfer.selectDistrict')"
-            readonly
-            is-link
-            required
-            @click="showDistrictPicker = true"
-          />
-          <van-field
-            v-model="form.custom_address"
-            :placeholder="t('transfer.inputAddress')"
-            type="textarea"
-            rows="2"
-            autosize
-            required
-          />
-          <van-field
-            v-model="form.room_number"
-            :label="t('checkout.roomNumber')"
-            :placeholder="t('checkout.roomPlaceholder')"
-            required
-          />
-        </div>
+        <div class="card-title">{{ t('checkout.deliveryInfo') }}</div>
+        <van-field
+          v-model="form.booking_no"
+          :label="t('checkout.bookingNo')"
+          :placeholder="t('checkout.bookingNoPlaceholder')"
+          required
+        />
+        <div class="booking-tip">{{ t('checkout.bookingNoTip') }}</div>
       </div>
 
       <!-- Contact -->
       <div class="card">
         <div class="card-title">{{ t('checkout.contact') }}</div>
-        <van-field v-model="form.contact_name" :label="t('transfer.contactName')" :placeholder="t('transfer.contactName')" required />
-        <van-field v-model="form.contact_phone" :label="t('transfer.contactPhone')" :placeholder="t('transfer.contactPhone')" type="tel" />
-        <van-field v-model="form.contact_email" :label="t('transfer.contactEmail')" :placeholder="t('transfer.contactEmail')" type="email" />
-        <van-field v-model="form.remark" :label="t('transfer.remark')" :placeholder="t('transfer.remarkPlaceholder')" type="textarea" rows="2" autosize />
+        <van-field v-model="form.contact_name" :label="t('checkout.contactName')" :placeholder="t('checkout.contactNamePlaceholder')" required />
+        <van-field v-model="form.contact_phone" :label="t('checkout.contactPhone')" :placeholder="t('checkout.contactPhonePlaceholder')" type="tel" />
+        <van-field v-model="form.contact_email" :label="t('checkout.contactEmail')" :placeholder="t('checkout.contactEmailPlaceholder')" type="email" />
+        <van-field v-model="form.remark" :label="t('checkout.remark')" :placeholder="t('checkout.remarkPlaceholder')" type="textarea" rows="2" autosize />
       </div>
 
       <!-- Coupon -->
@@ -105,7 +66,7 @@
           <span>¥{{ cart.totalPrice.toFixed(2) }}</span>
         </div>
         <div v-if="couponDiscount > 0" class="price-line discount">
-          <span>{{ t('transfer.discount') }}</span>
+          <span>{{ t('checkout.discount') }}</span>
           <span>-¥{{ couponDiscount }}</span>
         </div>
         <div class="price-line total">
@@ -126,34 +87,20 @@
         </van-checkbox>
       </div>
 
+      <!-- Validation error banner -->
+      <div v-if="errorMsg" class="error-banner">
+        <van-icon name="warning-o" size="18" />
+        <span>{{ errorMsg }}</span>
+      </div>
+
       <!-- Submit -->
       <div style="padding: 16px;">
-        <van-button round block type="danger" size="large" :loading="submitting" :disabled="!agreeTerms" @click="onSubmit">
+        <van-button round block type="primary" size="large" :loading="submitting" @click="onSubmit">
           {{ t('checkout.placeOrder') }} ¥{{ finalPrice }}
         </van-button>
       </div>
       <div style="height: 20px;"></div>
     </template>
-
-    <!-- Location picker -->
-    <van-popup v-model:show="showLocationPicker" position="bottom" round>
-      <van-picker
-        :title="t('checkout.selectLocation')"
-        :columns="locationColumns"
-        @confirm="onLocationConfirm"
-        @cancel="showLocationPicker = false"
-      />
-    </van-popup>
-
-    <!-- District picker -->
-    <van-popup v-model:show="showDistrictPicker" position="bottom" round>
-      <van-picker
-        :title="t('transfer.selectDistrict')"
-        :columns="districtColumns"
-        @confirm="onDistrictConfirm"
-        @cancel="showDistrictPicker = false"
-      />
-    </van-popup>
 
   </div>
 </template>
@@ -162,69 +109,36 @@
 import { ref, computed, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { showToast } from 'vant'
-import { getLocations, getDistricts, createShopOrder, verifyCoupon } from '../api'
+import { createShopOrder, verifyCoupon } from '../api'
 import { useCartStore } from '../stores/cart'
 
 const { t } = useI18n()
 const router = useRouter()
 const cart = useCartStore()
 
-const pageLoading = ref(true)
+const pageLoading = ref(false)
 const submitting = ref(false)
-const locations = ref([])
-const districts = ref([])
+const errorMsg = ref('')
 
 const form = reactive({
-  location_id: null,
-  custom_address: '',
-  custom_district: '',
-  room_number: '',
+  booking_no: '',
   contact_name: '',
   contact_phone: '',
   contact_email: '',
   remark: ''
 })
 
-const addressType = ref('homestay')
 const couponCode = ref('')
 const couponDiscount = ref(0)
 const couponLoading = ref(false)
 
-const showLocationPicker = ref(false)
-const showDistrictPicker = ref(false)
 const pendingOrderNo = ref('')
 const pendingAmount = ref('')
 const agreeTerms = ref(false)
 
-const locationColumns = computed(() =>
-  locations.value.map(l => ({ text: l.name, value: l.id }))
-)
-
-const districtColumns = computed(() =>
-  districts.value.map(d => ({ text: d.label, value: d.value }))
-)
-
-const selectedLocationName = computed(() => {
-  if (!form.location_id) return ''
-  return locations.value.find(l => l.id === form.location_id)?.name || ''
-})
-
 const finalPrice = computed(() =>
   Math.max(0, cart.totalPrice - couponDiscount.value).toFixed(2)
 )
-
-function onLocationConfirm({ selectedOptions }) {
-  const sel = selectedOptions[0]
-  if (sel) form.location_id = sel.value
-  showLocationPicker.value = false
-}
-
-function onDistrictConfirm({ selectedOptions }) {
-  const sel = selectedOptions[0]
-  if (sel) form.custom_district = sel.value
-  showDistrictPicker.value = false
-}
 
 async function onVerifyCoupon() {
   if (!couponCode.value) return
@@ -245,48 +159,39 @@ async function onVerifyCoupon() {
 }
 
 function validationFail(msg) {
-  console.warn('Validation failed:', msg)
-  showToast({ message: msg, position: 'top', duration: 3000 })
-  // Scroll to top so user can see which field is missing
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+  errorMsg.value = msg
+  setTimeout(() => {
+    const banner = document.querySelector('.error-banner')
+    if (banner) banner.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, 50)
+  setTimeout(() => { errorMsg.value = '' }, 5000)
 }
 
 async function onSubmit() {
-  console.log('onSubmit called', { addressType: addressType.value, form: JSON.parse(JSON.stringify(form)), cartItems: cart.items.length })
   try {
-    // Validate address
-    if (addressType.value === 'homestay') {
-      if (!form.location_id) { validationFail(t('checkout.selectLocation')); return }
-    } else {
-      if (!form.custom_district) { validationFail(t('transfer.selectDistrict')); return }
-      if (!form.custom_address) { validationFail(t('transfer.inputAddress')); return }
-    }
-
-    // Room number is required
-    if (!form.room_number) { validationFail(t('checkout.roomRequired')); return }
+    // Validate booking number
+    if (!form.booking_no.trim()) { validationFail(t('checkout.bookingNoRequired')); return }
 
     // Validate contact info
-    if (!form.contact_name) { validationFail(t('transfer.contactName')); return }
-    if (!form.contact_phone && !form.contact_email) { validationFail(t('checkout.phoneOrEmail')); return }
+    if (!form.contact_name.trim()) { validationFail(t('checkout.contactNameRequired')); return }
+    if (!form.contact_phone.trim() && !form.contact_email.trim()) { validationFail(t('checkout.phoneOrEmail')); return }
+
+    // Terms
+    if (!agreeTerms.value) { validationFail(t('transfer.agreeRequired')); return }
+
+    errorMsg.value = ''
 
     const data = {
+      booking_no: form.booking_no,
       contact_name: form.contact_name,
       contact_phone: form.contact_phone,
       contact_email: form.contact_email,
-      room_number: form.room_number,
       remark: form.remark,
       items: cart.items.map(item => ({
         product_id: item.productId,
         quantity: item.quantity,
         spec_name: item.specName || undefined
       }))
-    }
-
-    if (addressType.value === 'homestay') {
-      data.location_id = form.location_id
-    } else {
-      data.custom_address = form.custom_address
-      data.custom_district = form.custom_district
     }
 
     if (couponCode.value && couponDiscount.value > 0) {
@@ -301,7 +206,7 @@ async function onSubmit() {
     goToResult()
   } catch (e) {
     console.error('Submit order error:', e)
-    showToast(e.message || String(e))
+    errorMsg.value = e.message || String(e)
   } finally {
     submitting.value = false
   }
@@ -318,19 +223,9 @@ function goToResult() {
   })
 }
 
-onMounted(async () => {
+onMounted(() => {
   if (!cart.items.length) {
     router.replace('/cart')
-    return
-  }
-  try {
-    const [lRes, dRes] = await Promise.all([getLocations(), getDistricts()])
-    locations.value = lRes.data || []
-    districts.value = dRes.data || []
-  } catch (e) {
-    console.error(e)
-  } finally {
-    pageLoading.value = false
   }
 })
 </script>
@@ -406,9 +301,11 @@ onMounted(async () => {
   color: var(--text-light);
 }
 
-.address-radios {
-  display: flex;
-  gap: 16px;
+.booking-tip {
+  padding: 8px 16px;
+  font-size: 12px;
+  color: var(--text-light);
+  line-height: 1.5;
 }
 
 .coupon-row {
@@ -451,4 +348,25 @@ onMounted(async () => {
 .agree-card { padding: 12px 16px; }
 .agree-text { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
 .agree-link { color: var(--accent); text-decoration: underline; }
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 16px;
+  padding: 12px 16px;
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+  border-radius: 8px;
+  color: #ff4d4f;
+  font-size: 14px;
+  font-weight: 500;
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
 </style>

@@ -171,6 +171,7 @@ export default {
     transferOrderDetail: '接送订单详情',
     updateStatus: '更新状态',
     remark: '备注',
+    remarkPlaceholder: '输入管理员备注（如配送地址、特殊要求等）',
     confirmPayment: '确认收款',
     confirmPaymentTip: '客户选择了: {method}。请确认已收到款项后再点击确认。',
     notYetPaid: '客户尚未选择支付方式，订单未付款。',
