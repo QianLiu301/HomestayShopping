@@ -1,5 +1,5 @@
 """
-Add booking_no column to shop_orders table.
+Add booking_no and resolved_address columns to shop_orders table.
 Usage: python migrate_shop_booking_no.py
 """
 import os
@@ -9,6 +9,7 @@ app = create_app(os.getenv('FLASK_ENV', 'development'))
 
 NEW_COLUMNS = [
     ('shop_orders', 'booking_no', 'VARCHAR(100)'),
+    ('shop_orders', 'resolved_address', 'VARCHAR(255)'),
 ]
 
 with app.app_context():

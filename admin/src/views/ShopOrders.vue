@@ -61,6 +61,7 @@
       <el-descriptions :column="1" border v-if="current">
         <el-descriptions-item :label="$t('orders.orderNo')">{{ current.order_no }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.bookingNo')">{{ current.booking_no || '-' }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.resolvedAddress')">{{ current.resolved_address || '-' }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.customer')">{{ current.contact_name }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.phone')">{{ current.contact_phone }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.email')">{{ current.contact_email }}</el-descriptions-item>
@@ -97,6 +98,12 @@
       </div>
 
       <el-form style="margin-top:20px" label-position="top">
+        <el-form-item :label="$t('orders.bookingNo')">
+          <el-input v-model="updateForm.booking_no" :placeholder="$t('orders.bookingNoPlaceholder')" />
+        </el-form-item>
+        <el-form-item :label="$t('orders.resolvedAddress')">
+          <el-input v-model="updateForm.resolved_address" :placeholder="$t('orders.resolvedAddressPlaceholder')" />
+        </el-form-item>
         <el-form-item :label="$t('orders.updateStatus')">
           <el-select v-model="updateForm.status" style="width:100%">
             <el-option :label="$t('orders.pending')" :value="0" /><el-option :label="$t('orders.confirmed')" :value="1" /><el-option :label="$t('orders.completed')" :value="2" /><el-option :label="$t('orders.cancelled')" :value="3" />
@@ -133,7 +140,7 @@ const pageSize = 15
 const total = ref(0)
 const keyword = ref('')
 const statusFilter = ref('')
-const updateForm = reactive({ status: 0, remark: '' })
+const updateForm = reactive({ status: 0, remark: '', booking_no: '', resolved_address: '' })
 
 function formatDateTime(val) {
   if (!val) return '-'
@@ -169,6 +176,8 @@ function openDetail(row) {
   current.value = row
   updateForm.status = row.status
   updateForm.remark = row.remark || ''
+  updateForm.booking_no = row.booking_no || ''
+  updateForm.resolved_address = row.resolved_address || ''
   dialogVisible.value = true
 }
 

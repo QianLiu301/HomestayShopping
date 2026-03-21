@@ -452,16 +452,20 @@ def admin_update_shop_order(order_id):
     order = ShopOrder.query.get(order_id)
     if not order:
         return error_response('订单不存在', 404)
-    
+
     data = request.get_json()
-    
+
     if 'status' in data:
         order.status = data['status']
     if 'remark' in data:
         order.remark = data['remark']
-    
+    if 'booking_no' in data:
+        order.booking_no = data['booking_no']
+    if 'resolved_address' in data:
+        order.resolved_address = data['resolved_address']
+
     db.session.commit()
-    
+
     return success_response(order.to_dict(), '更新成功')
 
 
