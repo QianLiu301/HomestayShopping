@@ -90,7 +90,7 @@
           <div class="route-arrow">→</div>
           <div class="route-point to">
             <van-icon name="wap-home-o" color="#8b6f47" />
-            <span>{{ form.booking_no || t('transfer.bookingNo') }}</span>
+            <span>{{ t('transfer.homestayDestination') }}</span>
           </div>
         </div>
       </div>
@@ -133,7 +133,7 @@
         <div class="route-display" v-if="dropoffAirport">
           <div class="route-point from">
             <van-icon name="wap-home-o" color="#8b6f47" />
-            <span>{{ form.booking_no || t('transfer.bookingNo') }}</span>
+            <span>{{ t('transfer.homestayDestination') }}</span>
           </div>
           <div class="route-arrow">→</div>
           <div class="route-point to">
@@ -219,7 +219,7 @@
 
       <!-- Submit -->
       <div style="padding: 16px;">
-        <van-button round block type="primary" size="large" :loading="submitting" :disabled="!agreeTerms" @click="onSubmit">
+        <van-button round block type="primary" size="large" :loading="submitting" @click="onSubmit">
           {{ t('transfer.submitOrder') }} ¥{{ totalPrice }}
         </van-button>
       </div>
@@ -244,7 +244,7 @@
 import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { showToast } from 'vant'
+import { showToast, showFailToast } from 'vant'
 import { getVehicles, getTransferPrice, createTransferOrder, verifyCoupon } from '../api'
 
 const { t } = useI18n()
@@ -350,30 +350,33 @@ async function onSubmit() {
   const st = form.service_type
 
   // Vehicle
-  if (!form.vehicle_id) return showToast(t('transfer.selectVehicle'))
+  if (!form.vehicle_id) return showFailToast(t('transfer.selectVehicle'))
 
   // Pickup validation
   if (st === 'pickup' || st === 'combo') {
-    if (!form.pickup_airport) return showToast(t('transfer.selectAirportTip'))
-    if (!form.flight_no.trim()) return showToast(t('transfer.flightNoRequired'))
+    if (!form.pickup_airport) return showFailToast(t('transfer.selectAirportTip'))
+    if (!form.flight_no.trim()) return showFailToast(t('transfer.flightNoRequired'))
   }
 
   // Dropoff validation
   if (st === 'dropoff') {
-    if (!dropoffAirport.value) return showToast(t('transfer.selectAirportTip'))
-    if (!dropoffFlightNo.value.trim()) return showToast(t('transfer.flightNoRequired'))
+    if (!dropoffAirport.value) return showFailToast(t('transfer.selectAirportTip'))
+    if (!dropoffFlightNo.value.trim()) return showFailToast(t('transfer.flightNoRequired'))
   }
   if (st === 'combo') {
-    if (!dropoffAirport.value) return showToast(t('transfer.selectAirportTip'))
-    if (!dropoffFlightNo.value.trim()) return showToast(t('transfer.flightNoRequired'))
+    if (!dropoffAirport.value) return showFailToast(t('transfer.selectAirportTip'))
+    if (!dropoffFlightNo.value.trim()) return showFailToast(t('transfer.flightNoRequired'))
   }
 
   // Booking number
-  if (!form.booking_no.trim()) return showToast(t('transfer.bookingNoRequired'))
+  if (!form.booking_no.trim()) return showFailToast(t('transfer.bookingNoRequired'))
 
   // Contact
-  if (!form.contact_name.trim()) return showToast(t('transfer.contactNameRequired'))
-  if (!form.contact_phone.trim() && !form.contact_email.trim()) return showToast(t('checkout.phoneOrEmail'))
+  if (!form.contact_name.trim()) return showFailToast(t('transfer.contactNameRequired'))
+  if (!form.contact_phone.trim() && !form.contact_email.trim()) return showFailToast(t('checkout.phoneOrEmail'))
+
+  // Terms agreement
+  if (!agreeTerms.value) return showFailToast(t('transfer.agreeRequired'))
 
   // Build payload
   const data = {
