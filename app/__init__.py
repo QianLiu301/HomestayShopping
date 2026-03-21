@@ -60,7 +60,13 @@ def _auto_migrate(app):
         for table, column, col_type in columns_to_ensure:
             try:
                 if is_pg:
-                    # PostgreSQL 支持 IF NOT EXISTS
+                    # 先检查列是否已存在
+                    exists = db.session.execute(db.text(
+                        "SELECT 1 FROM information_schema.columns "
+                        "WHERE table_name = :table AND column_name = :column"
+                    ), {'table': table, 'column': column}).fetchone()
+                    if exists:
+                        continue
                     db.session.execute(db.text(
                         f'ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {column} {col_type}'
                     ))
@@ -70,7 +76,7 @@ def _auto_migrate(app):
                         f'ALTER TABLE {table} ADD COLUMN {column} {col_type}'
                     ))
                 db.session.commit()
-                app.logger.info(f'Auto-migrate: ensured {table}.{column}')
+                app.logger.info(f'Auto-migrate: added {table}.{column}')
             except Exception:
                 db.session.rollback()
 
