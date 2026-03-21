@@ -9,7 +9,7 @@
       </el-radio-group>
     </div>
 
-    <!-- Stat cards -->
+    <!-- Row 1: Revenue cards (3) -->
     <el-row :gutter="20">
       <el-col :xs="24" :sm="8">
         <el-card shadow="hover" class="stat-card">
@@ -46,6 +46,21 @@
       </el-col>
     </el-row>
 
+    <!-- Row 2: Count cards (4) -->
+    <el-row :gutter="20" style="margin-top:20px">
+      <el-col :xs="12" :sm="6" v-for="card in countCards" :key="card.key">
+        <el-card shadow="hover" class="stat-card">
+          <div class="stat-icon" :style="{ background: card.bg }">
+            <el-icon :size="24"><component :is="card.icon" /></el-icon>
+          </div>
+          <div class="stat-info">
+            <p class="stat-value">{{ card.value }}</p>
+            <p class="stat-title">{{ $t(`dashboard.${card.key}`) }}</p>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
     <!-- Chart -->
     <el-card shadow="hover" style="margin-top:20px">
       <template #header>
@@ -57,7 +72,7 @@
       <v-chart :option="chartOption" style="height:360px" autoresize />
     </el-card>
 
-    <!-- Recent orders -->
+    <!-- Recent orders (at the very bottom) -->
     <el-row :gutter="20" style="margin-top:20px">
       <el-col :xs="24" :sm="12">
         <el-card shadow="hover">
@@ -104,16 +119,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, markRaw, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { ShoppingCart, Van, TrendCharts } from '@element-plus/icons-vue'
+import { ShoppingCart, Van, TrendCharts, Goods, Ticket } from '@element-plus/icons-vue'
 import { use } from 'echarts/core'
 import { BarChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
-import { getShopOrders, getTransferOrders, getAnalytics } from '../api'
+import { getShopOrders, getTransferOrders, getProducts, getCoupons, getAnalytics } from '../api'
 
 use([BarChart, GridComponent, TooltipComponent, LegendComponent, CanvasRenderer])
 
@@ -127,6 +142,14 @@ const analytics = ref({
   total_revenue: 0,
   chart: { labels: [], shop: [], transfer: [] }
 })
+
+const countCards = ref([
+  { key: 'products', value: '-', icon: markRaw(Goods), bg: '#e6f7ff' },
+  { key: 'shopOrders', value: '-', icon: markRaw(ShoppingCart), bg: '#f6ffed' },
+  { key: 'transferOrders', value: '-', icon: markRaw(Van), bg: '#fff7e6' },
+  { key: 'coupons', value: '-', icon: markRaw(Ticket), bg: '#fff1f0' }
+])
+
 const recentShopOrders = ref([])
 const recentTransferOrders = ref([])
 
@@ -194,11 +217,28 @@ async function loadAnalytics() {
   }
 }
 
+async function loadCounts() {
+  try {
+    const [prodRes, shopRes, transRes, couponRes] = await Promise.all([
+      getProducts({ page: 1, per_page: 1 }),
+      getShopOrders({ page: 1, per_page: 1 }),
+      getTransferOrders({ page: 1, per_page: 1 }),
+      getCoupons({ page: 1, per_page: 1 })
+    ])
+    countCards.value[0].value = prodRes.data?.total ?? prodRes.data?.length ?? 0
+    countCards.value[1].value = shopRes.data?.total ?? 0
+    countCards.value[2].value = transRes.data?.total ?? 0
+    countCards.value[3].value = couponRes.data?.total ?? couponRes.data?.length ?? 0
+  } catch (e) {
+    console.error('Count cards load error:', e)
+  }
+}
+
 async function loadRecentOrders() {
   try {
     const [shopRes, transRes] = await Promise.all([
-      getShopOrders({ page: 1, per_page: 5 }),
-      getTransferOrders({ page: 1, per_page: 5 })
+      getShopOrders({ page: 1, per_page: 15 }),
+      getTransferOrders({ page: 1, per_page: 15 })
     ])
     recentShopOrders.value = shopRes.data?.list || shopRes.data?.items || []
     recentTransferOrders.value = transRes.data?.list || transRes.data?.items || []
@@ -209,6 +249,7 @@ async function loadRecentOrders() {
 
 onMounted(() => {
   loadAnalytics()
+  loadCounts()
   loadRecentOrders()
 })
 </script>

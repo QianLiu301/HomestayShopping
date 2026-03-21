@@ -417,9 +417,9 @@ def admin_delete_location(location_id):
 @api_bp.route('/admin/analytics', methods=['GET'])
 @admin_required
 def admin_analytics():
-    """营业数据分析"""
+    """营业数据分析 — DB-agnostic (aggregate in Python)"""
     from datetime import datetime, timedelta
-    from sqlalchemy import func, extract
+    from collections import defaultdict
 
     period = request.args.get('period', 'month')  # month / quarter / half_year
 
@@ -432,108 +432,74 @@ def admin_analytics():
     else:
         start = datetime(now.year, now.month, 1)
 
-    # 排除已取消订单 (status=3)
     cancelled_status = 3
 
-    # 汇总统计
-    shop_stats = db.session.query(
-        func.count(ShopOrder.id),
-        func.coalesce(func.sum(ShopOrder.total_price), 0)
+    # Fetch raw rows (only need created_at + total_price)
+    shop_rows = db.session.query(
+        ShopOrder.created_at, ShopOrder.total_price
     ).filter(
         ShopOrder.created_at >= start,
         ShopOrder.status != cancelled_status
-    ).first()
+    ).all()
 
-    transfer_stats = db.session.query(
-        func.count(TransferOrder.id),
-        func.coalesce(func.sum(TransferOrder.total_price), 0)
+    transfer_rows = db.session.query(
+        TransferOrder.created_at, TransferOrder.total_price
     ).filter(
         TransferOrder.created_at >= start,
         TransferOrder.status != cancelled_status
-    ).first()
+    ).all()
 
-    shop_count, shop_total = shop_stats
-    transfer_count, transfer_total = transfer_stats
+    shop_count = len(shop_rows)
+    shop_total = sum(float(r.total_price or 0) for r in shop_rows)
+    transfer_count = len(transfer_rows)
+    transfer_total = sum(float(r.total_price or 0) for r in transfer_rows)
 
-    # 按天/月分组的趋势数据
+    # Build chart data in Python
     if period == 'month':
-        # 按天分组
-        shop_daily = db.session.query(
-            func.strftime('%Y-%m-%d', ShopOrder.created_at).label('day'),
-            func.coalesce(func.sum(ShopOrder.total_price), 0)
-        ).filter(
-            ShopOrder.created_at >= start,
-            ShopOrder.status != cancelled_status
-        ).group_by('day').all()
-
-        transfer_daily = db.session.query(
-            func.strftime('%Y-%m-%d', TransferOrder.created_at).label('day'),
-            func.coalesce(func.sum(TransferOrder.total_price), 0)
-        ).filter(
-            TransferOrder.created_at >= start,
-            TransferOrder.status != cancelled_status
-        ).group_by('day').all()
-
-        # 生成当月所有日期
+        # 按天
+        fmt = '%Y-%m-%d'
         days = []
         d = start
         while d <= now:
-            days.append(d.strftime('%Y-%m-%d'))
+            days.append(d.strftime(fmt))
             d += timedelta(days=1)
-
-        shop_map = {r[0]: float(r[1]) for r in shop_daily}
-        transfer_map = {r[0]: float(r[1]) for r in transfer_daily}
-
-        chart = {
-            'labels': days,
-            'shop': [shop_map.get(d, 0) for d in days],
-            'transfer': [transfer_map.get(d, 0) for d in days]
-        }
+        labels = days
     else:
-        # 按月分组
-        shop_monthly = db.session.query(
-            func.strftime('%Y-%m', ShopOrder.created_at).label('month'),
-            func.coalesce(func.sum(ShopOrder.total_price), 0)
-        ).filter(
-            ShopOrder.created_at >= start,
-            ShopOrder.status != cancelled_status
-        ).group_by('month').all()
-
-        transfer_monthly = db.session.query(
-            func.strftime('%Y-%m', TransferOrder.created_at).label('month'),
-            func.coalesce(func.sum(TransferOrder.total_price), 0)
-        ).filter(
-            TransferOrder.created_at >= start,
-            TransferOrder.status != cancelled_status
-        ).group_by('month').all()
-
-        # 生成月份列表
-        months = []
+        # 按月
+        fmt = '%Y-%m'
+        labels = []
         d = start
         while d <= now:
-            m = d.strftime('%Y-%m')
-            if m not in months:
-                months.append(m)
+            m = d.strftime(fmt)
+            if m not in labels:
+                labels.append(m)
             if d.month == 12:
                 d = datetime(d.year + 1, 1, 1)
             else:
                 d = datetime(d.year, d.month + 1, 1)
 
-        shop_map = {r[0]: float(r[1]) for r in shop_monthly}
-        transfer_map = {r[0]: float(r[1]) for r in transfer_monthly}
+    shop_map = defaultdict(float)
+    for r in shop_rows:
+        if r.created_at:
+            shop_map[r.created_at.strftime(fmt)] += float(r.total_price or 0)
 
-        chart = {
-            'labels': months,
-            'shop': [shop_map.get(m, 0) for m in months],
-            'transfer': [transfer_map.get(m, 0) for m in months]
-        }
+    transfer_map = defaultdict(float)
+    for r in transfer_rows:
+        if r.created_at:
+            transfer_map[r.created_at.strftime(fmt)] += float(r.total_price or 0)
+
+    chart = {
+        'labels': labels,
+        'shop': [round(shop_map.get(l, 0), 2) for l in labels],
+        'transfer': [round(transfer_map.get(l, 0), 2) for l in labels]
+    }
 
     return success_response({
         'shop_count': shop_count,
-        'shop_total': float(shop_total),
+        'shop_total': round(shop_total, 2),
         'transfer_count': transfer_count,
-        'transfer_total': float(transfer_total),
-        'total_revenue': float(shop_total) + float(transfer_total),
+        'transfer_total': round(transfer_total, 2),
+        'total_revenue': round(shop_total + transfer_total, 2),
         'chart': chart
     })
 
