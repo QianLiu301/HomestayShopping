@@ -173,6 +173,7 @@ export default {
     remark: 'Remark',
     confirmPayment: 'Confirm Payment Received',
     confirmPaymentTip: 'Customer selected: {method}. Please verify payment received before confirming.',
+    notYetPaid: 'Customer has not selected a payment method. Order is unpaid.',
     paymentConfirmed: 'Payment confirmed ✓',
     paymentConfirmedMsg: 'Payment confirmed',
     transactionId: 'Transaction ID',

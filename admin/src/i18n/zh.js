@@ -173,6 +173,7 @@ export default {
     remark: '备注',
     confirmPayment: '确认收款',
     confirmPaymentTip: '客户选择了: {method}。请确认已收到款项后再点击确认。',
+    notYetPaid: '客户尚未选择支付方式，订单未付款。',
     paymentConfirmed: '已确认收款 ✓',
     paymentConfirmedMsg: '已确认收款',
     transactionId: '交易单号',

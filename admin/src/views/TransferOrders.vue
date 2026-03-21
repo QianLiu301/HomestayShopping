@@ -44,7 +44,9 @@
             <el-tag :type="statusTypes[row.status]" size="small">{{ statusLabel(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="created_at" :label="$t('orders.created')" width="170" />
+        <el-table-column :label="$t('orders.created')" width="170">
+          <template #default="{ row }">{{ formatDateTime(row.created_at) }}</template>
+        </el-table-column>
         <el-table-column :label="$t('common.actions')" width="120" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="openDetail(row)">{{ $t('common.manage') }}</el-button>
@@ -68,18 +70,18 @@
           {{ airportLabel(current.pickup_airport) }}
         </el-descriptions-item>
         <el-descriptions-item v-if="current.service_type === 'pickup' || current.service_type === 'combo'" :label="$t('orders.pickupFlightNo')">{{ current.flight_no }}</el-descriptions-item>
-        <el-descriptions-item v-if="current.service_type === 'pickup' || current.service_type === 'combo'" :label="$t('orders.pickupFlightTime')">{{ current.flight_time }}</el-descriptions-item>
+        <el-descriptions-item v-if="current.service_type === 'pickup' || current.service_type === 'combo'" :label="$t('orders.pickupFlightTime')">{{ formatDate(current.flight_time) }}</el-descriptions-item>
         <!-- Dropoff leg -->
         <el-descriptions-item v-if="current.service_type === 'dropoff'" :label="$t('orders.dropoffAirport')">
           {{ airportLabel(current.dropoff_airport) }}
         </el-descriptions-item>
         <el-descriptions-item v-if="current.service_type === 'dropoff'" :label="$t('orders.flightNo')">{{ current.flight_no }}</el-descriptions-item>
-        <el-descriptions-item v-if="current.service_type === 'dropoff'" :label="$t('orders.flightTime')">{{ current.flight_time }}</el-descriptions-item>
+        <el-descriptions-item v-if="current.service_type === 'dropoff'" :label="$t('orders.flightTime')">{{ formatDate(current.flight_time) }}</el-descriptions-item>
         <el-descriptions-item v-if="current.service_type === 'combo'" :label="$t('orders.dropoffAirport')">
           {{ airportLabel(current.dropoff_airport) }}
         </el-descriptions-item>
         <el-descriptions-item v-if="current.service_type === 'combo' && current.dropoff_flight_no" :label="$t('orders.dropoffFlightNo')">{{ current.dropoff_flight_no }}</el-descriptions-item>
-        <el-descriptions-item v-if="current.service_type === 'combo' && current.dropoff_flight_time" :label="$t('orders.dropoffFlightTime')">{{ current.dropoff_flight_time }}</el-descriptions-item>
+        <el-descriptions-item v-if="current.service_type === 'combo' && current.dropoff_flight_time" :label="$t('orders.dropoffFlightTime')">{{ formatDate(current.dropoff_flight_time) }}</el-descriptions-item>
         <!-- Booking Number -->
         <el-descriptions-item :label="$t('orders.bookingNo')">
           {{ current.booking_no || '-' }}
@@ -110,7 +112,8 @@
       </el-descriptions>
 
       <div v-if="current && current.payment_status !== 1" style="margin-top:16px;padding:12px;background:#fff7e6;border-radius:8px;text-align:center">
-        <p style="margin:0 0 10px;color:#e6a23c;font-size:13px">{{ $t('orders.confirmPaymentTip', { method: paymentMethodLabel(current.payment_method) }) }}</p>
+        <p v-if="current.payment_method" style="margin:0 0 10px;color:#e6a23c;font-size:13px">{{ $t('orders.confirmPaymentTip', { method: paymentMethodLabel(current.payment_method) }) }}</p>
+        <p v-else style="margin:0 0 10px;color:#e6a23c;font-size:13px">{{ $t('orders.notYetPaid') }}</p>
         <el-button type="warning" :loading="confirmingPayment" @click="onConfirmPayment">
           {{ $t('orders.confirmPayment') }}
         </el-button>
@@ -164,6 +167,23 @@ const keyword = ref('')
 const statusFilter = ref('')
 const updateForm = reactive({ status: 0, remark: '', booking_no: '', resolved_address: '' })
 
+function formatDateTime(val) {
+  if (!val) return '-'
+  // Handle ISO strings like "2026-03-21T08:57:36.566017" or "2026-03-21T00:00:00"
+  const d = new Date(val)
+  if (isNaN(d.getTime())) return val
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
+function formatDate(val) {
+  if (!val) return '-'
+  const d = new Date(val)
+  if (isNaN(d.getTime())) return val
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 const statusTypes = { 0: 'warning', 1: 'primary', 2: 'success', 3: 'info' }
 const statusLabel = s => t(`orders.${['pending','confirmed','completed','cancelled'][s] || 'unknown'}`)
 const serviceTypeLabel = s => {
@@ -172,8 +192,9 @@ const serviceTypeLabel = s => {
 }
 
 function paymentMethodLabel(method) {
+  if (!method) return '-'
   const map = { wechat: t('orders.wechat'), alipay: t('orders.alipay'), credit_card: t('orders.creditCard') }
-  return map[method] || method || '-'
+  return map[method] || method
 }
 
 function airportLabel(code) {
