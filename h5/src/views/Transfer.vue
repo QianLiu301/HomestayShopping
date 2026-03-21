@@ -217,6 +217,12 @@
         </van-checkbox>
       </div>
 
+      <!-- Validation error banner -->
+      <div v-if="errorMsg" class="error-banner">
+        <van-icon name="warning-o" size="18" />
+        <span>{{ errorMsg }}</span>
+      </div>
+
       <!-- Submit -->
       <div style="padding: 16px;">
         <van-button round block type="primary" size="large" :loading="submitting" @click="onSubmit">
@@ -252,6 +258,7 @@ const router = useRouter()
 
 const pageLoading = ref(true)
 const submitting = ref(false)
+const errorMsg = ref('')
 const vehicles = ref([])
 const pricing = ref(null)
 
@@ -347,8 +354,14 @@ async function onVerifyCoupon() {
 }
 
 function validationFail(msg) {
-  showToast({ message: msg, position: 'top', duration: 3000 })
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+  errorMsg.value = msg
+  // Scroll to bottom where the error banner is (above submit button)
+  setTimeout(() => {
+    const banner = document.querySelector('.error-banner')
+    if (banner) banner.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, 50)
+  // Auto-clear after 5 seconds
+  setTimeout(() => { errorMsg.value = '' }, 5000)
 }
 
 async function onSubmit() {
@@ -382,6 +395,9 @@ async function onSubmit() {
 
   // Terms agreement
   if (!agreeTerms.value) { validationFail(t('transfer.agreeRequired')); return }
+
+  // All validation passed, clear error
+  errorMsg.value = ''
 
   // Build payload
   const data = {
@@ -666,4 +682,25 @@ onMounted(async () => {
 .agree-card { padding: 12px 16px; }
 .agree-text { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
 .agree-link { color: var(--accent); text-decoration: underline; }
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 16px;
+  padding: 12px 16px;
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+  border-radius: 8px;
+  color: #ff4d4f;
+  font-size: 14px;
+  font-weight: 500;
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
 </style>
