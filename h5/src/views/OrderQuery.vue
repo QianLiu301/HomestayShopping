@@ -63,13 +63,48 @@
               <span>{{ t('transfer.title') }}</span>
               <span>{{ t(`transfer.${item.order.service_type}`) }}</span>
             </div>
+            <div v-if="item.order.vehicle" class="detail-row">
+              <span>{{ t('transfer.selectVehicle') }}</span>
+              <span>{{ item.order.vehicle.name }}</span>
+            </div>
+            <!-- Pickup info -->
+            <div v-if="item.order.pickup_airport" class="detail-row">
+              <span>{{ t('transfer.pickupInfo') }}</span>
+              <span>{{ item.order.pickup_airport === 'PVG' ? t('transfer.pudongAirport') : t('transfer.hongqiaoAirport') }}</span>
+            </div>
             <div v-if="item.order.flight_no" class="detail-row">
               <span>{{ t('transfer.flightNo') }}</span>
               <span>{{ item.order.flight_no }}</span>
             </div>
-            <div v-if="item.order.vehicle" class="detail-row">
-              <span>{{ t('transfer.selectVehicle') }}</span>
-              <span>{{ item.order.vehicle.name }}</span>
+            <div v-if="item.order.flight_time" class="detail-row">
+              <span>{{ t('transfer.flightTime') }}</span>
+              <span>{{ formatTime(item.order.flight_time) }}</span>
+            </div>
+            <!-- Dropoff info -->
+            <div v-if="item.order.dropoff_airport" class="detail-row">
+              <span>{{ t('transfer.dropoffInfo') }}</span>
+              <span>{{ item.order.dropoff_airport === 'PVG' ? t('transfer.pudongAirport') : t('transfer.hongqiaoAirport') }}</span>
+            </div>
+            <div v-if="item.order.dropoff_flight_no" class="detail-row">
+              <span>{{ t('transfer.flightNo') }}</span>
+              <span>{{ item.order.dropoff_flight_no }}</span>
+            </div>
+            <div v-if="item.order.dropoff_flight_time" class="detail-row">
+              <span>{{ t('transfer.flightTime') }}</span>
+              <span>{{ formatTime(item.order.dropoff_flight_time) }}</span>
+            </div>
+            <!-- Price breakdown -->
+            <div v-if="item.order.base_price" class="detail-row">
+              <span>{{ t('transfer.basePrice') }}</span>
+              <span>¥{{ item.order.base_price }}</span>
+            </div>
+            <div v-if="item.order.vehicle_extra > 0" class="detail-row">
+              <span>{{ t('transfer.vehicleExtra') }}</span>
+              <span>¥{{ item.order.vehicle_extra }}</span>
+            </div>
+            <div v-if="item.order.discount_amount > 0" class="detail-row">
+              <span>{{ t('transfer.discount') }}</span>
+              <span class="discount">-¥{{ item.order.discount_amount }}</span>
             </div>
           </template>
 
@@ -82,15 +117,52 @@
                 <span class="qi-price">¥{{ si.subtotal }}</span>
               </div>
             </div>
+            <div v-if="item.order.subtotal" class="detail-row">
+              <span>{{ t('checkout.subtotal') }}</span>
+              <span>¥{{ item.order.subtotal }}</span>
+            </div>
+            <div v-if="item.order.discount_amount > 0" class="detail-row">
+              <span>{{ t('checkout.discount') }}</span>
+              <span class="discount">-¥{{ item.order.discount_amount }}</span>
+            </div>
           </template>
 
+          <!-- Common fields -->
           <div class="detail-row">
-            <span>{{ t('order.contactLabel') }}</span>
+            <span>{{ t('transfer.contactName') }}</span>
             <span>{{ item.order.contact_name }}</span>
           </div>
+          <div v-if="item.order.contact_phone" class="detail-row">
+            <span>{{ t('transfer.contactPhone') }}</span>
+            <span>{{ item.order.contact_phone }}</span>
+          </div>
+          <div v-if="item.order.contact_email" class="detail-row">
+            <span>{{ t('transfer.contactEmail') }}</span>
+            <span>{{ item.order.contact_email }}</span>
+          </div>
           <div v-if="item.order.booking_no" class="detail-row">
-            <span>{{ t('checkout.bookingNo') }}</span>
+            <span>{{ t('transfer.bookingNo') }}</span>
             <span>{{ item.order.booking_no }}</span>
+          </div>
+          <div v-if="item.order.resolved_address" class="detail-row">
+            <span>{{ t('transfer.homestayDestination') }}</span>
+            <span>{{ item.order.resolved_address }}</span>
+          </div>
+          <div v-if="item.order.room_number" class="detail-row">
+            <span>{{ t('order.roomNumber') }}</span>
+            <span>{{ item.order.room_number }}</span>
+          </div>
+          <div v-if="item.order.payment_method" class="detail-row">
+            <span>{{ t('order.paymentMethod') }}</span>
+            <span>{{ item.order.payment_method }}</span>
+          </div>
+          <div v-if="item.order.remark" class="detail-row">
+            <span>{{ t('transfer.remark') }}</span>
+            <span class="remark-text">{{ item.order.remark }}</span>
+          </div>
+          <div v-if="item.order.created_at" class="detail-row">
+            <span>{{ t('order.createdAt') }}</span>
+            <span>{{ formatTime(item.order.created_at) }}</span>
           </div>
         </div>
 
@@ -278,6 +350,17 @@ onMounted(() => {
 .qi-name { flex: 1; }
 .qi-qty { width: 40px; text-align: center; }
 .qi-price { width: 60px; text-align: right; color: var(--text); }
+
+.discount {
+  color: #52c41a;
+  font-weight: 500;
+}
+
+.remark-text {
+  max-width: 60%;
+  text-align: right;
+  word-break: break-word;
+}
 
 .expand-hint {
   text-align: center;
