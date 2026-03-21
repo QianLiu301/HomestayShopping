@@ -63,10 +63,18 @@ export default {
 
   // Dashboard
   dashboard: {
-    products: 'Products',
-    shopOrders: 'Shop Orders',
-    transferOrders: 'Transfer Orders',
-    coupons: 'Coupons',
+    thisMonth: 'This Month',
+    thisQuarter: 'This Quarter',
+    halfYear: 'Last 6 Months',
+    totalRevenue: 'Total Revenue',
+    shopRevenue: 'Shop Revenue',
+    transferRevenue: 'Transfer Revenue',
+    orders: 'orders',
+    revenueTrend: 'Revenue Trend',
+    excludeCancelled: 'Cancelled orders excluded',
+    shopLabel: 'Shop',
+    transferLabel: 'Transfer',
+    totalLabel: 'Total',
     recentShopOrders: 'Recent Shop Orders',
     recentTransferOrders: 'Recent Transfer Orders',
     orderNo: 'Order No',

@@ -63,10 +63,18 @@ export default {
 
   // Dashboard
   dashboard: {
-    products: '商品数量',
-    shopOrders: '商城订单',
-    transferOrders: '接送订单',
-    coupons: '优惠券',
+    thisMonth: '本月',
+    thisQuarter: '本季度',
+    halfYear: '近半年',
+    totalRevenue: '营业总额',
+    shopRevenue: '商城营收',
+    transferRevenue: '接送营收',
+    orders: '单',
+    revenueTrend: '营收趋势',
+    excludeCancelled: '已排除取消订单',
+    shopLabel: '商城',
+    transferLabel: '接送',
+    totalLabel: '合计',
     recentShopOrders: '最近商城订单',
     recentTransferOrders: '最近接送订单',
     orderNo: '订单号',

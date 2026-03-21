@@ -60,6 +60,9 @@ export const createLocation = data => http.post('/admin/locations', data)
 export const updateLocation = (id, data) => http.put(`/admin/locations/${id}`, data)
 export const deleteLocation = id => http.delete(`/admin/locations/${id}`)
 
+// Analytics
+export const getAnalytics = params => http.get('/admin/analytics', { params })
+
 // Orders
 export const getShopOrders = params => http.get('/admin/orders/shop', { params })
 export const updateShopOrder = (id, data) => http.put(`/admin/orders/shop/${id}`, data)

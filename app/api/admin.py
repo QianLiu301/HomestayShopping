@@ -412,6 +412,132 @@ def admin_delete_location(location_id):
     return success_response(None, '删除成功')
 
 
+# ==================== 数据分析 ====================
+
+@api_bp.route('/admin/analytics', methods=['GET'])
+@admin_required
+def admin_analytics():
+    """营业数据分析"""
+    from datetime import datetime, timedelta
+    from sqlalchemy import func, extract
+
+    period = request.args.get('period', 'month')  # month / quarter / half_year
+
+    now = datetime.now()
+    if period == 'quarter':
+        start = datetime(now.year, ((now.month - 1) // 3) * 3 + 1, 1)
+    elif period == 'half_year':
+        start = datetime(now.year, now.month, 1) - timedelta(days=180)
+        start = datetime(start.year, start.month, 1)
+    else:
+        start = datetime(now.year, now.month, 1)
+
+    # 排除已取消订单 (status=3)
+    cancelled_status = 3
+
+    # 汇总统计
+    shop_stats = db.session.query(
+        func.count(ShopOrder.id),
+        func.coalesce(func.sum(ShopOrder.total_price), 0)
+    ).filter(
+        ShopOrder.created_at >= start,
+        ShopOrder.status != cancelled_status
+    ).first()
+
+    transfer_stats = db.session.query(
+        func.count(TransferOrder.id),
+        func.coalesce(func.sum(TransferOrder.total_price), 0)
+    ).filter(
+        TransferOrder.created_at >= start,
+        TransferOrder.status != cancelled_status
+    ).first()
+
+    shop_count, shop_total = shop_stats
+    transfer_count, transfer_total = transfer_stats
+
+    # 按天/月分组的趋势数据
+    if period == 'month':
+        # 按天分组
+        shop_daily = db.session.query(
+            func.strftime('%Y-%m-%d', ShopOrder.created_at).label('day'),
+            func.coalesce(func.sum(ShopOrder.total_price), 0)
+        ).filter(
+            ShopOrder.created_at >= start,
+            ShopOrder.status != cancelled_status
+        ).group_by('day').all()
+
+        transfer_daily = db.session.query(
+            func.strftime('%Y-%m-%d', TransferOrder.created_at).label('day'),
+            func.coalesce(func.sum(TransferOrder.total_price), 0)
+        ).filter(
+            TransferOrder.created_at >= start,
+            TransferOrder.status != cancelled_status
+        ).group_by('day').all()
+
+        # 生成当月所有日期
+        days = []
+        d = start
+        while d <= now:
+            days.append(d.strftime('%Y-%m-%d'))
+            d += timedelta(days=1)
+
+        shop_map = {r[0]: float(r[1]) for r in shop_daily}
+        transfer_map = {r[0]: float(r[1]) for r in transfer_daily}
+
+        chart = {
+            'labels': days,
+            'shop': [shop_map.get(d, 0) for d in days],
+            'transfer': [transfer_map.get(d, 0) for d in days]
+        }
+    else:
+        # 按月分组
+        shop_monthly = db.session.query(
+            func.strftime('%Y-%m', ShopOrder.created_at).label('month'),
+            func.coalesce(func.sum(ShopOrder.total_price), 0)
+        ).filter(
+            ShopOrder.created_at >= start,
+            ShopOrder.status != cancelled_status
+        ).group_by('month').all()
+
+        transfer_monthly = db.session.query(
+            func.strftime('%Y-%m', TransferOrder.created_at).label('month'),
+            func.coalesce(func.sum(TransferOrder.total_price), 0)
+        ).filter(
+            TransferOrder.created_at >= start,
+            TransferOrder.status != cancelled_status
+        ).group_by('month').all()
+
+        # 生成月份列表
+        months = []
+        d = start
+        while d <= now:
+            m = d.strftime('%Y-%m')
+            if m not in months:
+                months.append(m)
+            if d.month == 12:
+                d = datetime(d.year + 1, 1, 1)
+            else:
+                d = datetime(d.year, d.month + 1, 1)
+
+        shop_map = {r[0]: float(r[1]) for r in shop_monthly}
+        transfer_map = {r[0]: float(r[1]) for r in transfer_monthly}
+
+        chart = {
+            'labels': months,
+            'shop': [shop_map.get(m, 0) for m in months],
+            'transfer': [transfer_map.get(m, 0) for m in months]
+        }
+
+    return success_response({
+        'shop_count': shop_count,
+        'shop_total': float(shop_total),
+        'transfer_count': transfer_count,
+        'transfer_total': float(transfer_total),
+        'total_revenue': float(shop_total) + float(transfer_total),
+        'chart': chart
+    })
+
+
 # ==================== 订单管理 ====================
 
 @api_bp.route('/admin/orders/shop', methods=['GET'])
