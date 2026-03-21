@@ -153,8 +153,8 @@ const countCards = ref([
 const recentShopOrders = ref([])
 const recentTransferOrders = ref([])
 
-const statusTypes = { 0: 'warning', 1: 'primary', 2: 'success', 3: 'info' }
-const statusLabel = s => t(`orders.${['pending','confirmed','completed','cancelled'][s] || 'unknown'}`)
+const statusTypes = { 0: 'warning', 1: 'primary', 2: '', 3: 'success', 4: 'info' }
+const statusLabel = s => t(`orders.${['pending','confirmed','delivering','completed','cancelled'][s] || 'unknown'}`)
 const statusType = s => statusTypes[s] || 'info'
 
 function formatNum(n) {

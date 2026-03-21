@@ -19,6 +19,7 @@ const routes = [
       { path: 'locations', name: 'Locations', component: () => import('../views/Locations.vue'), meta: { title: 'Locations' } },
       { path: 'orders/shop', name: 'ShopOrders', component: () => import('../views/ShopOrders.vue'), meta: { title: 'Shop Orders' } },
       { path: 'orders/transfer', name: 'TransferOrders', component: () => import('../views/TransferOrders.vue'), meta: { title: 'Transfer Orders' } },
+      { path: 'delivery', name: 'Delivery', component: () => import('../views/DeliveryManagement.vue'), meta: { title: 'Delivery' } },
       { path: 'coupons', name: 'Coupons', component: () => import('../views/Coupons.vue'), meta: { title: 'Coupons' } },
       { path: 'transfer/pricing', name: 'TransferPricing', component: () => import('../views/Settings.vue'), meta: { title: 'Transfer Pricing' } },
       { path: 'payment', name: 'Payment', component: () => import('../views/Payment.vue'), meta: { title: 'Payment' } }

@@ -15,6 +15,7 @@ export default {
     coupons: '优惠券',
     settings: '系统设置',
     payment: '支付设置',
+    delivery: '配送管理',
     logout: '退出登录'
   },
 
@@ -175,6 +176,7 @@ export default {
     created: '创建时间',
     pending: '待处理',
     confirmed: '已确认',
+    delivering: '配送中',
     completed: '已完成',
     cancelled: '已取消',
     unknown: '未知',
@@ -226,6 +228,24 @@ export default {
     batchDeleteTitle: '确认删除',
     batchDeleteConfirm: '确定要永久删除选中的 {count} 个订单吗？此操作不可恢复。',
     confirmDelete: '确认删除'
+  },
+
+  // Delivery
+  delivery: {
+    searchPlaceholder: '搜索订单号/客户/地址...',
+    all: '全部',
+    waitingDelivery: '待配送',
+    delivering: '配送中',
+    startDelivery: '开始配送',
+    completeDelivery: '确认送达',
+    noOrders: '暂无需要配送的订单',
+    orderUnit: '单',
+    roomNumber: '房间号',
+    deliveryTime: '配送时间',
+    startSuccess: '已开始配送',
+    completeSuccess: '已确认送达，订单已完成',
+    batchStartConfirm: '确定将选中的 {count} 个订单标记为配送中？',
+    batchCompleteConfirm: '确定将选中的 {count} 个订单标记为已送达？订单状态将变为已完成。'
   },
 
   // Coupons

@@ -195,6 +195,7 @@ const expandedIdx = ref(-1)
 
 function statusTagType(status) {
   const map = { 0: 'warning', 1: 'primary', 2: 'primary', 3: 'success', 4: 'default' }
+  // status: 0=待确认 1=已确认 2=配送中 3=已完成 4=已取消
   return map[status] || 'default'
 }
 

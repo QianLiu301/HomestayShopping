@@ -432,21 +432,22 @@ def admin_analytics():
     else:
         start = datetime(now.year, now.month, 1)
 
-    cancelled_status = 3
+    shop_cancelled = 4   # 商城订单取消状态码
+    transfer_cancelled = 3  # 接送订单取消状态码
 
     # Fetch raw rows (only need created_at + total_price)
     shop_rows = db.session.query(
         ShopOrder.created_at, ShopOrder.total_price
     ).filter(
         ShopOrder.created_at >= start,
-        ShopOrder.status != cancelled_status
+        ShopOrder.status != shop_cancelled
     ).all()
 
     transfer_rows = db.session.query(
         TransferOrder.created_at, TransferOrder.total_price
     ).filter(
         TransferOrder.created_at >= start,
-        TransferOrder.status != cancelled_status
+        TransferOrder.status != transfer_cancelled
     ).all()
 
     shop_count = len(shop_rows)
@@ -561,7 +562,15 @@ def admin_update_shop_order(order_id):
     data = request.get_json()
 
     if 'status' in data:
-        order.status = data['status']
+        from app.models import china_now
+        new_status = data['status']
+        old_status = order.status
+        order.status = new_status
+        # 自动记录配送/完成时间
+        if new_status == 2 and old_status != 2 and not order.delivery_time:
+            order.delivery_time = china_now()
+        if new_status == 3 and old_status != 3 and not order.completed_time:
+            order.completed_time = china_now()
     if 'remark' in data:
         order.remark = data['remark']
     if 'booking_no' in data:
@@ -703,6 +712,89 @@ def admin_confirm_transfer_payment(order_id):
     order.payment_time = china_now()
     db.session.commit()
     return success_response(order.to_dict(), '已确认收款')
+
+
+# ==================== 配送管理 ====================
+
+@api_bp.route('/admin/delivery/orders', methods=['GET'])
+@admin_required
+def admin_get_delivery_orders():
+    """获取待配送/配送中的订单列表，按地址分组"""
+    status = request.args.get('status', type=int)  # 1=已确认(待配送), 2=配送中
+    keyword = request.args.get('keyword', '')
+
+    query = ShopOrder.query.filter(ShopOrder.status.in_([1, 2]))
+
+    if status is not None:
+        query = query.filter_by(status=status)
+    if keyword:
+        query = query.filter(
+            (ShopOrder.order_no.ilike(f'%{keyword}%')) |
+            (ShopOrder.contact_name.ilike(f'%{keyword}%')) |
+            (ShopOrder.booking_no.ilike(f'%{keyword}%')) |
+            (ShopOrder.resolved_address.ilike(f'%{keyword}%'))
+        )
+
+    orders = query.order_by(ShopOrder.created_at.asc()).all()
+
+    # 按地址分组
+    groups = {}
+    for o in orders:
+        addr = o.resolved_address or o.custom_address or '未指定地址'
+        if addr not in groups:
+            groups[addr] = []
+        groups[addr].append(o.to_dict())
+
+    result = [{'address': addr, 'orders': items} for addr, items in groups.items()]
+
+    return success_response({
+        'groups': result,
+        'total': len(orders)
+    })
+
+
+@api_bp.route('/admin/delivery/start', methods=['POST'])
+@admin_required
+def admin_start_delivery():
+    """批量开始配送"""
+    from app.models import china_now
+    data = request.get_json()
+    ids = data.get('ids', [])
+    if not ids:
+        return error_response('请选择要配送的订单')
+
+    now = china_now()
+    count = 0
+    orders = ShopOrder.query.filter(ShopOrder.id.in_(ids), ShopOrder.status == 1).all()
+    for o in orders:
+        o.status = 2
+        o.delivery_time = now
+        count += 1
+
+    db.session.commit()
+    return success_response({'updated': count}, f'已开始配送 {count} 个订单')
+
+
+@api_bp.route('/admin/delivery/complete', methods=['POST'])
+@admin_required
+def admin_complete_delivery():
+    """批量确认送达"""
+    from app.models import china_now
+    data = request.get_json()
+    ids = data.get('ids', [])
+    if not ids:
+        return error_response('请选择要完成的订单')
+
+    now = china_now()
+    count = 0
+    orders = ShopOrder.query.filter(ShopOrder.id.in_(ids), ShopOrder.status == 2).all()
+    for o in orders:
+        o.status = 3
+        o.completed_time = now
+        count += 1
+
+    db.session.commit()
+    return success_response({'updated': count}, f'已完成配送 {count} 个订单')
 
 
 # ==================== 优惠券管理 ====================

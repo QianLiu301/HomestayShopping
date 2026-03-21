@@ -45,6 +45,7 @@
           </template>
           <el-menu-item index="/orders/shop">{{ $t('nav.shopOrders') }}</el-menu-item>
           <el-menu-item index="/orders/transfer">{{ $t('nav.transferOrders') }}</el-menu-item>
+          <el-menu-item index="/delivery">{{ $t('nav.delivery') }}</el-menu-item>
         </el-sub-menu>
 
         <el-menu-item index="/coupons">
@@ -130,6 +131,7 @@ const titleMap = {
   '/locations': 'nav.locations',
   '/orders/shop': 'nav.shopOrders',
   '/orders/transfer': 'nav.transferOrders',
+  '/delivery': 'nav.delivery',
   '/coupons': 'nav.coupons',
   '/payment': 'nav.payment'
 }

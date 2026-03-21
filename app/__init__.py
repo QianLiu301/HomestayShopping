@@ -23,10 +23,34 @@ def _auto_migrate(app):
         ('shop_orders', 'transaction_id', 'VARCHAR(64)'),
         ('transfer_orders', 'booking_no', 'VARCHAR(100)'),
         ('transfer_orders', 'resolved_address', 'VARCHAR(255)'),
+        ('shop_orders', 'delivery_time', 'TIMESTAMP'),
+        ('shop_orders', 'completed_time', 'TIMESTAMP'),
     ]
     with app.app_context():
         # 先确保所有表都存在
         db.create_all()
+
+        # 一次性迁移旧状态码: 原 2=已完成→3, 原 3=已取消→4（仅shop_orders）
+        # 仅当 delivery_time 列刚添加（全为 NULL）且存在旧 status=2 的订单时执行
+        try:
+            has_delivery_col = db.session.execute(db.text(
+                "SELECT COUNT(*) FROM shop_orders WHERE delivery_time IS NOT NULL"
+            )).scalar()
+            has_old_status2 = db.session.execute(db.text(
+                "SELECT COUNT(*) FROM shop_orders WHERE status = 2"
+            )).scalar()
+            if has_delivery_col == 0 and has_old_status2 > 0:
+                # 先把3(旧取消)改成4，再把2(旧完成)改成3
+                db.session.execute(db.text(
+                    "UPDATE shop_orders SET status = 4 WHERE status = 3"
+                ))
+                db.session.execute(db.text(
+                    "UPDATE shop_orders SET status = 3 WHERE status = 2"
+                ))
+                db.session.commit()
+                app.logger.info('Auto-migrate: shop_orders status codes updated (2→3, 3→4)')
+        except Exception:
+            db.session.rollback()
 
         # 检测数据库类型
         db_url = str(db.engine.url)

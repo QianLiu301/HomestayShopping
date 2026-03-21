@@ -8,7 +8,7 @@
           </template>
         </el-input>
         <el-select v-model="statusFilter" :placeholder="$t('common.status')" clearable style="width:130px" @change="loadData">
-          <el-option :label="$t('orders.pending')" :value="0" /><el-option :label="$t('orders.confirmed')" :value="1" /><el-option :label="$t('orders.completed')" :value="2" /><el-option :label="$t('orders.cancelled')" :value="3" />
+          <el-option :label="$t('orders.pending')" :value="0" /><el-option :label="$t('orders.confirmed')" :value="1" /><el-option :label="$t('orders.delivering')" :value="2" /><el-option :label="$t('orders.completed')" :value="3" /><el-option :label="$t('orders.cancelled')" :value="4" />
         </el-select>
         <el-date-picker v-model="dateRange" type="daterange" :start-placeholder="$t('orders.dateStart')" :end-placeholder="$t('orders.dateEnd')" value-format="YYYY-MM-DD" style="width:260px" @change="loadData" clearable />
         <el-dropdown @command="onQuickDate" style="margin-left:4px">
@@ -124,7 +124,7 @@
         </el-form-item>
         <el-form-item :label="$t('orders.updateStatus')">
           <el-select v-model="updateForm.status" style="width:100%">
-            <el-option :label="$t('orders.pending')" :value="0" /><el-option :label="$t('orders.confirmed')" :value="1" /><el-option :label="$t('orders.completed')" :value="2" /><el-option :label="$t('orders.cancelled')" :value="3" />
+            <el-option :label="$t('orders.pending')" :value="0" /><el-option :label="$t('orders.confirmed')" :value="1" /><el-option :label="$t('orders.delivering')" :value="2" /><el-option :label="$t('orders.completed')" :value="3" /><el-option :label="$t('orders.cancelled')" :value="4" />
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('orders.remark')">
@@ -170,8 +170,8 @@ function formatDateTime(val) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 }
 
-const statusTypes = { 0: 'warning', 1: 'primary', 2: 'success', 3: 'info' }
-const statusLabel = s => t(`orders.${['pending','confirmed','completed','cancelled'][s] || 'unknown'}`)
+const statusTypes = { 0: 'warning', 1: 'primary', 2: '', 3: 'success', 4: 'info' }
+const statusLabel = s => t(`orders.${['pending','confirmed','delivering','completed','cancelled'][s] || 'unknown'}`)
 
 function paymentMethodLabel(method) {
   if (!method) return '-'

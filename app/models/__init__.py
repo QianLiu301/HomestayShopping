@@ -403,7 +403,9 @@ class ShopOrder(db.Model):
     payment_time = db.Column(db.DateTime)
     transaction_id = db.Column(db.String(64))
     payment_screenshot = db.Column(db.String(255))
-    status = db.Column(db.SmallInteger, default=0)
+    status = db.Column(db.SmallInteger, default=0)  # 0待处理 1已确认 2配送中 3已完成 4已取消
+    delivery_time = db.Column(db.DateTime)    # 开始配送时间
+    completed_time = db.Column(db.DateTime)   # 完成配送时间
     remark = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=china_now)
     updated_at = db.Column(db.DateTime, default=china_now, onupdate=china_now)
@@ -434,6 +436,8 @@ class ShopOrder(db.Model):
             'transaction_id': self.transaction_id,
             'payment_screenshot': self.payment_screenshot,
             'status': self.status,
+            'delivery_time': self.delivery_time.isoformat() if self.delivery_time else None,
+            'completed_time': self.completed_time.isoformat() if self.completed_time else None,
             'items': [item.to_dict() for item in self.items],
             'remark': self.remark,
             'created_at': self.created_at.isoformat() if self.created_at else None

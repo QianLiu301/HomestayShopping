@@ -15,6 +15,7 @@ export default {
     coupons: 'Coupons',
     settings: 'Settings',
     payment: 'Payment',
+    delivery: 'Delivery',
     logout: 'Logout'
   },
 
@@ -175,6 +176,7 @@ export default {
     created: 'Created',
     pending: 'Pending',
     confirmed: 'Confirmed',
+    delivering: 'Delivering',
     completed: 'Completed',
     cancelled: 'Cancelled',
     unknown: 'Unknown',
@@ -226,6 +228,24 @@ export default {
     batchDeleteTitle: 'Confirm Delete',
     batchDeleteConfirm: 'Are you sure you want to permanently delete {count} selected order(s)? This cannot be undone.',
     confirmDelete: 'Confirm Delete'
+  },
+
+  // Delivery
+  delivery: {
+    searchPlaceholder: 'Search order no / customer / address...',
+    all: 'All',
+    waitingDelivery: 'Waiting',
+    delivering: 'Delivering',
+    startDelivery: 'Start Delivery',
+    completeDelivery: 'Complete Delivery',
+    noOrders: 'No orders to deliver',
+    orderUnit: 'orders',
+    roomNumber: 'Room No.',
+    deliveryTime: 'Delivery Time',
+    startSuccess: 'Delivery started',
+    completeSuccess: 'Delivery completed',
+    batchStartConfirm: 'Start delivery for {count} selected order(s)?',
+    batchCompleteConfirm: 'Mark {count} selected order(s) as delivered? Status will change to completed.'
   },
 
   // Coupons
