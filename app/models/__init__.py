@@ -1,5 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from app import db
+
+CHINA_TZ = timezone(timedelta(hours=8))
+
+def china_now():
+    """返回中国时间（UTC+8），不含时区信息以兼容 SQLite"""
+    return datetime.now(CHINA_TZ).replace(tzinfo=None)
 
 
 def _localized(obj, field, lang):
@@ -21,8 +27,8 @@ class Admin(db.Model):
     name = db.Column(db.String(100))
     role = db.Column(db.String(20), default='admin')
     status = db.Column(db.SmallInteger, default=1)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=china_now)
+    updated_at = db.Column(db.DateTime, default=china_now, onupdate=china_now)
     
     def to_dict(self):
         return {
@@ -51,7 +57,7 @@ class Location(db.Model):
     district = db.Column(db.String(50))
     sort_order = db.Column(db.Integer, default=0)
     status = db.Column(db.SmallInteger, default=1)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=china_now)
 
     def to_dict(self, lang='zh'):
         return {
@@ -84,7 +90,7 @@ class Category(db.Model):
     icon = db.Column(db.String(50))
     sort_order = db.Column(db.Integer, default=0)
     status = db.Column(db.SmallInteger, default=1)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=china_now)
     
     # 关联商品
     products = db.relationship('Product', backref='category', lazy='dynamic')
@@ -124,8 +130,8 @@ class Product(db.Model):
     sort_order = db.Column(db.Integer, default=0)
     is_featured = db.Column(db.Boolean, default=False)
     status = db.Column(db.SmallInteger, default=1)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=china_now)
+    updated_at = db.Column(db.DateTime, default=china_now, onupdate=china_now)
 
     def to_dict(self, lang='zh'):
         return {
@@ -170,7 +176,7 @@ class Vehicle(db.Model):
     image = db.Column(db.String(255))
     sort_order = db.Column(db.Integer, default=0)
     status = db.Column(db.SmallInteger, default=1)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=china_now)
 
     def to_dict(self, lang='zh'):
         return {
@@ -202,7 +208,7 @@ class Setting(db.Model):
     key = db.Column(db.String(50), unique=True, nullable=False)
     value = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255))
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=china_now, onupdate=china_now)
     
     @staticmethod
     def get_value(key, default=None):
@@ -229,8 +235,8 @@ class Coupon(db.Model):
     start_time = db.Column(db.DateTime)
     end_time = db.Column(db.DateTime)
     status = db.Column(db.SmallInteger, default=1)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=china_now)
+    updated_at = db.Column(db.DateTime, default=china_now, onupdate=china_now)
     
     def to_dict(self, lang='zh'):
         return {
@@ -253,7 +259,7 @@ class Coupon(db.Model):
     
     def is_valid(self):
         """检查优惠券是否有效"""
-        now = datetime.utcnow()
+        now = china_now()
         if self.status != 1:
             return False, '优惠券已失效'
         if self.start_time and now < self.start_time:
@@ -289,7 +295,7 @@ class CouponUsage(db.Model):
     contact_email = db.Column(db.String(100))
     contact_phone = db.Column(db.String(30))
     discount_amount = db.Column(db.Numeric(10, 2), nullable=False)
-    used_at = db.Column(db.DateTime, default=datetime.utcnow)
+    used_at = db.Column(db.DateTime, default=china_now)
 
 
 class TransferOrder(db.Model):
@@ -331,8 +337,8 @@ class TransferOrder(db.Model):
     payment_screenshot = db.Column(db.String(255))
     status = db.Column(db.SmallInteger, default=0)
     remark = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=china_now)
+    updated_at = db.Column(db.DateTime, default=china_now, onupdate=china_now)
 
     # 关联
     vehicle = db.relationship('Vehicle', backref='orders')
@@ -399,8 +405,8 @@ class ShopOrder(db.Model):
     payment_screenshot = db.Column(db.String(255))
     status = db.Column(db.SmallInteger, default=0)
     remark = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=china_now)
+    updated_at = db.Column(db.DateTime, default=china_now, onupdate=china_now)
 
     # 关联
     location = db.relationship('Location', backref='shop_orders')

@@ -67,6 +67,8 @@ export const confirmShopPayment = id => http.post(`/admin/orders/shop/${id}/conf
 export const getTransferOrders = params => http.get('/admin/orders/transfer', { params })
 export const updateTransferOrder = (id, data) => http.put(`/admin/orders/transfer/${id}`, data)
 export const confirmTransferPayment = id => http.post(`/admin/orders/transfer/${id}/confirm-payment`)
+export const batchDeleteShopOrders = ids => http.post('/admin/orders/shop/batch-delete', { ids })
+export const batchDeleteTransferOrders = ids => http.post('/admin/orders/transfer/batch-delete', { ids })
 
 // Coupons
 export const getCoupons = params => http.get('/admin/coupons', { params })

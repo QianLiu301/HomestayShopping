@@ -203,7 +203,17 @@ export default {
     homestayAddress: '民宿地址',
     basePrice: '基础价格',
     vehicleExtra: '车辆加价',
-    discount: '优惠'
+    discount: '优惠',
+    dateStart: '开始日期',
+    dateEnd: '结束日期',
+    recent1m: '最近一个月',
+    recent3m: '最近三个月',
+    recent6m: '最近半年',
+    recent1y: '最近一年',
+    batchDelete: '批量删除',
+    batchDeleteTitle: '确认删除',
+    batchDeleteConfirm: '确定要永久删除选中的 {count} 个订单吗？此操作不可恢复。',
+    confirmDelete: '确认删除'
   },
 
   // Coupons

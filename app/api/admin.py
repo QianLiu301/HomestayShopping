@@ -418,13 +418,16 @@ def admin_delete_location(location_id):
 @admin_required
 def admin_get_shop_orders():
     """获取商城订单列表"""
+    from datetime import datetime
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     status = request.args.get('status', type=int)
     keyword = request.args.get('keyword', '')
-    
+    date_start = request.args.get('date_start', '')
+    date_end = request.args.get('date_end', '')
+
     query = ShopOrder.query
-    
+
     if status is not None:
         query = query.filter_by(status=status)
     if keyword:
@@ -433,10 +436,20 @@ def admin_get_shop_orders():
             (ShopOrder.contact_name.ilike(f'%{keyword}%')) |
             (ShopOrder.booking_no.ilike(f'%{keyword}%'))
         )
-    
+    if date_start:
+        try:
+            query = query.filter(ShopOrder.created_at >= datetime.fromisoformat(date_start))
+        except ValueError:
+            pass
+    if date_end:
+        try:
+            query = query.filter(ShopOrder.created_at <= datetime.fromisoformat(date_end + 'T23:59:59'))
+        except ValueError:
+            pass
+
     query = query.order_by(ShopOrder.created_at.desc())
     result = paginate_query(query, page, per_page)
-    
+
     return success_response({
         'list': [o.to_dict() for o in result['items']],
         'total': result['total'],
@@ -473,13 +486,16 @@ def admin_update_shop_order(order_id):
 @admin_required
 def admin_get_transfer_orders():
     """获取接送机订单列表"""
+    from datetime import datetime
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     status = request.args.get('status', type=int)
     keyword = request.args.get('keyword', '')
-    
+    date_start = request.args.get('date_start', '')
+    date_end = request.args.get('date_end', '')
+
     query = TransferOrder.query
-    
+
     if status is not None:
         query = query.filter_by(status=status)
     if keyword:
@@ -487,10 +503,20 @@ def admin_get_transfer_orders():
             (TransferOrder.order_no.ilike(f'%{keyword}%')) |
             (TransferOrder.contact_name.ilike(f'%{keyword}%'))
         )
-    
+    if date_start:
+        try:
+            query = query.filter(TransferOrder.created_at >= datetime.fromisoformat(date_start))
+        except ValueError:
+            pass
+    if date_end:
+        try:
+            query = query.filter(TransferOrder.created_at <= datetime.fromisoformat(date_end + 'T23:59:59'))
+        except ValueError:
+            pass
+
     query = query.order_by(TransferOrder.created_at.desc())
     result = paginate_query(query, page, per_page)
-    
+
     return success_response({
         'list': [o.to_dict() for o in result['items']],
         'total': result['total'],
@@ -523,18 +549,52 @@ def admin_update_transfer_order(order_id):
     return success_response(order.to_dict(), '更新成功')
 
 
+# ==================== 批量删除订单 ====================
+
+@api_bp.route('/admin/orders/shop/batch-delete', methods=['POST'])
+@admin_required
+def admin_batch_delete_shop_orders():
+    """批量删除商城订单"""
+    data = request.get_json()
+    ids = data.get('ids', [])
+    if not ids:
+        return error_response('请选择要删除的订单')
+    orders = ShopOrder.query.filter(ShopOrder.id.in_(ids)).all()
+    count = len(orders)
+    for o in orders:
+        db.session.delete(o)
+    db.session.commit()
+    return success_response({'deleted': count}, f'已删除 {count} 个订单')
+
+
+@api_bp.route('/admin/orders/transfer/batch-delete', methods=['POST'])
+@admin_required
+def admin_batch_delete_transfer_orders():
+    """批量删除接送机订单"""
+    data = request.get_json()
+    ids = data.get('ids', [])
+    if not ids:
+        return error_response('请选择要删除的订单')
+    orders = TransferOrder.query.filter(TransferOrder.id.in_(ids)).all()
+    count = len(orders)
+    for o in orders:
+        db.session.delete(o)
+    db.session.commit()
+    return success_response({'deleted': count}, f'已删除 {count} 个订单')
+
+
 # ==================== 确认收款 ====================
 
 @api_bp.route('/admin/orders/shop/<int:order_id>/confirm-payment', methods=['POST'])
 @admin_required
 def admin_confirm_shop_payment(order_id):
     """管理员确认商城订单已收款"""
-    from datetime import datetime
+    from app.models import china_now
     order = ShopOrder.query.get(order_id)
     if not order:
         return error_response('订单不存在', 404)
     order.payment_status = 1
-    order.payment_time = datetime.utcnow()
+    order.payment_time = china_now()
     db.session.commit()
     return success_response(order.to_dict(), '已确认收款')
 
@@ -543,12 +603,12 @@ def admin_confirm_shop_payment(order_id):
 @admin_required
 def admin_confirm_transfer_payment(order_id):
     """管理员确认接送机订单已收款"""
-    from datetime import datetime
+    from app.models import china_now
     order = TransferOrder.query.get(order_id)
     if not order:
         return error_response('订单不存在', 404)
     order.payment_status = 1
-    order.payment_time = datetime.utcnow()
+    order.payment_time = china_now()
     db.session.commit()
     return success_response(order.to_dict(), '已确认收款')
 

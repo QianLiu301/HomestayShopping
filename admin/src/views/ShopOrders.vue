@@ -2,19 +2,37 @@
   <div>
     <div class="page-header">
       <div class="header-filters">
-        <el-input v-model="keyword" :placeholder="$t('orders.searchPlaceholder')" clearable style="width:260px" @keyup.enter="loadData" @clear="loadData">
+        <el-input v-model="keyword" :placeholder="$t('orders.searchPlaceholder')" clearable style="width:240px" @keyup.enter="loadData" @clear="loadData">
           <template #append>
             <el-button :icon="Search" @click="loadData" />
           </template>
         </el-input>
-        <el-select v-model="statusFilter" :placeholder="$t('common.status')" clearable style="width:140px" @change="loadData">
+        <el-select v-model="statusFilter" :placeholder="$t('common.status')" clearable style="width:130px" @change="loadData">
           <el-option :label="$t('orders.pending')" :value="0" /><el-option :label="$t('orders.confirmed')" :value="1" /><el-option :label="$t('orders.completed')" :value="2" /><el-option :label="$t('orders.cancelled')" :value="3" />
         </el-select>
+        <el-date-picker v-model="dateRange" type="daterange" :start-placeholder="$t('orders.dateStart')" :end-placeholder="$t('orders.dateEnd')" value-format="YYYY-MM-DD" style="width:260px" @change="loadData" clearable />
+        <el-dropdown @command="onQuickDate" style="margin-left:4px">
+          <el-button><el-icon><Calendar /></el-icon></el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="1m">{{ $t('orders.recent1m') }}</el-dropdown-item>
+              <el-dropdown-item command="3m">{{ $t('orders.recent3m') }}</el-dropdown-item>
+              <el-dropdown-item command="6m">{{ $t('orders.recent6m') }}</el-dropdown-item>
+              <el-dropdown-item command="1y">{{ $t('orders.recent1y') }}</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
+      <div class="header-actions">
+        <el-button type="danger" :disabled="!selectedIds.length" :icon="Delete" @click="onBatchDelete">
+          {{ $t('orders.batchDelete') }} <span v-if="selectedIds.length">({{ selectedIds.length }})</span>
+        </el-button>
       </div>
     </div>
 
     <el-card shadow="hover">
-      <el-table :data="list" v-loading="loading" stripe>
+      <el-table :data="list" v-loading="loading" stripe @selection-change="onSelectionChange">
+        <el-table-column type="selection" width="45" />
         <el-table-column prop="order_no" :label="$t('orders.orderNo')" width="190" />
         <el-table-column prop="contact_name" :label="$t('orders.customer')" width="120" />
         <el-table-column :label="$t('orders.bookingNo')" width="150">
@@ -124,9 +142,9 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage } from 'element-plus'
-import { Search } from '@element-plus/icons-vue'
-import { getShopOrders, updateShopOrder, confirmShopPayment } from '../api'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, Delete, Calendar } from '@element-plus/icons-vue'
+import { getShopOrders, updateShopOrder, confirmShopPayment, batchDeleteShopOrders } from '../api'
 
 const { t } = useI18n()
 const list = ref([])
@@ -140,6 +158,8 @@ const pageSize = 15
 const total = ref(0)
 const keyword = ref('')
 const statusFilter = ref('')
+const dateRange = ref(null)
+const selectedIds = ref([])
 const updateForm = reactive({ status: 0, remark: '', booking_no: '', resolved_address: '' })
 
 function formatDateTime(val) {
@@ -159,12 +179,46 @@ function paymentMethodLabel(method) {
   return map[method] || method
 }
 
+function onQuickDate(cmd) {
+  const now = new Date()
+  const end = now.toISOString().slice(0, 10)
+  const d = new Date(now)
+  if (cmd === '1m') d.setMonth(d.getMonth() - 1)
+  else if (cmd === '3m') d.setMonth(d.getMonth() - 3)
+  else if (cmd === '6m') d.setMonth(d.getMonth() - 6)
+  else if (cmd === '1y') d.setFullYear(d.getFullYear() - 1)
+  dateRange.value = [d.toISOString().slice(0, 10), end]
+  loadData()
+}
+
+function onSelectionChange(rows) {
+  selectedIds.value = rows.map(r => r.id)
+}
+
+async function onBatchDelete() {
+  try {
+    await ElMessageBox.confirm(
+      t('orders.batchDeleteConfirm', { count: selectedIds.value.length }),
+      t('orders.batchDeleteTitle'),
+      { type: 'warning', confirmButtonText: t('orders.confirmDelete'), cancelButtonText: t('common.close') }
+    )
+  } catch { return }
+  try {
+    const res = await batchDeleteShopOrders(selectedIds.value)
+    ElMessage.success(res.message || t('common.updated'))
+    selectedIds.value = []
+    loadData()
+  } catch {}
+}
+
 async function loadData() {
   loading.value = true
   try {
     const params = { page: page.value, per_page: pageSize }
     if (keyword.value) params.keyword = keyword.value
     if (statusFilter.value !== '' && statusFilter.value !== null) params.status = statusFilter.value
+    if (dateRange.value && dateRange.value[0]) params.date_start = dateRange.value[0]
+    if (dateRange.value && dateRange.value[1]) params.date_end = dateRange.value[1]
     const res = await getShopOrders(params)
     list.value = res.data?.list || res.data?.items || []
     total.value = res.data?.total || list.value.length
@@ -207,7 +261,8 @@ onMounted(loadData)
 </script>
 
 <style scoped>
-.page-header { display: flex; justify-content: space-between; margin-bottom: 16px; }
-.header-filters { display: flex; gap: 12px; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+.header-filters { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.header-actions { display: flex; gap: 8px; }
 .pagination { margin-top: 16px; display: flex; justify-content: flex-end; }
 </style>

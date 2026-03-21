@@ -203,7 +203,17 @@ export default {
     homestayAddress: 'Homestay Address',
     basePrice: 'Base Price',
     vehicleExtra: 'Vehicle Extra',
-    discount: 'Discount'
+    discount: 'Discount',
+    dateStart: 'Start Date',
+    dateEnd: 'End Date',
+    recent1m: 'Last 1 Month',
+    recent3m: 'Last 3 Months',
+    recent6m: 'Last 6 Months',
+    recent1y: 'Last 1 Year',
+    batchDelete: 'Batch Delete',
+    batchDeleteTitle: 'Confirm Delete',
+    batchDeleteConfirm: 'Are you sure you want to permanently delete {count} selected order(s)? This cannot be undone.',
+    confirmDelete: 'Confirm Delete'
   },
 
   // Coupons
