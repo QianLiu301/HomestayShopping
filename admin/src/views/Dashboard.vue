@@ -61,18 +61,7 @@
       </el-col>
     </el-row>
 
-    <!-- Chart -->
-    <el-card shadow="hover" style="margin-top:20px">
-      <template #header>
-        <div class="chart-header">
-          <span>{{ $t('dashboard.revenueTrend') }}</span>
-          <span class="chart-hint">{{ $t('dashboard.excludeCancelled') }}</span>
-        </div>
-      </template>
-      <v-chart :option="chartOption" style="height:360px" autoresize />
-    </el-card>
-
-    <!-- Recent orders (at the very bottom) -->
+    <!-- Recent orders (before chart, convenient for operators) -->
     <el-row :gutter="20" style="margin-top:20px">
       <el-col :xs="24" :sm="12">
         <el-card shadow="hover">
@@ -115,6 +104,17 @@
         </el-card>
       </el-col>
     </el-row>
+
+    <!-- Chart (at the bottom) -->
+    <el-card shadow="hover" style="margin-top:20px">
+      <template #header>
+        <div class="chart-header">
+          <span>{{ $t('dashboard.revenueTrend') }}</span>
+          <span class="chart-hint">{{ $t('dashboard.excludeCancelled') }}</span>
+        </div>
+      </template>
+      <v-chart :option="chartOption" style="height:360px" autoresize />
+    </el-card>
   </div>
 </template>
 
@@ -178,8 +178,8 @@ const chartOption = computed(() => {
         return html
       }
     },
-    legend: { data: [t('dashboard.shopLabel'), t('dashboard.transferLabel')] },
-    grid: { left: 50, right: 20, bottom: 40, top: 40 },
+    legend: { data: [t('dashboard.shopLabel'), t('dashboard.transferLabel')], top: 0 },
+    grid: { left: 50, right: 20, bottom: 30, top: 36 },
     xAxis: {
       type: 'category',
       data: c.labels.map(l => l.length > 7 ? l.slice(5) : l),
