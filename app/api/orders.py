@@ -9,6 +9,7 @@ from app.models import (
 )
 from app import db
 from app.utils import success_response, error_response, generate_order_no, get_lang
+from app.utils.email import send_new_order_email
 
 
 @api_bp.route('/upload', methods=['POST'])
@@ -220,6 +221,15 @@ def create_transfer_order():
 
         db.session.commit()
 
+        # 发送新订单邮件通知
+        from flask import current_app
+        send_new_order_email(
+            current_app._get_current_object(),
+            'transfer', order.order_no, float(order.total_price),
+            data.get('contact_name'),
+            items_summary=f'{service_type} - {vehicle.name_zh}'
+        )
+
         return success_response({
             'order_no': order.order_no,
             'total_price': float(order.total_price)
@@ -387,7 +397,16 @@ def create_shop_order():
         coupon.used_count += 1
     
     db.session.commit()
-    
+
+    # 发送新订单邮件通知
+    from flask import current_app
+    items_str = ', '.join(f"{it['product_name']}x{it['quantity']}" for it in order_items)
+    send_new_order_email(
+        current_app._get_current_object(),
+        'shop', order.order_no, float(order.total_price),
+        contact_name, items_summary=items_str
+    )
+
     return success_response({
         'order_no': order.order_no,
         'total_price': float(order.total_price)

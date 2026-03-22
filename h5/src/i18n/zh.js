@@ -96,5 +96,6 @@ export default {
       contactContent: '如对本服务条款有任何疑问，请通过 info@homestay.com 联系我们。'
     }
   },
+  review: { title: '评价订单', writeReview: '写评价', myReview: '我的评价', commentPlaceholder: '分享您的体验（选填）', ratingRequired: '请选择评分', submitSuccess: '评价成功', submitFailed: '评价失败' },
   lang: { title: '语言', zh: '中文', en: 'English', ru: 'Русский', es: 'Español' }
 }

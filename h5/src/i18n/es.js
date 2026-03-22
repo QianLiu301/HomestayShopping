@@ -94,5 +94,6 @@ export default {
       contactContent: 'Si tiene preguntas sobre estos Términos de Servicio, contáctenos en info@homestay.com.'
     }
   },
+  review: { title: 'Calificar pedido', writeReview: 'Escribir reseña', myReview: 'Mi reseña', commentPlaceholder: 'Comparta su experiencia (opcional)', ratingRequired: 'Seleccione una calificación', submitSuccess: 'Reseña enviada', submitFailed: 'Error al enviar reseña' },
   lang: { title: 'Idioma', zh: '中文', en: 'English', ru: 'Русский', es: 'Español' }
 }

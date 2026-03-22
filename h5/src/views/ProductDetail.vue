@@ -24,6 +24,10 @@
           <span v-if="product.original_price" class="detail-original">¥{{ product.original_price }}</span>
         </div>
         <h2 class="detail-name">{{ product.name }}</h2>
+        <div v-if="productRating.review_count > 0" class="rating-row">
+          <van-rate v-model="productRating.avg_rating" readonly allow-half size="14" />
+          <span class="rating-text">{{ productRating.avg_rating }} ({{ productRating.review_count }})</span>
+        </div>
       </div>
 
       <!-- Specs -->
@@ -64,7 +68,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { showToast } from 'vant'
-import { getProduct } from '../api'
+import { getProduct, getProductRating } from '../api'
 import { useCartStore } from '../stores/cart'
 
 const { t } = useI18n()
@@ -75,6 +79,7 @@ const cart = useCartStore()
 const product = ref(null)
 const loading = ref(true)
 const selectedSpec = ref(null)
+const productRating = ref({ avg_rating: 0, review_count: 0 })
 
 const cartCount = computed(() => cart.totalCount)
 const selectedPrice = computed(() => selectedSpec.value?.price ?? product.value?.price)
@@ -86,6 +91,9 @@ onMounted(async () => {
     if (product.value?.specs?.length) {
       selectedSpec.value = product.value.specs[0]
     }
+    // 加载评分
+    const ratingRes = await getProductRating(route.params.id)
+    if (ratingRes.data) productRating.value = ratingRes.data
   } catch (e) {
     showToast(e.message)
   } finally {
@@ -150,6 +158,18 @@ function onBuyNow() {
   font-size: 16px;
   font-weight: 600;
   line-height: 1.5;
+}
+
+.rating-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.rating-text {
+  font-size: 13px;
+  color: var(--text-secondary);
 }
 
 .spec-list {

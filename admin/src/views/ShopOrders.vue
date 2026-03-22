@@ -109,6 +109,10 @@
           <el-image :src="current.payment_screenshot" style="max-width:200px;max-height:200px;border-radius:8px" :preview-src-list="[current.payment_screenshot]" fit="contain" />
         </el-descriptions-item>
         <el-descriptions-item v-if="current.remark" :label="$t('orders.remark')">{{ current.remark }}</el-descriptions-item>
+        <el-descriptions-item v-if="current.review" :label="$t('orders.review')">
+          <el-rate :model-value="current.review.rating" disabled size="small" />
+          <div v-if="current.review.comment" style="margin-top:4px;color:#666;font-size:13px">{{ current.review.comment }}</div>
+        </el-descriptions-item>
       </el-descriptions>
 
       <div v-if="current && current.payment_status !== 1" style="margin-top:16px;padding:12px;background:#fff7e6;border-radius:8px;text-align:center">

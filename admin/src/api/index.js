@@ -62,6 +62,7 @@ export const deleteLocation = id => http.delete(`/admin/locations/${id}`)
 
 // Analytics
 export const getAnalytics = params => http.get('/admin/analytics', { params })
+export const getTopProducts = params => http.get('/admin/analytics/top-products', { params })
 
 // Orders
 export const getShopOrders = params => http.get('/admin/orders/shop', { params })

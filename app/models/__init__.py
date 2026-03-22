@@ -446,7 +446,8 @@ class ShopOrder(db.Model):
             'completed_time': self.completed_time.isoformat() if self.completed_time else None,
             'items': [item.to_dict() for item in self.items],
             'remark': self.remark,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'review': self.review.to_dict() if self.review else None
         }
 
 
@@ -475,4 +476,26 @@ class OrderItem(db.Model):
             'price': float(self.price),
             'quantity': self.quantity,
             'subtotal': float(self.subtotal)
+        }
+
+
+class Review(db.Model):
+    """订单评价表"""
+    __tablename__ = 'reviews'
+
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('shop_orders.id'), unique=True, nullable=False)
+    rating = db.Column(db.SmallInteger, nullable=False)  # 1-5
+    comment = db.Column(db.String(500))
+    created_at = db.Column(db.DateTime, default=china_now)
+
+    order = db.relationship('ShopOrder', backref=db.backref('review', uselist=False))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'order_id': self.order_id,
+            'rating': self.rating,
+            'comment': self.comment,
+            'created_at': self.created_at.isoformat() if self.created_at else None
         }

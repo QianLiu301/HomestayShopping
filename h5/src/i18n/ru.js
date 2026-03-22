@@ -94,5 +94,6 @@ export default {
       contactContent: 'По вопросам об условиях использования: info@homestay.com.'
     }
   },
+  review: { title: 'Оценить заказ', writeReview: 'Написать отзыв', myReview: 'Мой отзыв', commentPlaceholder: 'Поделитесь впечатлениями (необязательно)', ratingRequired: 'Пожалуйста, выберите оценку', submitSuccess: 'Отзыв отправлен', submitFailed: 'Не удалось отправить отзыв' },
   lang: { title: 'Язык', zh: '中文', en: 'English', ru: 'Русский', es: 'Español' }
 }

@@ -174,6 +174,20 @@
           </div>
         </div>
 
+        <!-- Review section -->
+        <template v-if="expandedIdx === idx && item.type === 'shop'">
+          <div v-if="item.order.review" class="review-section">
+            <div class="review-label">{{ t('review.myReview') }}</div>
+            <van-rate v-model="item.order.review.rating" readonly size="16" />
+            <div v-if="item.order.review.comment" class="review-comment">{{ item.order.review.comment }}</div>
+          </div>
+          <div v-else-if="item.order.status === 3" class="review-section">
+            <van-button size="small" type="primary" plain round @click.stop="openReview(item.order)">
+              {{ t('review.writeReview') }}
+            </van-button>
+          </div>
+        </template>
+
         <div class="expand-hint">
           <van-icon :name="expandedIdx === idx ? 'arrow-up' : 'arrow-down'" size="14" />
         </div>
@@ -181,6 +195,30 @@
     </template>
 
     <van-empty v-if="searched && !results.length && !errorMsg" :description="t('common.noData')" />
+
+    <!-- Review dialog -->
+    <van-dialog
+      v-model:show="reviewVisible"
+      :title="t('review.title')"
+      show-cancel-button
+      :confirm-button-text="t('common.submit')"
+      :cancel-button-text="t('common.cancel')"
+      @confirm="onSubmitReview"
+    >
+      <div style="padding: 16px;">
+        <div style="text-align: center; margin-bottom: 12px;">
+          <van-rate v-model="reviewRating" size="28" />
+        </div>
+        <van-field
+          v-model="reviewComment"
+          type="textarea"
+          :placeholder="t('review.commentPlaceholder')"
+          maxlength="200"
+          show-word-limit
+          rows="3"
+        />
+      </div>
+    </van-dialog>
   </div>
 </template>
 
@@ -188,7 +226,8 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { queryOrder } from '../api'
+import { queryOrder, submitReview } from '../api'
+import { showToast } from 'vant'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -200,6 +239,43 @@ const results = ref([])
 const searched = ref(false)
 const errorMsg = ref('')
 const expandedIdx = ref(-1)
+const reviewVisible = ref(false)
+const reviewRating = ref(5)
+const reviewComment = ref('')
+const reviewOrderId = ref(null)
+
+function openReview(order) {
+  reviewOrderId.value = order.id
+  reviewRating.value = 5
+  reviewComment.value = ''
+  reviewVisible.value = true
+}
+
+async function onSubmitReview() {
+  if (!reviewRating.value) {
+    showToast(t('review.ratingRequired'))
+    return
+  }
+  try {
+    await submitReview({
+      order_id: reviewOrderId.value,
+      rating: reviewRating.value,
+      comment: reviewComment.value
+    })
+    showToast({ message: t('review.submitSuccess'), icon: 'success' })
+    reviewVisible.value = false
+    // Update the order in results to show review
+    const item = results.value.find(r => r.order.id === reviewOrderId.value)
+    if (item) {
+      item.order.review = {
+        rating: reviewRating.value,
+        comment: reviewComment.value
+      }
+    }
+  } catch (e) {
+    showToast(e.message || t('review.submitFailed'))
+  }
+}
 
 function statusTagType(status) {
   const map = { 0: 'warning', 1: 'primary', 2: 'primary', 3: 'success', 4: 'default' }
@@ -389,5 +465,24 @@ onMounted(() => {
   color: #ff4d4f;
   font-size: 14px;
   font-weight: 500;
+}
+
+.review-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.review-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.review-comment {
+  font-size: 13px;
+  color: var(--text);
+  margin-top: 4px;
+  line-height: 1.5;
 }
 </style>

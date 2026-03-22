@@ -59,6 +59,10 @@ export const uploadFile = (file) => {
   return api.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
 }
 
+// ==================== Reviews ====================
+export const submitReview = (data) => api.post('/reviews', data)
+export const getProductRating = (productId) => api.get(`/products/${productId}/rating`)
+
 // ==================== Coupons ====================
 export const verifyCoupon = (data) => api.post('/coupons/verify', data)
 

@@ -414,6 +414,35 @@ def admin_delete_location(location_id):
 
 # ==================== 数据分析 ====================
 
+@api_bp.route('/admin/analytics/top-products', methods=['GET'])
+@admin_required
+def admin_top_products():
+    """热销商品排行"""
+    from app.models import OrderItem
+    limit = request.args.get('limit', 10, type=int)
+
+    # 统计已完成订单（非取消）的商品销量
+    rows = db.session.query(
+        OrderItem.product_id,
+        OrderItem.product_name,
+        db.func.sum(OrderItem.quantity).label('total_qty'),
+        db.func.sum(OrderItem.subtotal).label('total_revenue')
+    ).join(ShopOrder, OrderItem.order_id == ShopOrder.id).filter(
+        ShopOrder.status != 4  # 排除已取消
+    ).group_by(OrderItem.product_id, OrderItem.product_name).order_by(
+        db.func.sum(OrderItem.quantity).desc()
+    ).limit(limit).all()
+
+    result = [{
+        'product_id': r.product_id,
+        'product_name': r.product_name,
+        'total_qty': int(r.total_qty),
+        'total_revenue': round(float(r.total_revenue), 2)
+    } for r in rows]
+
+    return success_response(result)
+
+
 @api_bp.route('/admin/analytics', methods=['GET'])
 @admin_required
 def admin_analytics():

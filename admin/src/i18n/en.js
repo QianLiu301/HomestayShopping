@@ -85,7 +85,11 @@ export default {
     orderNo: 'Order No',
     customer: 'Customer',
     total: 'Total',
-    type: 'Type'
+    type: 'Type',
+    topProducts: 'Top Selling Products',
+    productName: 'Product',
+    totalSales: 'Total Sales',
+    totalRevenue: 'Revenue'
   },
 
   // Products
@@ -231,7 +235,8 @@ export default {
     expectedDelivery: 'Expected Delivery',
     checkoutDate: 'Checkout Date',
     checkoutDatePlaceholder: 'Select guest checkout date',
-    timePeriod: { morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening' }
+    timePeriod: { morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening' },
+    review: 'Customer Review'
   },
 
   // Delivery

@@ -85,7 +85,11 @@ export default {
     orderNo: '订单号',
     customer: '客户',
     total: '金额',
-    type: '类型'
+    type: '类型',
+    topProducts: '热销商品排行',
+    productName: '商品名称',
+    totalSales: '总销量',
+    totalRevenue: '销售额'
   },
 
   // Products
@@ -231,7 +235,8 @@ export default {
     expectedDelivery: '期望送达',
     checkoutDate: '退房日期',
     checkoutDatePlaceholder: '选择客户退房日期',
-    timePeriod: { morning: '上午', afternoon: '下午', evening: '晚上' }
+    timePeriod: { morning: '上午', afternoon: '下午', evening: '晚上' },
+    review: '客户评价'
   },
 
   // Delivery

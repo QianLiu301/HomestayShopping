@@ -61,6 +61,19 @@
       </el-col>
     </el-row>
 
+    <!-- Top selling products -->
+    <el-card shadow="hover" style="margin-top:20px" v-if="topProducts.length">
+      <template #header>{{ $t('dashboard.topProducts') }}</template>
+      <el-table :data="topProducts" size="small" stripe>
+        <el-table-column type="index" width="50" label="#" />
+        <el-table-column prop="product_name" :label="$t('dashboard.productName')" />
+        <el-table-column prop="total_qty" :label="$t('dashboard.totalSales')" width="120" />
+        <el-table-column :label="$t('dashboard.totalRevenue')" width="140">
+          <template #default="{ row }">¥{{ formatNum(row.total_revenue) }}</template>
+        </el-table-column>
+      </el-table>
+    </el-card>
+
     <!-- Recent orders (before chart, convenient for operators) -->
     <el-row :gutter="20" style="margin-top:20px">
       <el-col :xs="24" :sm="12">
@@ -128,7 +141,7 @@ import { BarChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
-import { getShopOrders, getTransferOrders, getProducts, getCoupons, getAnalytics } from '../api'
+import { getShopOrders, getTransferOrders, getProducts, getCoupons, getAnalytics, getTopProducts } from '../api'
 
 use([BarChart, GridComponent, TooltipComponent, LegendComponent, CanvasRenderer])
 
@@ -152,6 +165,7 @@ const countCards = ref([
 
 const recentShopOrders = ref([])
 const recentTransferOrders = ref([])
+const topProducts = ref([])
 
 const statusTypes = { 0: 'warning', 1: 'primary', 2: '', 3: 'success', 4: 'info' }
 const statusLabel = s => t(`orders.${['pending','confirmed','delivering','completed','cancelled'][s] || 'unknown'}`)
@@ -247,10 +261,20 @@ async function loadRecentOrders() {
   }
 }
 
+async function loadTopProducts() {
+  try {
+    const res = await getTopProducts({ limit: 10 })
+    topProducts.value = res.data || []
+  } catch (e) {
+    console.error('Top products load error:', e)
+  }
+}
+
 onMounted(() => {
   loadAnalytics()
   loadCounts()
   loadRecentOrders()
+  loadTopProducts()
 })
 </script>
 
