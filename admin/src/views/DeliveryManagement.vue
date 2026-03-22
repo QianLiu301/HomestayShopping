@@ -2,12 +2,12 @@
   <div>
     <div class="page-header">
       <div class="header-filters">
-        <el-input v-model="keyword" :placeholder="$t('delivery.searchPlaceholder')" clearable style="width:240px" @keyup.enter="loadData" @clear="loadData">
+        <el-input v-model="keyword" :placeholder="$t('delivery.searchPlaceholder')" clearable style="width:240px" @keyup.enter="onFilter" @clear="onFilter">
           <template #append>
-            <el-button :icon="Search" @click="loadData" />
+            <el-button :icon="Search" @click="onFilter" />
           </template>
         </el-input>
-        <el-radio-group v-model="statusFilter" @change="loadData">
+        <el-radio-group v-model="statusFilter" @change="onFilter">
           <el-radio-button :value="''">{{ $t('delivery.all') }}</el-radio-button>
           <el-radio-button :value="1">{{ $t('delivery.waitingDelivery') }}</el-radio-button>
           <el-radio-button :value="2">{{ $t('delivery.delivering') }}</el-radio-button>
@@ -80,6 +80,10 @@
           </el-table>
         </el-card>
       </div>
+
+      <div class="pagination" v-if="totalCount > 0">
+        <el-pagination v-model:current-page="page" :page-size="pageSize" :total="totalCount" layout="total, prev, pager, next" @current-change="loadData" />
+      </div>
     </div>
 
     <!-- Detail dialog -->
@@ -135,6 +139,9 @@ const keyword = ref('')
 const statusFilter = ref('')
 const dialogVisible = ref(false)
 const current = ref(null)
+const page = ref(1)
+const pageSize = 20
+const totalCount = ref(0)
 
 // Track selections across all groups
 const groupSelections = ref({})
@@ -175,11 +182,12 @@ async function loadData() {
   groupSelections.value = {}
   selectedIds.value = []
   try {
-    const params = {}
+    const params = { page: page.value, per_page: pageSize }
     if (keyword.value) params.keyword = keyword.value
     if (statusFilter.value !== '') params.status = statusFilter.value
     const res = await getDeliveryOrders(params)
     groups.value = res.data?.groups || []
+    totalCount.value = res.data?.total || 0
   } catch {}
   loading.value = false
 }
@@ -243,6 +251,7 @@ onMounted(loadData)
 .header-filters { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
+.pagination { margin-top: 16px; display: flex; justify-content: flex-end; }
 .address-group { margin-bottom: 20px; }
 .address-header {
   display: flex;
