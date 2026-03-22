@@ -729,7 +729,7 @@ def admin_confirm_transfer_payment(order_id):
 @api_bp.route('/admin/delivery/orders', methods=['GET'])
 @admin_required
 def admin_get_delivery_orders():
-    """获取待配送/配送中的订单列表，按地址分组（分页）"""
+    """获取待配送/配送中的订单列表（分页，按期望送达/退房日期排序）"""
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
     status = request.args.get('status', type=int)  # 1=已确认(待配送), 2=配送中
@@ -756,18 +756,10 @@ def admin_get_delivery_orders():
 
     result = paginate_query(query, page, per_page)
 
-    # 按地址分组
-    groups = {}
-    for o in result['items']:
-        addr = o.resolved_address or o.custom_address or '未指定地址'
-        if addr not in groups:
-            groups[addr] = []
-        groups[addr].append(o.to_dict())
-
-    group_list = [{'address': addr, 'orders': items} for addr, items in groups.items()]
+    orders = [o.to_dict() for o in result['items']]
 
     return success_response({
-        'groups': group_list,
+        'orders': orders,
         'total': result['total'],
         'page': result['page'],
         'pages': result['pages']

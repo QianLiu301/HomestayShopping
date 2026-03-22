@@ -24,62 +24,56 @@
     </div>
 
     <div v-loading="loading">
-      <el-empty v-if="!loading && !groups.length" :description="$t('delivery.noOrders')" />
+      <el-empty v-if="!loading && !orders.length" :description="$t('delivery.noOrders')" />
 
-      <div v-for="(group, gi) in groups" :key="gi" class="address-group">
-        <div class="address-header">
-          <el-icon><Location /></el-icon>
-          <span class="address-text">{{ group.address }}</span>
-          <el-tag size="small" type="info">{{ group.orders.length }} {{ $t('delivery.orderUnit') }}</el-tag>
-        </div>
-        <el-card shadow="hover">
-          <el-table :data="group.orders" size="small" stripe @selection-change="rows => onGroupSelectionChange(gi, rows)">
-            <el-table-column type="selection" width="45" />
-            <el-table-column prop="order_no" :label="$t('orders.orderNo')" width="190" />
-            <el-table-column prop="contact_name" :label="$t('orders.customer')" width="120" />
-            <el-table-column prop="room_number" :label="$t('delivery.roomNumber')" width="100">
-              <template #default="{ row }">{{ row.room_number || '-' }}</template>
-            </el-table-column>
-            <el-table-column :label="$t('orders.items')" min-width="200">
-              <template #default="{ row }">
-                <span v-for="(item, i) in (row.items || [])" :key="i">{{ item.product_name }} x{{ item.quantity }}<span v-if="i < row.items.length - 1">, </span></span>
-              </template>
-            </el-table-column>
-            <el-table-column :label="$t('orders.total')" width="100">
-              <template #default="{ row }">¥{{ row.total_price }}</template>
-            </el-table-column>
-            <el-table-column :label="$t('orders.expectedDelivery')" width="170">
-              <template #default="{ row }">
-                <template v-if="row.expected_delivery_date">
-                  <span>{{ row.expected_delivery_date }}</span>
-                  <el-tag v-if="row.expected_delivery_time" size="small" type="info" style="margin-left:4px">{{ $t(`orders.timePeriod.${row.expected_delivery_time}`) }}</el-tag>
-                </template>
-                <span v-else>-</span>
-              </template>
-            </el-table-column>
-            <el-table-column :label="$t('orders.checkoutDate')" width="120">
-              <template #default="{ row }">
-                <span :class="{ 'checkout-urgent': isCheckoutUrgent(row) }">{{ row.checkout_date || '-' }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column :label="$t('orders.status')" width="110">
-              <template #default="{ row }">
-                <el-tag :type="statusTypes[row.status]" size="small">{{ statusLabel(row.status) }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column :label="$t('delivery.deliveryTime')" width="170">
-              <template #default="{ row }">{{ formatDateTime(row.delivery_time) }}</template>
-            </el-table-column>
-            <el-table-column :label="$t('common.actions')" width="160" fixed="right">
-              <template #default="{ row }">
-                <el-button v-if="row.status === 1" link type="primary" @click="onStartSingle(row)">{{ $t('delivery.startDelivery') }}</el-button>
-                <el-button v-if="row.status === 2" link type="success" @click="onCompleteSingle(row)">{{ $t('delivery.completeDelivery') }}</el-button>
-                <el-button link type="info" @click="openDetail(row)">{{ $t('common.manage') }}</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
-      </div>
+      <el-table v-else :data="orders" size="small" stripe @selection-change="onSelectionChange">
+        <el-table-column type="selection" width="45" />
+        <el-table-column prop="order_no" :label="$t('orders.orderNo')" width="190" />
+        <el-table-column prop="contact_name" :label="$t('orders.customer')" width="120" />
+        <el-table-column prop="room_number" :label="$t('delivery.roomNumber')" width="100">
+          <template #default="{ row }">{{ row.room_number || '-' }}</template>
+        </el-table-column>
+        <el-table-column :label="$t('orders.resolvedAddress')" min-width="160">
+          <template #default="{ row }">{{ row.resolved_address || row.custom_address || '-' }}</template>
+        </el-table-column>
+        <el-table-column :label="$t('orders.items')" min-width="200">
+          <template #default="{ row }">
+            <span v-for="(item, i) in (row.items || [])" :key="i">{{ item.product_name }} x{{ item.quantity }}<span v-if="i < row.items.length - 1">, </span></span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('orders.total')" width="100">
+          <template #default="{ row }">¥{{ row.total_price }}</template>
+        </el-table-column>
+        <el-table-column prop="expected_delivery_date" :label="$t('orders.expectedDelivery')" width="170" sortable>
+          <template #default="{ row }">
+            <template v-if="row.expected_delivery_date">
+              <span>{{ row.expected_delivery_date }}</span>
+              <el-tag v-if="row.expected_delivery_time" size="small" type="info" style="margin-left:4px">{{ $t(`orders.timePeriod.${row.expected_delivery_time}`) }}</el-tag>
+            </template>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="checkout_date" :label="$t('orders.checkoutDate')" width="120" sortable>
+          <template #default="{ row }">
+            <span :class="{ 'checkout-urgent': isCheckoutUrgent(row) }">{{ row.checkout_date || '-' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('orders.status')" width="110">
+          <template #default="{ row }">
+            <el-tag :type="statusTypes[row.status]" size="small">{{ statusLabel(row.status) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('delivery.deliveryTime')" width="170">
+          <template #default="{ row }">{{ formatDateTime(row.delivery_time) }}</template>
+        </el-table-column>
+        <el-table-column :label="$t('common.actions')" width="160" fixed="right">
+          <template #default="{ row }">
+            <el-button v-if="row.status === 1" link type="primary" @click="onStartSingle(row)">{{ $t('delivery.startDelivery') }}</el-button>
+            <el-button v-if="row.status === 2" link type="success" @click="onCompleteSingle(row)">{{ $t('delivery.completeDelivery') }}</el-button>
+            <el-button link type="info" @click="openDetail(row)">{{ $t('common.manage') }}</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
       <div class="pagination" v-if="totalCount > 0">
         <el-pagination v-model:current-page="page" :page-size="pageSize" :total="totalCount" layout="total, prev, pager, next" @current-change="loadData" />
@@ -129,11 +123,11 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Van, CircleCheck, Location } from '@element-plus/icons-vue'
+import { Search, Van, CircleCheck } from '@element-plus/icons-vue'
 import { getDeliveryOrders, startDelivery, completeDelivery } from '../api'
 
 const { t } = useI18n()
-const groups = ref([])
+const orders = ref([])
 const loading = ref(false)
 const keyword = ref('')
 const statusFilter = ref('')
@@ -142,10 +136,12 @@ const current = ref(null)
 const page = ref(1)
 const pageSize = 20
 const totalCount = ref(0)
-
-// Track selections across all groups
-const groupSelections = ref({})
 const selectedIds = ref([])
+
+function onFilter() {
+  page.value = 1
+  loadData()
+}
 
 function isCheckoutUrgent(row) {
   if (!row.checkout_date) return false
@@ -167,26 +163,19 @@ function formatDateTime(val) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 }
 
-function onGroupSelectionChange(gi, rows) {
-  groupSelections.value[gi] = rows.map(r => r.id)
-  // Merge all group selections
-  const all = []
-  for (const ids of Object.values(groupSelections.value)) {
-    all.push(...ids)
-  }
-  selectedIds.value = all
+function onSelectionChange(rows) {
+  selectedIds.value = rows.map(r => r.id)
 }
 
 async function loadData() {
   loading.value = true
-  groupSelections.value = {}
   selectedIds.value = []
   try {
     const params = { page: page.value, per_page: pageSize }
     if (keyword.value) params.keyword = keyword.value
     if (statusFilter.value !== '') params.status = statusFilter.value
     const res = await getDeliveryOrders(params)
-    groups.value = res.data?.groups || []
+    orders.value = res.data?.orders || []
     totalCount.value = res.data?.total || 0
   } catch {}
   loading.value = false
@@ -250,18 +239,6 @@ onMounted(loadData)
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
 .header-filters { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-
 .pagination { margin-top: 16px; display: flex; justify-content: flex-end; }
-.address-group { margin-bottom: 20px; }
-.address-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 4px;
-  font-size: 15px;
-  font-weight: 600;
-  color: #4a3728;
-}
-.address-text { flex: 1; }
 .checkout-urgent { color: #f56c6c; font-weight: 600; }
 </style>
