@@ -140,4 +140,38 @@ def create_app(config_name='default'):
     # 自动迁移：确保所有新列存在
     _auto_migrate(app)
 
+    # 确保管理员账号存在（通过环境变量配置）
+    _ensure_admin(app)
+
     return app
+
+
+def _ensure_admin(app):
+    """根据环境变量初始化/重置管理员账号"""
+    username = os.environ.get('ADMIN_USERNAME')
+    password = os.environ.get('ADMIN_PASSWORD')
+    if not username or not password:
+        return
+
+    with app.app_context():
+        from app.models import Admin
+        admin = Admin.query.filter_by(username=username).first()
+        if admin:
+            # 密码可能已更新，每次用环境变量的值覆盖
+            new_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+            if not bcrypt.check_password_hash(admin.password_hash, password):
+                admin.password_hash = new_hash
+                admin.status = 1
+                db.session.commit()
+                app.logger.info(f'Admin password updated for: {username}')
+        else:
+            admin = Admin(
+                username=username,
+                password_hash=bcrypt.generate_password_hash(password).decode('utf-8'),
+                name='Administrator',
+                role='admin',
+                status=1
+            )
+            db.session.add(admin)
+            db.session.commit()
+            app.logger.info(f'Admin account created: {username}')
