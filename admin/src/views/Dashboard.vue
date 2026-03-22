@@ -237,8 +237,8 @@ async function loadCounts() {
 async function loadRecentOrders() {
   try {
     const [shopRes, transRes] = await Promise.all([
-      getShopOrders({ page: 1, per_page: 15 }),
-      getTransferOrders({ page: 1, per_page: 15 })
+      getShopOrders({ page: 1, per_page: 15, status: 0 }),
+      getTransferOrders({ page: 1, per_page: 15, status: 0 })
     ])
     recentShopOrders.value = shopRes.data?.list || shopRes.data?.items || []
     recentTransferOrders.value = transRes.data?.list || transRes.data?.items || []
