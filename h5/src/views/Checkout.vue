@@ -38,6 +38,40 @@
         <div class="booking-tip">{{ t('checkout.bookingNoTip') }}</div>
       </div>
 
+      <!-- Expected delivery -->
+      <div class="card">
+        <div class="card-title">{{ t('checkout.expectedDelivery') }}</div>
+        <van-field
+          v-model="form.expected_delivery_date"
+          :label="t('checkout.expectedDate')"
+          :placeholder="t('checkout.expectedDatePlaceholder')"
+          readonly
+          is-link
+          @click="showDatePicker = true"
+        />
+        <van-popup v-model:show="showDatePicker" position="bottom" round>
+          <van-date-picker
+            v-model="datePickerValue"
+            :title="t('checkout.expectedDate')"
+            :min-date="minDate"
+            @confirm="onDateConfirm"
+            @cancel="showDatePicker = false"
+          />
+        </van-popup>
+        <van-field :label="t('checkout.expectedTime')" v-if="form.expected_delivery_date">
+          <template #input>
+            <van-radio-group v-model="form.expected_delivery_time" direction="horizontal">
+              <van-radio name="morning">{{ t('checkout.morning') }}</van-radio>
+              <van-radio name="afternoon">{{ t('checkout.afternoon') }}</van-radio>
+              <van-radio name="evening">{{ t('checkout.evening') }}</van-radio>
+            </van-radio-group>
+          </template>
+        </van-field>
+        <div class="delivery-tip">
+          {{ form.expected_delivery_date ? '' : t('checkout.defaultDeliveryTip') }}
+        </div>
+      </div>
+
       <!-- Contact -->
       <div class="card">
         <div class="card-title">{{ t('checkout.contact') }}</div>
@@ -125,8 +159,21 @@ const form = reactive({
   contact_name: '',
   contact_phone: '',
   contact_email: '',
-  remark: ''
+  remark: '',
+  expected_delivery_date: '',
+  expected_delivery_time: ''
 })
+
+const showDatePicker = ref(false)
+const now = new Date()
+const minDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+const datePickerValue = ref([String(now.getFullYear()), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')])
+
+function onDateConfirm({ selectedValues }) {
+  form.expected_delivery_date = selectedValues.join('-')
+  if (!form.expected_delivery_time) form.expected_delivery_time = 'morning'
+  showDatePicker.value = false
+}
 
 const couponCode = ref('')
 const couponDiscount = ref(0)
@@ -192,6 +239,11 @@ async function onSubmit() {
         quantity: item.quantity,
         spec_name: item.specName || undefined
       }))
+    }
+
+    if (form.expected_delivery_date) {
+      data.expected_delivery_date = form.expected_delivery_date
+      if (form.expected_delivery_time) data.expected_delivery_time = form.expected_delivery_time
     }
 
     if (couponCode.value && couponDiscount.value > 0) {
@@ -299,6 +351,14 @@ onMounted(() => {
 .item-qty {
   font-size: 13px;
   color: var(--text-light);
+}
+
+.delivery-tip {
+  padding: 8px 16px;
+  font-size: 12px;
+  color: #e6a23c;
+  line-height: 1.5;
+  min-height: 20px;
 }
 
 .booking-tip {

@@ -152,6 +152,14 @@
             <span>{{ t('order.roomNumber') }}</span>
             <span>{{ item.order.room_number }}</span>
           </div>
+          <div v-if="item.order.expected_delivery_date" class="detail-row">
+            <span>{{ t('order.expectedDelivery') }}</span>
+            <span>{{ item.order.expected_delivery_date }} {{ item.order.expected_delivery_time ? t(`order.timePeriod.${item.order.expected_delivery_time}`) : '' }}</span>
+          </div>
+          <div v-if="item.order.checkout_date" class="detail-row">
+            <span>{{ t('order.checkoutDate') }}</span>
+            <span>{{ item.order.checkout_date }}</span>
+          </div>
           <div v-if="item.order.payment_method" class="detail-row">
             <span>{{ t('order.paymentMethod') }}</span>
             <span>{{ item.order.payment_method }}</span>

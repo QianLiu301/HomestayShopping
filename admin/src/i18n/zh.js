@@ -227,7 +227,11 @@ export default {
     batchDelete: '批量删除',
     batchDeleteTitle: '确认删除',
     batchDeleteConfirm: '确定要永久删除选中的 {count} 个订单吗？此操作不可恢复。',
-    confirmDelete: '确认删除'
+    confirmDelete: '确认删除',
+    expectedDelivery: '期望送达',
+    checkoutDate: '退房日期',
+    checkoutDatePlaceholder: '选择客户退房日期',
+    timePeriod: { morning: '上午', afternoon: '下午', evening: '晚上' }
   },
 
   // Delivery

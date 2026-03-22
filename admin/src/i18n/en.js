@@ -227,7 +227,11 @@ export default {
     batchDelete: 'Batch Delete',
     batchDeleteTitle: 'Confirm Delete',
     batchDeleteConfirm: 'Are you sure you want to permanently delete {count} selected order(s)? This cannot be undone.',
-    confirmDelete: 'Confirm Delete'
+    confirmDelete: 'Confirm Delete',
+    expectedDelivery: 'Expected Delivery',
+    checkoutDate: 'Checkout Date',
+    checkoutDatePlaceholder: 'Select guest checkout date',
+    timePeriod: { morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening' }
   },
 
   // Delivery

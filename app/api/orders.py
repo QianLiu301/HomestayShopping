@@ -1,6 +1,6 @@
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, date
 from flask import request, current_app
 from app.api import api_bp
 from app.models import (
@@ -320,6 +320,21 @@ def create_shop_order():
     
     total_price = subtotal - discount_amount
     
+    # 解析期望送达日期
+    expected_delivery_date = None
+    expected_delivery_time = None
+    raw_date = data.get('expected_delivery_date')
+    if raw_date:
+        try:
+            parsed = date.fromisoformat(raw_date)
+            if parsed >= date.today():
+                expected_delivery_date = parsed
+        except (ValueError, TypeError):
+            pass
+    raw_time = data.get('expected_delivery_time')
+    if raw_time in ('morning', 'afternoon', 'evening'):
+        expected_delivery_time = raw_time
+
     # 创建订单
     order = ShopOrder(
         order_no=generate_order_no('SH'),
@@ -328,6 +343,8 @@ def create_shop_order():
         custom_address=custom_address,
         custom_district=custom_district,
         room_number=room_number,
+        expected_delivery_date=expected_delivery_date,
+        expected_delivery_time=expected_delivery_time,
         contact_name=contact_name,
         contact_phone=contact_phone,
         contact_email=contact_email,

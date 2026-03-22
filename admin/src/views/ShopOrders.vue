@@ -80,6 +80,13 @@
         <el-descriptions-item :label="$t('orders.orderNo')">{{ current.order_no }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.bookingNo')">{{ current.booking_no || '-' }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.resolvedAddress')">{{ current.resolved_address || '-' }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.expectedDelivery')">
+          <template v-if="current.expected_delivery_date">
+            {{ current.expected_delivery_date }} {{ current.expected_delivery_time ? $t(`orders.timePeriod.${current.expected_delivery_time}`) : '' }}
+          </template>
+          <span v-else>-</span>
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.checkoutDate')">{{ current.checkout_date || '-' }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.customer')">{{ current.contact_name }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.phone')">{{ current.contact_phone }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.email')">{{ current.contact_email }}</el-descriptions-item>
@@ -122,6 +129,9 @@
         <el-form-item :label="$t('orders.resolvedAddress')">
           <el-input v-model="updateForm.resolved_address" :placeholder="$t('orders.resolvedAddressPlaceholder')" />
         </el-form-item>
+        <el-form-item :label="$t('orders.checkoutDate')">
+          <el-date-picker v-model="updateForm.checkout_date" type="date" value-format="YYYY-MM-DD" :placeholder="$t('orders.checkoutDatePlaceholder')" clearable style="width:100%" />
+        </el-form-item>
         <el-form-item :label="$t('orders.updateStatus')">
           <el-select v-model="updateForm.status" style="width:100%">
             <el-option :label="$t('orders.pending')" :value="0" /><el-option :label="$t('orders.confirmed')" :value="1" /><el-option :label="$t('orders.delivering')" :value="2" /><el-option :label="$t('orders.completed')" :value="3" /><el-option :label="$t('orders.cancelled')" :value="4" />
@@ -160,7 +170,7 @@ const keyword = ref('')
 const statusFilter = ref('')
 const dateRange = ref(null)
 const selectedIds = ref([])
-const updateForm = reactive({ status: 0, remark: '', booking_no: '', resolved_address: '' })
+const updateForm = reactive({ status: 0, remark: '', booking_no: '', resolved_address: '', checkout_date: '' })
 
 function formatDateTime(val) {
   if (!val) return '-'
@@ -232,6 +242,7 @@ function openDetail(row) {
   updateForm.remark = row.remark || ''
   updateForm.booking_no = row.booking_no || ''
   updateForm.resolved_address = row.resolved_address || ''
+  updateForm.checkout_date = row.checkout_date || ''
   dialogVisible.value = true
 }
 

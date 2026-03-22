@@ -391,6 +391,9 @@ class ShopOrder(db.Model):
     custom_address = db.Column(db.String(255))
     custom_district = db.Column(db.String(50))
     room_number = db.Column(db.String(20))
+    expected_delivery_date = db.Column(db.Date)           # 客户期望送达日期
+    expected_delivery_time = db.Column(db.String(10))     # 客户期望送达时间段: morning/afternoon/evening
+    checkout_date = db.Column(db.Date)                    # 退房日期 (admin录入)
     contact_name = db.Column(db.String(100), nullable=False)
     contact_phone = db.Column(db.String(30))
     contact_email = db.Column(db.String(100))
@@ -425,6 +428,9 @@ class ShopOrder(db.Model):
             'custom_address': self.custom_address,
             'custom_district': self.custom_district,
             'room_number': self.room_number,
+            'expected_delivery_date': self.expected_delivery_date.isoformat() if self.expected_delivery_date else None,
+            'expected_delivery_time': self.expected_delivery_time,
+            'checkout_date': self.checkout_date.isoformat() if self.checkout_date else None,
             'contact_name': self.contact_name,
             'contact_phone': self.contact_phone,
             'contact_email': self.contact_email,

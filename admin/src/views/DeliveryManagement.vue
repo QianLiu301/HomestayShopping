@@ -48,6 +48,20 @@
             <el-table-column :label="$t('orders.total')" width="100">
               <template #default="{ row }">¥{{ row.total_price }}</template>
             </el-table-column>
+            <el-table-column :label="$t('orders.expectedDelivery')" width="170">
+              <template #default="{ row }">
+                <template v-if="row.expected_delivery_date">
+                  <span>{{ row.expected_delivery_date }}</span>
+                  <el-tag v-if="row.expected_delivery_time" size="small" type="info" style="margin-left:4px">{{ $t(`orders.timePeriod.${row.expected_delivery_time}`) }}</el-tag>
+                </template>
+                <span v-else>-</span>
+              </template>
+            </el-table-column>
+            <el-table-column :label="$t('orders.checkoutDate')" width="120">
+              <template #default="{ row }">
+                <span :class="{ 'checkout-urgent': isCheckoutUrgent(row) }">{{ row.checkout_date || '-' }}</span>
+              </template>
+            </el-table-column>
             <el-table-column :label="$t('orders.status')" width="110">
               <template #default="{ row }">
                 <el-tag :type="statusTypes[row.status]" size="small">{{ statusLabel(row.status) }}</el-tag>
@@ -77,6 +91,15 @@
         <el-descriptions-item :label="$t('delivery.roomNumber')">{{ current.room_number || '-' }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.resolvedAddress')">{{ current.resolved_address || '-' }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.bookingNo')">{{ current.booking_no || '-' }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.expectedDelivery')">
+          <template v-if="current.expected_delivery_date">
+            {{ current.expected_delivery_date }} {{ current.expected_delivery_time ? $t(`orders.timePeriod.${current.expected_delivery_time}`) : '' }}
+          </template>
+          <span v-else>-</span>
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.checkoutDate')">
+          <span :class="{ 'checkout-urgent': isCheckoutUrgent(current) }">{{ current.checkout_date || '-' }}</span>
+        </el-descriptions-item>
         <el-descriptions-item :label="$t('orders.items')">
           <span v-for="(item, i) in (current.items || [])" :key="i">
             {{ item.product_name }}<span v-if="item.spec_name"> ({{ item.spec_name }})</span> x{{ item.quantity }} ¥{{ item.subtotal }}<br v-if="i < current.items.length - 1" />
@@ -116,6 +139,15 @@ const current = ref(null)
 // Track selections across all groups
 const groupSelections = ref({})
 const selectedIds = ref([])
+
+function isCheckoutUrgent(row) {
+  if (!row.checkout_date) return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const checkout = new Date(row.checkout_date + 'T00:00:00')
+  const diff = (checkout - today) / (1000 * 60 * 60 * 24)
+  return diff <= 1
+}
 
 const statusTypes = { 0: 'warning', 1: 'primary', 2: '', 3: 'success', 4: 'info' }
 const statusLabel = s => t(`orders.${['pending', 'confirmed', 'delivering', 'completed', 'cancelled'][s] || 'unknown'}`)
@@ -222,4 +254,5 @@ onMounted(loadData)
   color: #4a3728;
 }
 .address-text { flex: 1; }
+.checkout-urgent { color: #f56c6c; font-weight: 600; }
 </style>

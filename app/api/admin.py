@@ -577,6 +577,16 @@ def admin_update_shop_order(order_id):
         order.booking_no = data['booking_no']
     if 'resolved_address' in data:
         order.resolved_address = data['resolved_address']
+    if 'checkout_date' in data:
+        from datetime import date as date_cls
+        raw = data['checkout_date']
+        if raw:
+            try:
+                order.checkout_date = date_cls.fromisoformat(raw)
+            except (ValueError, TypeError):
+                pass
+        else:
+            order.checkout_date = None
 
     db.session.commit()
 
@@ -735,7 +745,12 @@ def admin_get_delivery_orders():
             (ShopOrder.resolved_address.ilike(f'%{keyword}%'))
         )
 
-    orders = query.order_by(ShopOrder.created_at.asc()).all()
+    # 按期望送达日期优先，退房日期次之，最后创建时间
+    orders = query.order_by(
+        ShopOrder.expected_delivery_date.asc().nullslast(),
+        ShopOrder.checkout_date.asc().nullslast(),
+        ShopOrder.created_at.asc()
+    ).all()
 
     # 按地址分组
     groups = {}

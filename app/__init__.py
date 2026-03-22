@@ -25,6 +25,9 @@ def _auto_migrate(app):
         ('transfer_orders', 'resolved_address', 'VARCHAR(255)'),
         ('shop_orders', 'delivery_time', 'TIMESTAMP'),
         ('shop_orders', 'completed_time', 'TIMESTAMP'),
+        ('shop_orders', 'expected_delivery_date', 'DATE'),
+        ('shop_orders', 'expected_delivery_time', 'VARCHAR(10)'),
+        ('shop_orders', 'checkout_date', 'DATE'),
     ]
     with app.app_context():
         # 先确保所有表都存在
