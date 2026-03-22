@@ -155,6 +155,11 @@ def _ensure_admin(app):
 
     with app.app_context():
         from app.models import Admin
+
+        # 禁用所有其他管理员账号
+        Admin.query.filter(Admin.username != username).update({'status': 0})
+        db.session.commit()
+
         admin = Admin.query.filter_by(username=username).first()
         if admin:
             # 密码可能已更新，每次用环境变量的值覆盖
