@@ -48,6 +48,8 @@ def upload_file(file_storage, upload_folder):
 
     if r2 and public_url:
         content_type = _CONTENT_TYPES.get(ext, 'application/octet-stream')
+        # 确保流位置在起始处，避免上传空文件
+        file_storage.stream.seek(0)
         r2.upload_fileobj(
             file_storage.stream,
             bucket,

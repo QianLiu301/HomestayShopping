@@ -252,6 +252,8 @@ async function handleUpload(options) {
     const url = res.data?.url
     if (url) {
       uploadedImages.value.push(url)
+      // 将返回的 URL 存入 file 对象，方便 handleRemove 匹配
+      options.file._uploadedUrl = url
       options.onSuccess(res)
     } else {
       options.onError(new Error(t('common.uploadFailed')))
@@ -262,9 +264,15 @@ async function handleUpload(options) {
 }
 
 function handleRemove(file) {
-  const url = file.url || file.response?.data?.url
+  // 优先使用上传时存储的 URL，其次从 response 中获取
+  const url = file.raw?._uploadedUrl || file.response?.data?.url || file.url
   if (url) {
     const idx = uploadedImages.value.indexOf(url)
+    if (idx > -1) uploadedImages.value.splice(idx, 1)
+  }
+  // 对于编辑模式加载的已有图片，直接用 resolveUrl 反查
+  if (url && url.startsWith('http')) {
+    const idx = uploadedImages.value.findIndex(u => resolveUrl(u) === url)
     if (idx > -1) uploadedImages.value.splice(idx, 1)
   }
 }
