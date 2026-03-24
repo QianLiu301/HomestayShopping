@@ -1,5 +1,4 @@
 import os
-import uuid
 from flask import request, current_app
 from app.api import api_bp
 from app.models import (
@@ -10,6 +9,7 @@ from app import db, bcrypt
 from app.utils import (
     success_response, error_response, admin_required, paginate_query
 )
+from app.utils.storage import upload_file
 from app.translations import auto_fill_translations
 
 
@@ -34,12 +34,8 @@ def admin_upload_file():
     if not allowed_file(file.filename):
         return error_response('不支持的文件格式，请上传 png/jpg/jpeg/gif/webp')
 
-    ext = file.filename.rsplit('.', 1)[1].lower()
-    filename = f"{uuid.uuid4().hex}.{ext}"
     upload_folder = current_app.config['UPLOAD_FOLDER']
-    file.save(os.path.join(upload_folder, filename))
-
-    url = f"/uploads/{filename}"
+    url = upload_file(file, upload_folder)
     return success_response({'url': url}, '上传成功')
 
 

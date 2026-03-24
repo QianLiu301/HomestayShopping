@@ -1,5 +1,4 @@
 import os
-import uuid
 from datetime import datetime, date
 from flask import request, current_app
 from app.api import api_bp
@@ -9,6 +8,7 @@ from app.models import (
 )
 from app import db
 from app.utils import success_response, error_response, generate_order_no, get_lang
+from app.utils.storage import upload_file
 from app.utils.email import send_new_order_email
 
 
@@ -26,12 +26,8 @@ def guest_upload_file():
     if '.' not in file.filename or file.filename.rsplit('.', 1)[1].lower() not in allowed:
         return error_response('不支持的文件格式')
 
-    ext = file.filename.rsplit('.', 1)[1].lower()
-    filename = f"{uuid.uuid4().hex}.{ext}"
     upload_folder = current_app.config['UPLOAD_FOLDER']
-    file.save(os.path.join(upload_folder, filename))
-
-    url = f"/uploads/{filename}"
+    url = upload_file(file, upload_folder)
     return success_response({'url': url}, '上传成功')
 
 
