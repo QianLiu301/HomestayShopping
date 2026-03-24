@@ -21,7 +21,10 @@ def _get_r2_client():
         endpoint_url=endpoint,
         aws_access_key_id=access_key,
         aws_secret_access_key=secret_key,
-        config=BotoConfig(signature_version='s3v4'),
+        config=BotoConfig(
+            signature_version='s3v4',
+            proxies={},          # 绕过系统代理，直连 R2
+        ),
         region_name='auto'
     )
 
