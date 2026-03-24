@@ -61,19 +61,6 @@
       </el-col>
     </el-row>
 
-    <!-- Top selling products -->
-    <el-card shadow="hover" style="margin-top:20px" v-if="topProducts.length">
-      <template #header>{{ $t('dashboard.topProducts') }}</template>
-      <el-table :data="topProducts" size="small" stripe>
-        <el-table-column type="index" width="50" label="#" />
-        <el-table-column prop="product_name" :label="$t('dashboard.productName')" />
-        <el-table-column prop="total_qty" :label="$t('dashboard.totalSales')" width="120" />
-        <el-table-column :label="$t('dashboard.totalRevenue')" width="140">
-          <template #default="{ row }">¥{{ formatNum(row.total_revenue) }}</template>
-        </el-table-column>
-      </el-table>
-    </el-card>
-
     <!-- Recent orders (before chart, convenient for operators) -->
     <el-row :gutter="20" style="margin-top:20px">
       <el-col :xs="24" :sm="12">
@@ -127,6 +114,19 @@
         </div>
       </template>
       <v-chart :option="chartOption" style="height:360px" autoresize />
+    </el-card>
+
+    <!-- Top selling products -->
+    <el-card shadow="hover" style="margin-top:20px" v-if="topProducts.length">
+      <template #header>{{ $t('dashboard.topProducts') }}</template>
+      <el-table :data="topProducts" size="small" stripe>
+        <el-table-column type="index" width="50" label="#" />
+        <el-table-column prop="product_name" :label="$t('dashboard.productName')" />
+        <el-table-column prop="total_qty" :label="$t('dashboard.totalSales')" width="120" />
+        <el-table-column :label="$t('dashboard.totalRevenue')" width="140">
+          <template #default="{ row }">¥{{ formatNum(row.total_revenue) }}</template>
+        </el-table-column>
+      </el-table>
     </el-card>
   </div>
 </template>
