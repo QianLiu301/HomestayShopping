@@ -49,7 +49,10 @@ export const getAdminInfo = () => http.get('/auth/info')
 export const uploadFile = file => {
   const formData = new FormData()
   formData.append('file', file)
-  return http.post('/admin/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+  return http.post('/admin/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60000   // 上传到 R2 需要更长超时
+  })
 }
 
 // Products

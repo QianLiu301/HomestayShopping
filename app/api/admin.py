@@ -35,8 +35,13 @@ def admin_upload_file():
         return error_response('不支持的文件格式，请上传 png/jpg/jpeg/gif/webp')
 
     upload_folder = current_app.config['UPLOAD_FOLDER']
-    url = upload_file(file, upload_folder)
-    return success_response({'url': url}, '上传成功')
+    try:
+        url = upload_file(file, upload_folder)
+        current_app.logger.info(f'文件上传成功: {url}')
+        return success_response({'url': url}, '上传成功')
+    except Exception as e:
+        current_app.logger.error(f'文件上传失败: {e}')
+        return error_response(f'上传失败: {str(e)}', 500)
 
 
 # ==================== 商品管理 ====================
