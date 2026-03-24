@@ -16,7 +16,7 @@
       <el-table :data="list" v-loading="loading" stripe>
         <el-table-column :label="$t('common.image')" width="80">
           <template #default="{ row }">
-            <el-image v-if="row.images?.length" :src="row.images[0]" style="width:50px;height:50px;border-radius:8px" fit="cover" />
+            <el-image v-if="row.images?.length" :src="resolveUrl(row.images[0])" style="width:50px;height:50px;border-radius:8px" fit="cover" />
             <div v-else style="width:50px;height:50px;border-radius:8px;background:#f5efe6;display:flex;align-items:center;justify-content:center;color:#c8a97e;font-weight:700">{{ (row.name_en || row.name_zh || '?').charAt(0) }}</div>
           </template>
         </el-table-column>
@@ -157,7 +157,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { getProducts, createProduct, updateProduct, deleteProduct, getCategories, uploadFile } from '../api'
+import { getProducts, createProduct, updateProduct, deleteProduct, getCategories, uploadFile, resolveUrl } from '../api'
 
 const { t } = useI18n()
 const list = ref([])
@@ -223,7 +223,7 @@ function openDialog(row) {
     uploadedImages.value = [...images]
     fileList.value = images.map((url, idx) => ({
       name: `image-${idx}`,
-      url: url
+      url: resolveUrl(url)
     }))
   } else {
     isEdit.value = false

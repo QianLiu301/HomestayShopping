@@ -9,7 +9,7 @@
       <el-table :data="list" v-loading="loading" stripe>
         <el-table-column :label="$t('common.image')" width="80">
           <template #default="{ row }">
-            <el-image v-if="row.image" :src="row.image" style="width:50px;height:50px;border-radius:8px" fit="cover" />
+            <el-image v-if="row.image" :src="resolveUrl(row.image)" style="width:50px;height:50px;border-radius:8px" fit="cover" />
             <div v-else style="width:50px;height:50px;border-radius:8px;background:#f5efe6;display:flex;align-items:center;justify-content:center;font-size:20px">🚗</div>
           </template>
         </el-table-column>
@@ -85,7 +85,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { getVehicles, createVehicle, updateVehicle, deleteVehicle, uploadFile } from '../api'
+import { getVehicles, createVehicle, updateVehicle, deleteVehicle, uploadFile, resolveUrl } from '../api'
 
 const { t } = useI18n()
 const list = ref([])
@@ -113,7 +113,7 @@ function openDialog(row) {
     editId.value = row.id
     Object.keys(form).forEach(k => { if (row[k] !== undefined && row[k] !== null) form[k] = row[k] })
     if (row.image) {
-      fileList.value = [{ name: 'vehicle-image', url: row.image }]
+      fileList.value = [{ name: 'vehicle-image', url: resolveUrl(row.image) }]
     }
   } else {
     isEdit.value = false

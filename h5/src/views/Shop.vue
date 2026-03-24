@@ -34,7 +34,7 @@
           >
             <img
               v-if="product.images?.length"
-              :src="product.images[0]"
+              :src="$resolveUrl(product.images[0])"
               :alt="product.name"
               class="product-image"
             />

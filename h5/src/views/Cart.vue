@@ -13,7 +13,7 @@
     <template v-else>
       <van-swipe-cell v-for="item in cart.items" :key="item.key">
         <div class="cart-item" @click="$router.push(`/product/${item.productId}`)">
-          <img v-if="item.image" :src="item.image" class="cart-img" />
+          <img v-if="item.image" :src="$resolveUrl(item.image)" class="cart-img" />
           <div v-else class="cart-img placeholder">{{ item.name?.charAt(0) }}</div>
           <div class="cart-info">
             <div class="cart-name">{{ item.name }}</div>

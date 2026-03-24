@@ -43,7 +43,7 @@
         <el-form-item :label="$t('settings.wechatQr')">
           <div class="qr-upload-area">
             <div v-if="contactForm.contact_wechat_qr" class="qr-preview">
-              <el-image :src="contactForm.contact_wechat_qr" style="width:160px;height:160px;border-radius:8px" fit="contain" :preview-src-list="[contactForm.contact_wechat_qr]" />
+              <el-image :src="resolveUrl(contactForm.contact_wechat_qr)" style="width:160px;height:160px;border-radius:8px" fit="contain" :preview-src-list="[resolveUrl(contactForm.contact_wechat_qr)]" />
               <div class="qr-actions">
                 <el-button size="small" @click="triggerUpload('wechat')">{{ $t('settings.clickToReplace') }}</el-button>
                 <el-button size="small" type="danger" @click="contactForm.contact_wechat_qr = ''">{{ $t('settings.remove') }}</el-button>
@@ -63,7 +63,7 @@
         <el-form-item :label="$t('settings.whatsappQr')">
           <div class="qr-upload-area">
             <div v-if="contactForm.contact_whatsapp_qr" class="qr-preview">
-              <el-image :src="contactForm.contact_whatsapp_qr" style="width:160px;height:160px;border-radius:8px" fit="contain" :preview-src-list="[contactForm.contact_whatsapp_qr]" />
+              <el-image :src="resolveUrl(contactForm.contact_whatsapp_qr)" style="width:160px;height:160px;border-radius:8px" fit="contain" :preview-src-list="[resolveUrl(contactForm.contact_whatsapp_qr)]" />
               <div class="qr-actions">
                 <el-button size="small" @click="triggerUpload('whatsapp')">{{ $t('settings.clickToReplace') }}</el-button>
                 <el-button size="small" type="danger" @click="contactForm.contact_whatsapp_qr = ''">{{ $t('settings.remove') }}</el-button>
@@ -85,7 +85,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import { getSettings, updateSettings, uploadFile } from '../api'
+import { getSettings, updateSettings, uploadFile, resolveUrl } from '../api'
 
 const { t } = useI18n()
 const loading = ref(false)

@@ -17,7 +17,7 @@
               accept="image/*"
             >
               <div v-if="form.wechat_qr_url" class="qr-preview">
-                <img :src="form.wechat_qr_url" />
+                <img :src="resolveUrl(form.wechat_qr_url)" />
                 <div class="qr-overlay">{{ $t('payment.clickToReplace') }}</div>
               </div>
               <div v-else class="qr-placeholder">
@@ -37,7 +37,7 @@
               accept="image/*"
             >
               <div v-if="form.alipay_qr_url" class="qr-preview">
-                <img :src="form.alipay_qr_url" />
+                <img :src="resolveUrl(form.alipay_qr_url)" />
                 <div class="qr-overlay">{{ $t('payment.clickToReplace') }}</div>
               </div>
               <div v-else class="qr-placeholder">
@@ -65,7 +65,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
-import { getSettings, updateSettings, uploadFile } from '../api'
+import { getSettings, updateSettings, uploadFile, resolveUrl } from '../api'
 
 const { t } = useI18n()
 const loading = ref(false)

@@ -12,7 +12,7 @@
         <div class="card-title">{{ t('checkout.orderItems') }} ({{ cart.totalCount }})</div>
         <div class="order-items">
           <div v-for="item in cart.items" :key="item.key" class="checkout-item">
-            <img v-if="item.image" :src="item.image" class="item-img" />
+            <img v-if="item.image" :src="$resolveUrl(item.image)" class="item-img" />
             <div v-else class="item-img placeholder">{{ item.name?.charAt(0) }}</div>
             <div class="item-info">
               <div class="item-name">{{ item.name }}</div>

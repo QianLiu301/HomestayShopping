@@ -106,7 +106,7 @@
           <span style="font-family:monospace">{{ current.transaction_id }}</span>
         </el-descriptions-item>
         <el-descriptions-item v-if="current.payment_screenshot" :label="$t('orders.paymentScreenshot')">
-          <el-image :src="current.payment_screenshot" style="max-width:200px;max-height:200px;border-radius:8px" :preview-src-list="[current.payment_screenshot]" fit="contain" />
+          <el-image :src="resolveUrl(current.payment_screenshot)" style="max-width:200px;max-height:200px;border-radius:8px" :preview-src-list="[resolveUrl(current.payment_screenshot)]" fit="contain" />
         </el-descriptions-item>
         <el-descriptions-item v-if="current.remark" :label="$t('orders.remark')">{{ current.remark }}</el-descriptions-item>
         <el-descriptions-item v-if="current.review" :label="$t('orders.review')">
@@ -158,7 +158,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Delete, Calendar } from '@element-plus/icons-vue'
-import { getShopOrders, updateShopOrder, confirmShopPayment, batchDeleteShopOrders } from '../api'
+import { getShopOrders, updateShopOrder, confirmShopPayment, batchDeleteShopOrders, resolveUrl } from '../api'
 
 const { t } = useI18n()
 const list = ref([])

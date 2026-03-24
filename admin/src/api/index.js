@@ -2,7 +2,15 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import router from '../router'
 
-const http = axios.create({ baseURL: (import.meta.env.VITE_API_URL || '') + '/api', timeout: 15000 })
+const API_BASE = import.meta.env.VITE_API_URL || ''
+const http = axios.create({ baseURL: API_BASE + '/api', timeout: 15000 })
+
+// 用于将相对路径的图片 URL 转为完整 URL（生产环境需要拼接 API 域名）
+export const resolveUrl = (path) => {
+  if (!path) return ''
+  if (path.startsWith('http')) return path
+  return API_BASE + path
+}
 
 http.interceptors.request.use(config => {
   const token = localStorage.getItem('admin_token')
@@ -10,14 +18,22 @@ http.interceptors.request.use(config => {
   return config
 })
 
+// 防止 401 弹出多次
+let isLoggingOut = false
+
 http.interceptors.response.use(
   res => res.data,
   err => {
     const status = err.response?.status
     if (status === 401) {
       localStorage.removeItem('admin_token')
-      router.push('/login')
-      ElMessage.error('Login expired, please login again')
+      if (!isLoggingOut) {
+        isLoggingOut = true
+        ElMessage.error('Login expired, please login again')
+        router.push('/login').finally(() => {
+          setTimeout(() => { isLoggingOut = false }, 2000)
+        })
+      }
     } else {
       ElMessage.error(err.response?.data?.message || 'Request failed')
     }

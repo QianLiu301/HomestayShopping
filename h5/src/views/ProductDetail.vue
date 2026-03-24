@@ -10,7 +10,7 @@
       <!-- Product Images -->
       <van-swipe :autoplay="3000" lazy-render class="product-swipe">
         <van-swipe-item v-for="(img, i) in product.images" :key="i">
-          <img :src="img" class="swipe-img" />
+          <img :src="$resolveUrl(img)" class="swipe-img" />
         </van-swipe-item>
         <van-swipe-item v-if="!product.images?.length">
           <div class="swipe-placeholder">{{ product.name?.charAt(0) }}</div>

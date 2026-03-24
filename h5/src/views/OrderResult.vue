@@ -48,7 +48,7 @@
           </div>
           <!-- WeChat QR -->
           <div v-if="contactInfo.contact_wechat_qr" class="contact-qr">
-            <img :src="contactInfo.contact_wechat_qr" class="qr-image" :alt="t('order.wechatLabel')" />
+            <img :src="$resolveUrl(contactInfo.contact_wechat_qr)" class="qr-image" :alt="t('order.wechatLabel')" />
           </div>
 
           <!-- WhatsApp -->
@@ -62,7 +62,7 @@
           </div>
           <!-- WhatsApp QR -->
           <div v-if="contactInfo.contact_whatsapp_qr" class="contact-qr">
-            <img :src="contactInfo.contact_whatsapp_qr" class="qr-image" :alt="'WhatsApp'" />
+            <img :src="$resolveUrl(contactInfo.contact_whatsapp_qr)" class="qr-image" :alt="'WhatsApp'" />
           </div>
 
           <!-- Fallback if nothing configured -->

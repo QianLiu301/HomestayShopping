@@ -64,7 +64,7 @@
         <div class="shop-grid">
           <div v-for="product in featured" :key="product.id" class="shop-item" @click="$router.push(`/product/${product.id}`)">
             <div class="si-image">
-              <img v-if="product.images?.length" :src="product.images[0]" :alt="product.name" />
+              <img v-if="product.images?.length" :src="$resolveUrl(product.images[0])" :alt="product.name" />
               <div v-else class="si-placeholder">{{ product.name?.charAt(0) }}</div>
               <div class="si-overlay"><span class="si-view">{{ t('common.viewMore') }}</span></div>
             </div>

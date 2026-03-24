@@ -1,7 +1,16 @@
 import axios from 'axios'
 
+const API_BASE = import.meta.env.VITE_API_URL || ''
+
+// 将相对路径图片 URL 转为完整 URL
+export const resolveUrl = (path) => {
+  if (!path) return ''
+  if (path.startsWith('http')) return path
+  return API_BASE + path
+}
+
 const api = axios.create({
-  baseURL: (import.meta.env.VITE_API_URL || '') + '/api',
+  baseURL: API_BASE + '/api',
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' }
 })

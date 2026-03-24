@@ -29,7 +29,7 @@
             <van-loading size="24" />
           </div>
           <div v-else-if="qrUrl" class="qr-container">
-            <img :src="qrUrl" class="qr-image" :alt="method === 'wechat' ? 'WeChat Pay' : 'Alipay'" />
+            <img :src="$resolveUrl(qrUrl)" class="qr-image" :alt="method === 'wechat' ? 'WeChat Pay' : 'Alipay'" />
           </div>
           <div v-else class="qr-empty">
             <van-icon name="photo-o" size="48" color="#ccc" />
