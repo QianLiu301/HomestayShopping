@@ -17,6 +17,26 @@ def _localized(obj, field, lang):
     )
 
 
+import re
+
+def _normalize_image_urls(images):
+    """将旧的 R2 完整 URL 转换为代理路径 /api/images/<key>"""
+    result = []
+    for url in images:
+        if not url:
+            continue
+        if url.startswith('http'):
+            # 从完整 URL 中提取文件名 key（最后一段路径）
+            key = url.rstrip('/').rsplit('/', 1)[-1]
+            if re.match(r'^[a-f0-9]+\.\w+$', key):
+                result.append(f'/api/images/{key}')
+            else:
+                result.append(url)
+        else:
+            result.append(url)
+    return result
+
+
 class Admin(db.Model):
     """管理员表"""
     __tablename__ = 'admins'
@@ -149,7 +169,7 @@ class Product(db.Model):
             'desc_es': self.desc_es,
             'price': float(self.price) if self.price else 0,
             'original_price': float(self.original_price) if self.original_price else None,
-            'images': self.images or [],
+            'images': _normalize_image_urls(self.images or []),
             'specs': self.specs,
             'is_featured': self.is_featured,
             'sort_order': self.sort_order,

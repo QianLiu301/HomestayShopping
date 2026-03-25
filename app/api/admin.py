@@ -1,5 +1,5 @@
 import os
-from flask import request, current_app
+from flask import request, current_app, Response
 from app.api import api_bp
 from app.models import (
     Admin, Product, Category, Vehicle, Location, Setting, Coupon,
@@ -9,7 +9,7 @@ from app import db, bcrypt
 from app.utils import (
     success_response, error_response, admin_required, paginate_query
 )
-from app.utils.storage import upload_file
+from app.utils.storage import upload_file, get_r2_file
 from app.translations import auto_fill_translations
 
 
@@ -42,6 +42,21 @@ def admin_upload_file():
     except Exception as e:
         current_app.logger.error(f'文件上传失败: {e}')
         return error_response(f'上传失败: {str(e)}', 500)
+
+
+# ==================== R2 图片代理 ====================
+
+@api_bp.route('/images/<path:key>', methods=['GET'])
+def proxy_r2_image(key):
+    """代理 R2 图片，避免依赖 R2 公开访问 URL"""
+    import re
+    if not re.match(r'^[a-f0-9]+\.\w+$', key):
+        return error_response('Invalid key', 400)
+    data, content_type = get_r2_file(key)
+    if data is None:
+        return error_response('Image not found', 404)
+    return Response(data, content_type=content_type,
+                    headers={'Cache-Control': 'public, max-age=86400'})
 
 
 # ==================== 商品管理 ====================

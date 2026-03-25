@@ -39,7 +39,7 @@ _CONTENT_TYPES = {
 def upload_file(file_storage, upload_folder):
     """
     上传文件，返回可访问的 URL。
-    - 如果配置了 R2 → 上传到 R2，返回完整公开 URL
+    - 如果配置了 R2 → 上传到 R2，返回 /api/images/filename 代理路径
     - 否则 → 保存到本地 upload_folder，返回 /uploads/filename
     """
     ext = file_storage.filename.rsplit('.', 1)[1].lower()
@@ -47,9 +47,8 @@ def upload_file(file_storage, upload_folder):
 
     r2 = _get_r2_client()
     bucket = os.getenv('R2_BUCKET_NAME', 'homestay')
-    public_url = os.getenv('R2_PUBLIC_URL', '')  # e.g. https://img.your-domain.com
 
-    if r2 and public_url:
+    if r2:
         content_type = _CONTENT_TYPES.get(ext, 'application/octet-stream')
         # 确保流位置在起始处，避免上传空文件
         file_storage.stream.seek(0)
@@ -59,11 +58,26 @@ def upload_file(file_storage, upload_folder):
             filename,
             ExtraArgs={'ContentType': content_type}
         )
-        # 返回完整公开 URL
-        url = f"{public_url.rstrip('/')}/{filename}"
+        # 返回代理路径，由后端 /api/images/<key> 端点提供图片
+        url = f"/api/images/{filename}"
     else:
         # 回退到本地存储
         file_storage.save(os.path.join(upload_folder, filename))
         url = f"/uploads/{filename}"
 
     return url
+
+
+def get_r2_file(key):
+    """从 R2 读取文件，返回 (bytes, content_type) 或 (None, None)"""
+    r2 = _get_r2_client()
+    if not r2:
+        return None, None
+    bucket = os.getenv('R2_BUCKET_NAME', 'homestay')
+    try:
+        resp = r2.get_object(Bucket=bucket, Key=key)
+        data = resp['Body'].read()
+        content_type = resp.get('ContentType', 'application/octet-stream')
+        return data, content_type
+    except Exception:
+        return None, None
