@@ -5,11 +5,9 @@
 import io
 import os
 import uuid
-from functools import lru_cache
 
 import boto3
 from botocore.config import Config as BotoConfig
-from PIL import Image
 
 
 def _get_r2_client():
@@ -46,42 +44,55 @@ WEBP_QUALITY = 80         # WebP 压缩质量
 
 
 def _compress_image(file_storage, ext):
-    """压缩图片，返回 (BytesIO, new_ext)。GIF 不压缩。"""
+    """压缩图片，返回 (BytesIO, new_ext)。Pillow 不可用时直接返回原文件。"""
+    # GIF 不压缩
     if ext == 'gif':
         file_storage.stream.seek(0)
         buf = io.BytesIO(file_storage.stream.read())
         return buf, ext
 
-    file_storage.stream.seek(0)
-    img = Image.open(file_storage.stream)
-
-    # 处理 EXIF 旋转
+    # 延迟导入 Pillow，不可用时跳过压缩
     try:
-        from PIL import ImageOps
-        img = ImageOps.exif_transpose(img)
+        from PIL import Image, ImageOps
+    except ImportError:
+        file_storage.stream.seek(0)
+        buf = io.BytesIO(file_storage.stream.read())
+        return buf, ext
+
+    try:
+        file_storage.stream.seek(0)
+        img = Image.open(file_storage.stream)
+
+        # 处理 EXIF 旋转
+        try:
+            img = ImageOps.exif_transpose(img)
+        except Exception:
+            pass
+
+        # 转换 RGBA → RGB（JPEG 不支持 alpha）
+        if img.mode in ('RGBA', 'P') and ext in ('jpg', 'jpeg'):
+            img = img.convert('RGB')
+
+        # 等比缩放
+        img.thumbnail((MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT), Image.LANCZOS)
+
+        buf = io.BytesIO()
+        if ext in ('jpg', 'jpeg'):
+            img.save(buf, format='JPEG', quality=JPEG_QUALITY, optimize=True)
+        elif ext == 'webp':
+            img.save(buf, format='WEBP', quality=WEBP_QUALITY)
+        elif ext == 'png':
+            img.save(buf, format='PNG', optimize=True)
+        else:
+            img.save(buf, format=img.format or 'JPEG', quality=JPEG_QUALITY)
+
+        buf.seek(0)
+        return buf, ext
     except Exception:
-        pass
-
-    # 转换 RGBA → RGB（JPEG 不支持 alpha）
-    if img.mode in ('RGBA', 'P') and ext in ('jpg', 'jpeg'):
-        img = img.convert('RGB')
-
-    # 等比缩放
-    img.thumbnail((MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT), Image.LANCZOS)
-
-    buf = io.BytesIO()
-    if ext in ('jpg', 'jpeg'):
-        img.save(buf, format='JPEG', quality=JPEG_QUALITY, optimize=True)
-    elif ext == 'webp':
-        img.save(buf, format='WEBP', quality=WEBP_QUALITY)
-    elif ext == 'png':
-        # PNG 转为 WebP 可大幅减小体积，但保持原格式
-        img.save(buf, format='PNG', optimize=True)
-    else:
-        img.save(buf, format=img.format or 'JPEG', quality=JPEG_QUALITY)
-
-    buf.seek(0)
-    return buf, ext
+        # 压缩失败时回退到原文件
+        file_storage.stream.seek(0)
+        buf = io.BytesIO(file_storage.stream.read())
+        return buf, ext
 
 
 def get_r2_public_url():
