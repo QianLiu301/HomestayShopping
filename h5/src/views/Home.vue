@@ -1,7 +1,7 @@
 <template>
   <div class="home-page">
     <!-- ===== SECTION 1: HERO ===== -->
-    <section class="hero">
+    <section class="hero" :style="heroStyle">
       <div class="hero-content">
         <p class="hero-label fade-in-up">{{ t('home.heroLabel') }}</p>
         <h1 class="hero-title fade-in-up delay-1">{{ t('home.heroTitle') }}</h1>
@@ -147,7 +147,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { showToast } from 'vant'
@@ -155,6 +155,22 @@ import { getFeaturedProducts, getVehicles, getTransferPrice, queryOrder } from '
 
 const { t } = useI18n()
 const router = useRouter()
+
+// R2 公开 URL — hero 背景图
+const R2_BASE = import.meta.env.VITE_R2_PUBLIC_URL || ''
+const isMobile = ref(window.innerWidth <= 768)
+
+const heroStyle = computed(() => {
+  const bg = isMobile.value
+    ? `${R2_BASE}/hero-bg-mobile.jpg`
+    : `${R2_BASE}/hero-bg.jpg`
+  return {
+    backgroundImage: `url('${bg}')`,
+    backgroundSize: 'cover',
+    backgroundPosition: isMobile.value ? 'center top' : 'center center',
+    backgroundRepeat: 'no-repeat'
+  }
+})
 
 const featured = ref([])
 const vehicles = ref([])
@@ -187,7 +203,10 @@ async function onQueryOrder() {
   router.push({ path: '/order-query', query })
 }
 
+const onResize = () => { isMobile.value = window.innerWidth <= 768 }
+
 onMounted(async () => {
+  window.addEventListener('resize', onResize)
   try {
     const [featRes, vehRes, priceRes] = await Promise.all([getFeaturedProducts(6), getVehicles(), getTransferPrice()])
     featured.value = featRes.data || []
@@ -196,11 +215,13 @@ onMounted(async () => {
   } catch (e) { console.error(e) }
   finally { loading.value = false }
 })
+
+onUnmounted(() => { window.removeEventListener('resize', onResize) })
 </script>
 
 <style scoped>
 /* ===== HERO ===== */
-.hero { position: relative; height: 100vh; min-height: 600px; display: flex; align-items: center; justify-content: center; background: url('/images/hero-bg.jpg') center center / cover no-repeat; overflow: hidden; text-align: center; color: #fff; }
+.hero { position: relative; height: 100vh; min-height: 600px; display: flex; align-items: center; justify-content: center; overflow: hidden; text-align: center; color: #fff; background-color: var(--dark-bg); }
 .hero::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(74,55,40,0.7) 0%, rgba(92,70,51,0.55) 40%, rgba(60,45,30,0.5) 100%); z-index: 1; }
 .hero-content { position: relative; z-index: 2; padding: 0 24px; max-width: 800px; }
 .hero-scroll-hint { z-index: 2; }
@@ -283,7 +304,7 @@ onMounted(async () => {
 
 @media (max-width: 768px) {
   /* Hero mobile */
-  .hero { background-image: url('/images/hero-bg-mobile.jpg'); background-position: center top; min-height: 100vh; }
+  .hero { min-height: 100vh; }
   .hero-content { padding: 0 20px; max-width: 100%; }
   .hero-title { font-size: 32px; }
   .hero-subtitle { font-size: 15px; margin-bottom: 28px; }
