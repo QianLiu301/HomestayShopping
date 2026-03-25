@@ -117,7 +117,9 @@ def create_app(config_name='default'):
     # 静态文件服务 - 上传的图片
     @app.route('/uploads/<path:filename>')
     def uploaded_file(filename):
-        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+        resp = send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+        resp.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+        return resp
 
     # 健康检查路由
     @app.route('/health')

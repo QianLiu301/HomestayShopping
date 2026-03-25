@@ -48,15 +48,29 @@ def admin_upload_file():
 
 @api_bp.route('/images/<path:key>', methods=['GET'])
 def proxy_r2_image(key):
-    """代理 R2 图片，避免依赖 R2 公开访问 URL"""
+    """代理 R2 图片，避免依赖 R2 公开访问 URL（带内存缓存 + 强浏览器缓存）"""
     import re
+    import hashlib
     if not re.match(r'^[a-f0-9]+\.\w+$', key):
         return error_response('Invalid key', 400)
+
+    # 检查浏览器 ETag 缓存
+    if_none_match = request.headers.get('If-None-Match')
+    if if_none_match:
+        # 图片内容不变，文件名即可作为 ETag
+        etag = f'"{key}"'
+        if if_none_match == etag:
+            return Response(status=304)
+
     data, content_type = get_r2_file(key)
     if data is None:
         return error_response('Image not found', 404)
-    return Response(data, content_type=content_type,
-                    headers={'Cache-Control': 'public, max-age=86400'})
+
+    etag = f'"{key}"'
+    return Response(data, content_type=content_type, headers={
+        'Cache-Control': 'public, max-age=31536000, immutable',  # 1年缓存（文件名含UUID不会变）
+        'ETag': etag,
+    })
 
 
 # ==================== 商品管理 ====================

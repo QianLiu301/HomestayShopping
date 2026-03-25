@@ -37,6 +37,7 @@
               :src="$resolveUrl(product.images[0])"
               :alt="product.name"
               class="product-image"
+              loading="lazy"
             />
             <div v-else class="placeholder-img">{{ product.name?.charAt(0) }}</div>
             <div class="product-info">

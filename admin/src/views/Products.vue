@@ -16,7 +16,9 @@
       <el-table :data="list" v-loading="loading" stripe>
         <el-table-column :label="$t('common.image')" width="80">
           <template #default="{ row }">
-            <el-image v-if="row.images?.length" :src="resolveUrl(row.images[0])" style="width:50px;height:50px;border-radius:8px" fit="cover" />
+            <el-image v-if="row.images?.length" :src="resolveUrl(row.images[0])" style="width:50px;height:50px;border-radius:8px" fit="cover" lazy loading="lazy">
+              <template #error><div style="width:50px;height:50px;border-radius:8px;background:#f5efe6;display:flex;align-items:center;justify-content:center;color:#c8a97e;font-size:12px">!</div></template>
+            </el-image>
             <div v-else style="width:50px;height:50px;border-radius:8px;background:#f5efe6;display:flex;align-items:center;justify-content:center;color:#c8a97e;font-weight:700">{{ (row.name_en || row.name_zh || '?').charAt(0) }}</div>
           </template>
         </el-table-column>

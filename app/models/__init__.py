@@ -20,16 +20,29 @@ def _localized(obj, field, lang):
 import re
 
 def _normalize_image_urls(images):
-    """将旧的 R2 完整 URL 转换为代理路径 /api/images/<key>"""
+    """
+    标准化图片 URL：
+    - 有 R2_PUBLIC_URL 时，将代理路径转为公开 CDN URL（最快）
+    - 无 R2_PUBLIC_URL 时，将旧的完整 R2 URL 转为代理路径
+    """
+    import os
+    r2_public = (os.getenv('R2_PUBLIC_URL') or '').rstrip('/')
     result = []
     for url in images:
         if not url:
             continue
-        if url.startswith('http'):
-            # 从完整 URL 中提取文件名 key（最后一段路径）
+        if r2_public and url.startswith('/api/images/'):
+            # 有公开 URL 时，转换代理路径为 CDN 直达
+            key = url.replace('/api/images/', '')
+            result.append(f'{r2_public}/{key}')
+        elif url.startswith('http'):
+            # 从完整 URL 中提取文件名 key
             key = url.rstrip('/').rsplit('/', 1)[-1]
             if re.match(r'^[a-f0-9]+\.\w+$', key):
-                result.append(f'/api/images/{key}')
+                if r2_public:
+                    result.append(f'{r2_public}/{key}')
+                else:
+                    result.append(f'/api/images/{key}')
             else:
                 result.append(url)
         else:
