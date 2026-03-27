@@ -50,8 +50,7 @@ def admin_upload_file():
 def proxy_r2_image(key):
     """代理 R2 图片，避免依赖 R2 公开访问 URL（带内存缓存 + 强浏览器缓存）"""
     import re
-    import hashlib
-    if not re.match(r'^[a-f0-9]+\.\w+$', key):
+    if not re.match(r'^[a-f0-9]{32}\.\w+$', key):
         return error_response('Invalid key', 400)
 
     # 检查浏览器 ETag 缓存
@@ -66,10 +65,21 @@ def proxy_r2_image(key):
     if data is None:
         return error_response('Image not found', 404)
 
+    # 确保 Content-Type 精确，避免 CORB
+    if not content_type or content_type == 'application/octet-stream':
+        ext = key.rsplit('.', 1)[-1].lower()
+        content_type_map = {
+            'jpg': 'image/jpeg', 'jpeg': 'image/jpeg',
+            'png': 'image/png', 'gif': 'image/gif', 'webp': 'image/webp'
+        }
+        content_type = content_type_map.get(ext, 'image/jpeg')
+
     etag = f'"{key}"'
     return Response(data, content_type=content_type, headers={
-        'Cache-Control': 'public, max-age=31536000, immutable',  # 1年缓存（文件名含UUID不会变）
+        'Cache-Control': 'public, max-age=31536000, immutable',
         'ETag': etag,
+        'X-Content-Type-Options': 'nosniff',  # 防止 MIME 嗅探，避免 CORB
+        'Access-Control-Allow-Origin': '*',   # 明确允许跨域
     })
 
 

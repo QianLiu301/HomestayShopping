@@ -22,31 +22,61 @@ import re
 def _normalize_image_urls(images):
     """
     标准化图片 URL：
-    - 有 R2_PUBLIC_URL 时，将代理路径转为公开 CDN URL（最快）
-    - 无 R2_PUBLIC_URL 时，将旧的完整 R2 URL 转为代理路径
+    - R2 文件统一转为后端代理路径 /api/images/<key>
+    - 本地文件保持 /uploads/<key>
+    - 兼容多种历史格式：完整 R2/CDN URL、代理路径、本地路径、纯文件名
+
+    说明：
+    这里不再优先输出 R2_PUBLIC_URL，避免本地开发环境直接请求公网图片域名时
+    因响应头或错误页导致 CORB，统一走后端代理最稳。
     """
-    import os
-    r2_public = (os.getenv('R2_PUBLIC_URL') or '').rstrip('/')
     result = []
+
     for url in images:
         if not url:
             continue
-        if r2_public and url.startswith('/api/images/'):
-            # 有公开 URL 时，转换代理路径为 CDN 直达
-            key = url.replace('/api/images/', '')
-            result.append(f'{r2_public}/{key}')
-        elif url.startswith('http'):
-            # 从完整 URL 中提取文件名 key
+
+        url = str(url).strip()
+        if not url:
+            continue
+
+        key = None
+        is_local_upload = False
+
+        if url.startswith('/api/images/'):
+            key = url.replace('/api/images/', '', 1)
+        elif url.startswith('/uploads/'):
+            key = url.replace('/uploads/', '', 1)
+            is_local_upload = True
+        elif url.startswith('http://') or url.startswith('https://') or url.startswith('//'):
             key = url.rstrip('/').rsplit('/', 1)[-1]
-            if re.match(r'^[a-f0-9]+\.\w+$', key):
-                if r2_public:
-                    result.append(f'{r2_public}/{key}')
-                else:
-                    result.append(f'/api/images/{key}')
-            else:
-                result.append(url)
         else:
+            key = url
+
+        if not key:
+            continue
+
+        # R2 生成的标准文件名：32位十六进制 UUID + 扩展名
+        if re.match(r'^[a-f0-9]{32}\.\w+$', key):
+            if is_local_upload:
+                result.append(f'/uploads/{key}')
+            else:
+                result.append(f'/api/images/{key}')
+            continue
+
+        # 明确的本地上传路径保持不变
+        if is_local_upload:
+            result.append(f'/uploads/{key}')
+            continue
+
+        # 已是完整 URL 的非标准历史数据，先原样保留
+        if url.startswith('http://') or url.startswith('https://'):
             result.append(url)
+            continue
+
+        # 纯文件名历史数据，默认走图片代理
+        result.append(f'/api/images/{key}')
+
     return result
 
 

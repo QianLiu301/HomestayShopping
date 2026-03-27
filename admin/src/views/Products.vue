@@ -148,7 +148,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
-        <el-button type="primary" :loading="saving" @click="onSave">{{ $t('common.save') }}</el-button>
+        <el-button type="primary" :loading="saving || uploadingCount > 0" :disabled="uploadingCount > 0" @click="onSave">{{ uploadingCount > 0 ? '图片上传中...' : $t('common.save') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -166,6 +166,7 @@ const list = ref([])
 const categories = ref([])
 const loading = ref(false)
 const saving = ref(false)
+const uploadingCount = ref(0)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const editId = ref(null)
@@ -249,6 +250,7 @@ function beforeUpload(file) {
 }
 
 async function handleUpload(options) {
+  uploadingCount.value++
   try {
     const res = await uploadFile(options.file)
     const url = res.data?.url
@@ -262,6 +264,8 @@ async function handleUpload(options) {
     }
   } catch (err) {
     options.onError(err)
+  } finally {
+    uploadingCount.value = Math.max(0, uploadingCount.value - 1)
   }
 }
 
@@ -283,6 +287,7 @@ async function onSave() {
   if (!form.name_en && !form.name_zh) return ElMessage.warning(t('common.nameRequired'))
   if (!form.category_id) return ElMessage.warning(t('products.categoryRequired'))
   if (!form.price) return ElMessage.warning(t('products.priceRequired'))
+  if (uploadingCount.value > 0) return ElMessage.warning('图片仍在上传中，请等待上传完成后再保存')
 
   saving.value = true
   const data = { ...form, images: [...uploadedImages.value] }

@@ -156,14 +156,15 @@ import { getFeaturedProducts, getVehicles, getTransferPrice, queryOrder } from '
 const { t } = useI18n()
 const router = useRouter()
 
-// R2 公开 URL — hero 背景图
-const R2_BASE = import.meta.env.VITE_R2_PUBLIC_URL || ''
+// 本地静态资源 hero 背景图
+const HERO_BG_DESKTOP = '/hero-bg.jpg'
+const HERO_BG_MOBILE = '/hero-bg-mobile.jpg'
 const isMobile = ref(window.innerWidth <= 768)
 
 const heroStyle = computed(() => {
   const bg = isMobile.value
-    ? `${R2_BASE}/hero-bg-mobile.jpg`
-    : `${R2_BASE}/hero-bg.jpg`
+    ? HERO_BG_MOBILE
+    : HERO_BG_DESKTOP
   return {
     backgroundImage: `url('${bg}')`,
     backgroundSize: 'cover',

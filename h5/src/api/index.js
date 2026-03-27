@@ -5,8 +5,17 @@ const API_BASE = import.meta.env.VITE_API_URL || ''
 // 将相对路径图片 URL 转为完整 URL
 export const resolveUrl = (path) => {
   if (!path) return ''
-  if (path.startsWith('http')) return path
-  return API_BASE + path
+
+  const value = String(path).trim()
+  if (!value) return ''
+
+  if (value.startsWith('http://') || value.startsWith('https://')) return value
+  if (value.startsWith('//')) return window.location.protocol + value
+  if (value.startsWith('/api/images/') || value.startsWith('/uploads/')) return API_BASE + value
+  if (value.startsWith('/')) return API_BASE + value
+
+  // 兼容数据库中仅保存文件名的历史数据
+  return API_BASE + `/api/images/${value}`
 }
 
 const api = axios.create({
