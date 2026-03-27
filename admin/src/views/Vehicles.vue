@@ -74,7 +74,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
-        <el-button type="primary" :loading="saving" @click="onSave">{{ $t('common.save') }}</el-button>
+        <el-button type="primary" :loading="saving || uploading" :disabled="uploading" @click="onSave">{{ uploading ? '图片上传中...' : $t('common.save') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -91,6 +91,7 @@ const { t } = useI18n()
 const list = ref([])
 const loading = ref(false)
 const saving = ref(false)
+const uploading = ref(false)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const editId = ref(null)
@@ -108,6 +109,7 @@ async function loadData() {
 function openDialog(row) {
   Object.assign(form, defaultForm())
   fileList.value = []
+  uploading.value = false
   if (row) {
     isEdit.value = true
     editId.value = row.id
@@ -131,20 +133,33 @@ function beforeUpload(file) {
 }
 
 async function handleUpload(options) {
+  uploading.value = true
   try {
     const res = await uploadFile(options.file)
     const url = res.data?.url
-    if (url) { form.image = url; options.onSuccess(res) }
-    else { options.onError(new Error(t('common.uploadFailed'))) }
-  } catch (err) { options.onError(err) }
+    if (url) {
+      form.image = url
+      options.file._uploadedUrl = url
+      fileList.value = [{ name: options.file.name || 'vehicle-image', url: resolveUrl(url) }]
+      options.onSuccess(res)
+    } else {
+      options.onError(new Error(t('common.uploadFailed')))
+    }
+  } catch (err) {
+    options.onError(err)
+  } finally {
+    uploading.value = false
+  }
 }
 
 function handleRemove() {
   form.image = ''
+  fileList.value = []
 }
 
 async function onSave() {
   if (!form.name_en && !form.name_zh) return ElMessage.warning(t('common.nameRequired'))
+  if (uploading.value) return ElMessage.warning('图片仍在上传中，请等待上传完成后再保存')
   saving.value = true
   try {
     if (isEdit.value) { await updateVehicle(editId.value, form); ElMessage.success(t('common.updated')) }
