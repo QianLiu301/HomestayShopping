@@ -242,6 +242,12 @@ class Vehicle(db.Model):
     created_at = db.Column(db.DateTime, default=china_now)
 
     def to_dict(self, lang='zh'):
+        # 标准化图片 URL（与 Product 保持一致）
+        image_url = None
+        if self.image:
+            normalized = _normalize_image_urls([self.image])
+            image_url = normalized[0] if normalized else None
+        
         return {
             'id': self.id,
             'name': _localized(self, 'name', lang),
@@ -257,7 +263,7 @@ class Vehicle(db.Model):
             'seats': self.seats,
             'luggage_capacity': self.luggage_capacity,
             'extra_price': float(self.extra_price) if self.extra_price else 0,
-            'image': self.image,
+            'image': image_url,
             'sort_order': self.sort_order,
             'status': self.status
         }
