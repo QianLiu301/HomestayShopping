@@ -104,6 +104,8 @@ export default {
     nameEs: 'Name (ES)',
     descEn: 'Description (EN)',
     descZh: 'Description (ZH)',
+    descRu: 'Description (RU)',
+    descEs: 'Description (ES)',
     category: 'Category',
     price: 'Price',
     originalPrice: 'Original Price',

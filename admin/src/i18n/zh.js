@@ -104,6 +104,8 @@ export default {
     nameEs: '名称 (西文)',
     descEn: '描述 (英文)',
     descZh: '描述 (中文)',
+    descRu: '描述 (俄文)',
+    descEs: '描述 (西文)',
     category: '分类',
     price: '价格',
     originalPrice: '原价',

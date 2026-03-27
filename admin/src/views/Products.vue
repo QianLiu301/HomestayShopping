@@ -114,20 +114,50 @@
               <el-input v-model="form.desc_zh" type="textarea" :rows="3" />
             </el-form-item>
           </el-col>
+          <el-col :span="12">
+            <el-form-item :label="$t('products.descRu')">
+              <el-input v-model="form.desc_ru" type="textarea" :rows="3" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item :label="$t('products.descEs')">
+              <el-input v-model="form.desc_es" type="textarea" :rows="3" />
+            </el-form-item>
+          </el-col>
         </el-row>
 
         <el-form-item :label="$t('products.productImages')">
-          <el-upload
-            :file-list="fileList"
-            :http-request="handleUpload"
-            :on-remove="handleRemove"
-            :before-upload="beforeUpload"
-            list-type="picture-card"
-            accept="image/*"
-            multiple
-          >
-            <el-icon><Plus /></el-icon>
-          </el-upload>
+          <div class="image-upload-area">
+            <div
+              v-for="(file, idx) in fileList"
+              :key="file.uid || idx"
+              class="image-item"
+              draggable="true"
+              @dragstart="onDragStart($event, idx)"
+              @dragover.prevent
+              @drop="onDrop($event, idx)"
+            >
+              <el-image :src="file.url" fit="cover" class="preview-img" />
+              <div class="image-actions">
+                <el-icon class="action-icon" @click="handleRemove(file)"><Delete /></el-icon>
+              </div>
+              <div class="drag-handle">⋮⋮</div>
+            </div>
+            <el-upload
+              :file-list="[]"
+              :http-request="handleUpload"
+              :before-upload="beforeUpload"
+              :show-file-list="false"
+              accept="image/*"
+              multiple
+              class="upload-trigger"
+            >
+              <div class="upload-box">
+                <el-icon><Plus /></el-icon>
+              </div>
+            </el-upload>
+          </div>
+          <div class="upload-tip">{{ $t('products.dragToReorder') }}</div>
         </el-form-item>
 
         <el-row :gutter="16">
@@ -157,7 +187,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getProducts, createProduct, updateProduct, deleteProduct, getCategories, uploadFile, resolveUrl } from '../api'
 
@@ -177,10 +207,11 @@ const keyword = ref('')
 const categoryFilter = ref('')
 const fileList = ref([])
 const uploadedImages = ref([])
+const draggedIndex = ref(null)
 
 const defaultForm = () => ({
   name_en: '', name_zh: '', name_ru: '', name_es: '',
-  desc_en: '', desc_zh: '',
+  desc_en: '', desc_zh: '', desc_ru: '', desc_es: '',
   category_id: null, price: 0, original_price: null,
   sort_order: 0, is_featured: false, status: 1
 })
@@ -283,6 +314,29 @@ function handleRemove(file) {
   }
 }
 
+function onDragStart(event, index) {
+  draggedIndex.value = index
+  event.dataTransfer.effectAllowed = 'move'
+}
+
+function onDrop(event, dropIndex) {
+  event.preventDefault()
+  const dragIndex = draggedIndex.value
+  if (dragIndex === null || dragIndex === dropIndex) return
+
+  // 交换 fileList
+  const draggedFile = fileList.value[dragIndex]
+  fileList.value.splice(dragIndex, 1)
+  fileList.value.splice(dropIndex, 0, draggedFile)
+
+  // 同步 uploadedImages
+  const draggedUrl = uploadedImages.value[dragIndex]
+  uploadedImages.value.splice(dragIndex, 1)
+  uploadedImages.value.splice(dropIndex, 0, draggedUrl)
+
+  draggedIndex.value = null
+}
+
 async function onSave() {
   if (!form.name_en && !form.name_zh) return ElMessage.warning(t('common.nameRequired'))
   if (!form.category_id) return ElMessage.warning(t('products.categoryRequired'))
@@ -320,4 +374,101 @@ onMounted(() => { loadData(); loadCategories() })
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .header-filters { display: flex; gap: 12px; }
 .pagination { margin-top: 16px; display: flex; justify-content: flex-end; }
+
+.image-upload-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.image-item {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border: 1px solid #dcdfe6;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: move;
+  transition: all 0.2s;
+}
+
+.image-item:hover {
+  border-color: #c8a97e;
+  box-shadow: 0 2px 8px rgba(200, 169, 126, 0.2);
+}
+
+.preview-img {
+  width: 100%;
+  height: 100%;
+}
+
+.image-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.image-item:hover .image-actions {
+  opacity: 1;
+}
+
+.action-icon {
+  font-size: 20px;
+  color: #fff;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.action-icon:hover {
+  color: #f56c6c;
+}
+
+.drag-handle {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 14px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.upload-trigger {
+  display: inline-block;
+}
+
+.upload-box {
+  width: 120px;
+  height: 120px;
+  border: 1px dashed #dcdfe6;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 28px;
+  color: #8c939d;
+}
+
+.upload-box:hover {
+  border-color: #c8a97e;
+  color: #c8a97e;
+}
+
+.upload-tip {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #909399;
+}
 </style>
