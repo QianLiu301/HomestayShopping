@@ -9,9 +9,9 @@
     <template v-else>
       <!-- Order items summary -->
       <div class="card">
-        <div class="card-title">{{ t('checkout.orderItems') }} ({{ cart.totalCount }})</div>
+        <div class="card-title">{{ t('checkout.orderItems') }} ({{ cart.selectedCount }})</div>
         <div class="order-items">
-          <div v-for="item in cart.items" :key="item.key" class="checkout-item">
+          <div v-for="item in cart.selectedItems" :key="item.key" class="checkout-item">
             <img v-if="item.image" :src="$resolveUrl(item.image)" class="item-img" />
             <div v-else class="item-img placeholder">{{ item.name?.charAt(0) }}</div>
             <div class="item-info">
@@ -97,7 +97,7 @@
       <div class="card">
         <div class="price-line">
           <span>{{ t('checkout.subtotal') }}</span>
-          <span>¥{{ cart.totalPrice.toFixed(2) }}</span>
+          <span>¥{{ cart.selectedPrice.toFixed(2) }}</span>
         </div>
         <div v-if="couponDiscount > 0" class="price-line discount">
           <span>{{ t('checkout.discount') }}</span>
@@ -184,7 +184,7 @@ const pendingAmount = ref('')
 const agreeTerms = ref(false)
 
 const finalPrice = computed(() =>
-  Math.max(0, cart.totalPrice - couponDiscount.value).toFixed(2)
+  Math.max(0, cart.selectedPrice - couponDiscount.value).toFixed(2)
 )
 
 async function onVerifyCoupon() {
@@ -193,7 +193,7 @@ async function onVerifyCoupon() {
   try {
     const res = await verifyCoupon({
       code: couponCode.value,
-      amount: cart.totalPrice,
+      amount: cart.selectedPrice,
       apply_to: 'shop'
     })
     couponDiscount.value = res.data?.discount_amount || 0
@@ -234,7 +234,7 @@ async function onSubmit() {
       contact_phone: form.contact_phone,
       contact_email: form.contact_email,
       remark: form.remark,
-      items: cart.items.map(item => ({
+      items: cart.selectedItems.map(item => ({
         product_id: item.productId,
         quantity: item.quantity,
         spec_name: item.specName || undefined
@@ -252,7 +252,7 @@ async function onSubmit() {
 
     submitting.value = true
     const res = await createShopOrder(data)
-    cart.clear()
+    cart.removeSelected()
     pendingOrderNo.value = res.data?.order_no || res.order_no || ''
     pendingAmount.value = res.data?.total_price || res.total_price || ''
     goToResult()
@@ -276,7 +276,7 @@ function goToResult() {
 }
 
 onMounted(() => {
-  if (!cart.items.length) {
+  if (!cart.items.length || !cart.selectedItems.length) {
     router.replace('/cart')
   }
 })

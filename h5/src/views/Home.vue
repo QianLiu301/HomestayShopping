@@ -25,7 +25,7 @@
         <p class="section-subtitle">{{ t('home.servicesSubtitle') }}</p>
 
         <div class="service-types">
-          <div class="service-type" v-for="svc in serviceTypes" :key="svc.type" :class="{ active: activeService === svc.type }" @click="activeService = svc.type">
+          <div class="service-type" v-for="svc in serviceTypes" :key="svc.type" :class="{ active: activeService === svc.type }" @click="activeService = svc.type; goToTransfer(svc.type)">
             <div class="svc-icon">{{ svc.icon }}</div>
             <div class="svc-name">{{ t(svc.label) }}</div>
             <div class="svc-price">{{ svc.priceLabel }}</div>
@@ -33,9 +33,10 @@
         </div>
 
         <div class="vehicle-grid">
-          <div v-for="v in vehicles" :key="v.id" class="vehicle-card" @click="$router.push('/transfer')">
+          <div v-for="v in vehicles" :key="v.id" class="vehicle-card" @click="goToTransfer(activeService)">
             <div class="vc-image">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9m-6-6h15m-6 0V6"/></svg>
+              <img v-if="v.image" :src="$resolveUrl(v.image)" :alt="v.name" />
+              <svg v-else width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9m-6-6h15m-6 0V6"/></svg>
             </div>
             <div class="vc-info">
               <h3 class="vc-name">{{ v.name }}</h3>
@@ -197,6 +198,10 @@ const steps = [
   { title: 'home.step4Title', desc: 'home.step4Desc' }
 ]
 
+function goToTransfer(serviceType) {
+  router.push({ path: '/transfer', query: { service_type: serviceType } })
+}
+
 async function onQueryOrder() {
   if (!queryContact.value) return showToast(t('order.inputContact'))
   const query = { contact: queryContact.value.trim() }
@@ -241,13 +246,14 @@ onUnmounted(() => { window.removeEventListener('resize', onResize) })
 .service-type:hover { border-color: var(--accent); background: var(--accent-light); }
 .service-type.active { border-color: var(--accent); background: var(--accent-light); }
 .svc-icon { font-size: 28px; margin-bottom: 8px; }
-.svc-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.svc-name { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.35; }
 .svc-price { font-size: 20px; font-weight: 700; color: var(--accent); margin-top: 4px; }
 
 .vehicle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 16px; }
 .vehicle-card { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; cursor: pointer; transition: all 0.3s; background: var(--white); }
 .vehicle-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(74,55,40,0.1); }
-.vc-image { height: 180px; background: linear-gradient(135deg, var(--accent-light), var(--warm-bg)); display: flex; align-items: center; justify-content: center; color: var(--accent); }
+.vc-image { height: 220px; background: linear-gradient(135deg, var(--accent-light), var(--warm-bg)); display: flex; align-items: center; justify-content: center; color: var(--accent); overflow: hidden; padding: 12px; }
+.vc-image img { width: 100%; height: 100%; object-fit: contain; border-radius: 12px; background: #fff; }
 .vc-info { padding: 20px; }
 .vc-name { font-family: var(--font-display); font-size: 20px; font-weight: 600; margin-bottom: 6px; }
 .vc-desc { font-size: 13px; color: var(--text-light); margin-bottom: 16px; }
@@ -316,10 +322,10 @@ onUnmounted(() => { window.removeEventListener('resize', onResize) })
   .service-types { flex-direction: column; gap: 10px; margin: 24px 0 20px; }
   .service-type { min-width: unset; padding: 16px; display: flex; align-items: center; gap: 12px; text-align: left; border-radius: 12px; }
   .service-type .svc-icon { font-size: 24px; margin-bottom: 0; }
-  .service-type .svc-name { font-size: 14px; flex: 1; }
+  .service-type .svc-name { font-size: 13px; flex: 1; line-height: 1.3; }
   .service-type .svc-price { font-size: 16px; margin-top: 0; }
   .vehicle-grid { grid-template-columns: 1fr; }
-  .vc-image { height: 140px; }
+  .vc-image { height: 180px; padding: 10px; }
 
   /* Shop mobile */
   .shop-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }

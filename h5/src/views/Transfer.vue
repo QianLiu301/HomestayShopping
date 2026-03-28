@@ -32,7 +32,14 @@
             @click="form.vehicle_id = v.id"
           >
             <div class="vehicle-icon">
-              <van-icon name="logistics" size="28" :color="form.vehicle_id === v.id ? '#1a73e8' : '#999'" />
+              <img
+                v-if="v.image"
+                :src="$resolveUrl(v.image)"
+                :alt="v.name"
+                class="vehicle-img"
+                @click.stop="previewVehicle(v)"
+              />
+              <van-icon v-else name="logistics" size="28" :color="form.vehicle_id === v.id ? '#1a73e8' : '#999'" />
             </div>
             <div class="vehicle-info">
               <div class="vehicle-name">{{ v.name }}</div>
@@ -243,18 +250,32 @@
       />
     </van-popup>
 
+    <van-popup v-model:show="showImagePreview" class="image-preview-popup" closeable>
+      <div class="image-preview-wrapper" @click="showImagePreview = false">
+        <img
+          v-if="previewImage"
+          :src="previewImage"
+          :alt="previewTitle"
+          class="image-preview-img"
+          @click.stop
+        />
+        <div v-if="previewTitle" class="image-preview-title">{{ previewTitle }}</div>
+      </div>
+    </van-popup>
+
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, reactive, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { showToast } from 'vant'
-import { getVehicles, getTransferPrice, createTransferOrder, verifyCoupon } from '../api'
+import { getVehicles, getTransferPrice, createTransferOrder, verifyCoupon, resolveUrl } from '../api'
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
 
 const pageLoading = ref(true)
 const submitting = ref(false)
@@ -263,7 +284,7 @@ const vehicles = ref([])
 const pricing = ref(null)
 
 const form = reactive({
-  service_type: 'pickup',
+  service_type: route.query.service_type || 'pickup',
   vehicle_id: null,
   pickup_airport: 'PVG',
   flight_no: '',
@@ -289,6 +310,9 @@ const activeDatePicker = ref('pickup') // 'pickup' or 'dropoff'
 const pendingOrderNo = ref('')
 const pendingAmount = ref('')
 const agreeTerms = ref(false)
+const showImagePreview = ref(false)
+const previewImage = ref('')
+const previewTitle = ref('')
 
 const now = new Date()
 const datePickerValue = ref([
@@ -333,6 +357,13 @@ function onDateConfirm({ selectedValues }) {
     form.flight_time = val
   }
   showDatePicker.value = false
+}
+
+function previewVehicle(vehicle) {
+  if (!vehicle?.image) return
+  previewImage.value = resolveUrl(vehicle.image)
+  previewTitle.value = vehicle.name || ''
+  showImagePreview.value = true
 }
 
 async function onVerifyCoupon() {
@@ -459,6 +490,12 @@ function goToResult() {
 }
 
 onMounted(async () => {
+  // 从 URL 参数读取服务类型
+  const serviceType = route.query.service_type
+  if (serviceType && ['pickup', 'dropoff', 'combo'].includes(serviceType)) {
+    form.service_type = serviceType
+  }
+
   try {
     const [vRes, pRes] = await Promise.all([
       getVehicles(),
@@ -601,13 +638,22 @@ onMounted(async () => {
 }
 
 .vehicle-icon {
-  width: 48px;
-  height: 48px;
+  width: 64px;
+  height: 64px;
   border-radius: 10px;
   background: #f5f5f5;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.vehicle-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: zoom-in;
 }
 
 .vehicle-card.active .vehicle-icon {
@@ -696,6 +742,43 @@ onMounted(async () => {
   font-size: 14px;
   font-weight: 500;
   animation: shake 0.4s ease-in-out;
+}
+
+.image-preview-popup {
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.88);
+}
+
+.image-preview-wrapper {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px 24px;
+  box-sizing: border-box;
+}
+
+.image-preview-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.image-preview-title {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 20px;
+  text-align: center;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
 }
 
 @keyframes shake {
