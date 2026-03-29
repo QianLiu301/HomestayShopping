@@ -79,7 +79,7 @@ export default {
       orderTitle: 'Pedidos y confirmación',
       orderContent: 'Tras enviar un pedido, lo confirmaremos lo antes posible. Una vez confirmado, se establece el acuerdo de servicio. Asegúrese de que su información de contacto y vuelo sea correcta.',
       paymentTitle: 'Pago',
-      paymentContent: 'Aceptamos WeChat Pay y Alipay. Tras realizar el pedido, complete el pago escaneando el código QR y suba el comprobante de pago (captura de pantalla o ID de transacción).',
+      paymentContent: 'Utilizamos pago fuera de línea. Después de enviar su pedido, nuestro equipo se pondrá en contacto con usted para confirmar el pedido y organizar el pago. El monto del pedido se basa en el precio al momento del envío.',
       cancelTitle: 'Cancelación y reembolsos',
       cancelTransfer: 'Traslado: reembolso completo por cancelaciones realizadas con más de 24 horas de anticipación. Las cancelaciones con menos de 24 horas pueden generar cargos parciales.',
       cancelShop: 'Productos: cancelación gratuita con reembolso completo hasta 48 horas antes de la fecha de entrega o salida. Para cancelaciones con menos de 48 horas, contáctenos. Los pedidos no pagados pueden cancelarse en cualquier momento.',

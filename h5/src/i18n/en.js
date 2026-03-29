@@ -81,7 +81,7 @@ export default {
       orderTitle: 'Orders & Confirmation',
       orderContent: 'After submitting an order, we will confirm it as soon as possible. Once confirmed, the service agreement is established. Please ensure your contact and flight information is accurate. We are not responsible for delays or losses caused by incorrect information.',
       paymentTitle: 'Payment',
-      paymentContent: 'We accept WeChat Pay and Alipay. After submitting your order, please complete payment by scanning the QR code and upload payment proof (screenshot or transaction ID). The order amount is based on the price at the time of submission.',
+      paymentContent: 'We use offline payment. After submitting your order, our team will contact you to confirm the order and arrange payment. The order amount is based on the price at the time of submission.',
       cancelTitle: 'Cancellation & Refunds',
       cancelTransfer: 'Transfer service: Full refund for cancellations made more than 24 hours before service. Cancellations within 24 hours may incur partial charges.',
       cancelShop: 'Product orders: Free cancellation with full refund up to 48 hours before the delivery or checkout date. For cancellations within 48 hours, please contact our team. Unpaid orders can be cancelled at any time.',
