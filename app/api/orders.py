@@ -475,9 +475,12 @@ def query_order():
 
 @api_bp.route('/orders/refund', methods=['POST'])
 def request_refund():
-    """客户申请退款（仅限商城订单，下单48小时内可全额退款）"""
+    """客户取消/退款订单
+    - 未确认订单(status=0)：直接取消（未付款无需退款）
+    - 已确认订单(status=1/2)：距离离店日期或期望送达日期 ≥ 48小时可免费取消退款
+    """
     from app.models import china_now
-    from datetime import timedelta
+    from datetime import datetime, timedelta
 
     data = request.get_json()
     if not data:
@@ -497,22 +500,44 @@ def request_refund():
     if order.contact_email != contact and order.contact_phone != contact:
         return error_response('联系方式不匹配')
 
-    # 检查订单状态：已取消或已完成的不能退款
+    # 检查订单状态：已完成或已取消的不能操作
     if order.status in (3, 4):
-        return error_response('该订单状态不支持退款')
+        return error_response('该订单状态不支持取消')
 
     # 检查是否已退款
     if order.refund_status == 1:
         return error_response('该订单已退款')
 
-    # 检查48小时退款期限
     now = china_now()
-    if not order.created_at:
-        return error_response('订单信息异常')
 
-    hours_since_order = (now - order.created_at).total_seconds() / 3600
-    if hours_since_order > 48:
-        return error_response('已超过48小时退款期限，无法退款')
+    # 未确认订单（未付款）：直接取消
+    if order.status == 0:
+        order.status = 4  # 已取消
+        db.session.commit()
+        return success_response({
+            'order_no': order.order_no,
+            'cancelled': True
+        }, '订单已取消')
+
+    # 已确认/配送中的订单：检查48小时规则
+    # 取离店日期和期望送达日期中较早的一个
+    target_date = None
+    if order.expected_delivery_date and order.checkout_date:
+        target_date = min(order.expected_delivery_date, order.checkout_date)
+    elif order.expected_delivery_date:
+        target_date = order.expected_delivery_date
+    elif order.checkout_date:
+        target_date = order.checkout_date
+
+    if not target_date:
+        return error_response('订单缺少送达日期或离店日期信息，请联系客服处理')
+
+    # 将 date 转为 datetime（当天 00:00）用于计算时间差
+    target_datetime = datetime.combine(target_date, datetime.min.time())
+    hours_until_target = (target_datetime - now).total_seconds() / 3600
+
+    if hours_until_target < 48:
+        return error_response('距离送达/离店日期不足48小时，无法免费取消，请联系客服处理')
 
     # 自动审批通过：标记退款状态，订单状态改为已取消
     order.refund_status = 1

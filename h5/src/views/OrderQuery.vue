@@ -174,7 +174,7 @@
           </div>
         </div>
 
-        <!-- Refund section (shop orders only) -->
+        <!-- Cancel / Refund section (shop orders only) -->
         <template v-if="expandedIdx === idx && item.type === 'shop'">
           <!-- Already refunded -->
           <div v-if="item.order.refund_status === 1" class="refund-section refund-done">
@@ -182,7 +182,17 @@
             <span>{{ t('refund.refunded') }}</span>
             <span v-if="item.order.refund_time" class="refund-time">{{ formatTime(item.order.refund_time) }}</span>
           </div>
-          <!-- Can refund (within 48h, not cancelled/completed) -->
+          <!-- Unconfirmed order (status=0): direct cancel, no payment yet -->
+          <div v-else-if="item.order.status === 0" class="refund-section">
+            <div class="refund-hint">
+              <van-icon name="info-o" size="14" />
+              <span>{{ t('refund.unpaidCancel') }}</span>
+            </div>
+            <van-button size="small" type="danger" plain round :loading="refundLoading" @click.stop="onCancelUnpaid(item)">
+              {{ t('refund.cancelOrder') }}
+            </van-button>
+          </div>
+          <!-- Confirmed order: can refund if >=48h before target date -->
           <div v-else-if="canRefund(item)" class="refund-section">
             <div class="refund-hint">
               <van-icon name="clock-o" size="14" />
@@ -192,7 +202,7 @@
               {{ t('refund.requestRefund') }}
             </van-button>
           </div>
-          <!-- Past 48h, show expired hint -->
+          <!-- Less than 48h before target date -->
           <div v-else-if="item.order.status !== 4 && item.order.status !== 3" class="refund-section refund-expired">
             <van-icon name="info-o" size="14" />
             <span>{{ t('refund.expired') }}</span>
@@ -221,7 +231,34 @@
 
     <van-empty v-if="searched && !results.length && !errorMsg" :description="t('common.noData')" />
 
-    <!-- Refund confirmation dialog -->
+    <!-- Cancel unpaid order confirmation dialog -->
+    <van-dialog
+      v-model:show="cancelVisible"
+      :title="t('refund.cancelConfirmTitle')"
+      show-cancel-button
+      :confirm-button-text="t('refund.cancelConfirmBtn')"
+      :cancel-button-text="t('common.cancel')"
+      :confirm-button-color="'#ee0a24'"
+      @confirm="onConfirmCancel"
+    >
+      <div style="padding: 16px; text-align: center;">
+        <p style="font-size: 15px; color: #333;">{{ t('refund.cancelConfirmMsg') }}</p>
+      </div>
+    </van-dialog>
+
+    <!-- Cancel success dialog (unpaid) -->
+    <van-dialog
+      v-model:show="cancelSuccessVisible"
+      :title="t('refund.cancelSuccessTitle')"
+      :confirm-button-text="t('common.confirm')"
+    >
+      <div style="padding: 20px; text-align: center;">
+        <van-icon name="checked" size="48" color="#52c41a" />
+        <p style="font-size: 15px; color: #333; margin-top: 12px;">{{ t('refund.cancelSuccessMsg') }}</p>
+      </div>
+    </van-dialog>
+
+    <!-- Refund confirmation dialog (paid orders) -->
     <van-dialog
       v-model:show="refundVisible"
       :title="t('refund.confirmTitle')"
@@ -298,6 +335,8 @@ const reviewVisible = ref(false)
 const reviewRating = ref(5)
 const reviewComment = ref('')
 const reviewOrderId = ref(null)
+const cancelVisible = ref(false)
+const cancelSuccessVisible = ref(false)
 const refundVisible = ref(false)
 const refundSuccessVisible = ref(false)
 const refundLoading = ref(false)
@@ -339,12 +378,39 @@ async function onSubmitReview() {
 function canRefund(item) {
   if (item.type !== 'shop') return false
   if (item.order.refund_status === 1) return false
-  if (item.order.status === 3 || item.order.status === 4) return false
-  if (!item.order.created_at) return false
-  const created = new Date(item.order.created_at)
+  // Only for confirmed/delivering orders (status 1 or 2)
+  if (item.order.status !== 1 && item.order.status !== 2) return false
+  // Check 48h before target date (earliest of expected_delivery_date and checkout_date)
+  const dates = [item.order.expected_delivery_date, item.order.checkout_date].filter(Boolean)
+  if (!dates.length) return false
+  const targetStr = dates.sort()[0] // earliest date (YYYY-MM-DD string sort works)
+  const target = new Date(targetStr + 'T00:00:00')
   const now = new Date()
-  const hours = (now - created) / (1000 * 60 * 60)
-  return hours <= 48
+  const hoursUntil = (target - now) / (1000 * 60 * 60)
+  return hoursUntil >= 48
+}
+
+function onCancelUnpaid(item) {
+  refundOrder.value = item
+  cancelVisible.value = true
+}
+
+async function onConfirmCancel() {
+  if (!refundOrder.value) return
+  refundLoading.value = true
+  try {
+    await requestRefund({
+      order_no: refundOrder.value.order.order_no,
+      contact: contact.value.trim()
+    })
+    refundOrder.value.order.status = 4
+    cancelVisible.value = false
+    cancelSuccessVisible.value = true
+  } catch (e) {
+    showToast(e.message || t('refund.failed'))
+  } finally {
+    refundLoading.value = false
+  }
 }
 
 function onRefund(item) {
@@ -360,7 +426,6 @@ async function onConfirmRefund() {
       order_no: refundOrder.value.order.order_no,
       contact: contact.value.trim()
     })
-    // Update local state
     refundOrder.value.order.refund_status = 1
     refundOrder.value.order.status = 4
     refundOrder.value.order.refund_time = new Date().toISOString()

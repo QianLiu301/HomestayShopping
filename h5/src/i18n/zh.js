@@ -96,7 +96,7 @@ export default {
       contactContent: '如对本服务条款有任何疑问，请通过 info@homestay.com 联系我们。'
     }
   },
-  refund: { requestRefund: '申请退款', eligible: '下单48小时内可免费退款', expired: '已超过48小时退款期限', refunded: '已退款', confirmTitle: '确认退款', confirmBtn: '确认退款', confirmMsg: '确认要申请全额退款吗？', confirmNote: '退款将在3个工作日内由客服处理完成，请耐心等待。', successTitle: '退款成功', successMsg: '您的退款申请已通过！', successNote: '客服将在3个工作日内与您联系并完成退款，请保持联系方式畅通。', failed: '退款申请失败' },
+  refund: { requestRefund: '申请退款', eligible: '距离送达/离店日期超过48小时，可免费取消', expired: '距离送达/离店日期不足48小时，如需取消请联系客服', unpaidCancel: '订单尚未付款，可直接取消', cancelOrder: '取消订单', cancelConfirmTitle: '确认取消', cancelConfirmBtn: '确认取消', cancelConfirmMsg: '确认要取消该订单吗？', cancelSuccessTitle: '取消成功', cancelSuccessMsg: '订单已取消。', refunded: '已退款', confirmTitle: '确认退款', confirmBtn: '确认退款', confirmMsg: '确认要申请全额退款吗？', confirmNote: '客服将在3个工作日内与您联系并完成退款，请保持联系方式畅通。', successTitle: '退款成功', successMsg: '您的退款申请已通过！', successNote: '客服将在3个工作日内与您联系并完成退款，请保持联系方式畅通。', failed: '操作失败' },
   review: { title: '评价订单', writeReview: '写评价', myReview: '我的评价', commentPlaceholder: '分享您的体验（选填）', ratingRequired: '请选择评分', submitSuccess: '评价成功', submitFailed: '评价失败' },
   lang: { title: '语言', zh: '中文', en: 'English', ru: 'Русский', es: 'Español' }
 }
