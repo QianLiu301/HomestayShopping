@@ -197,6 +197,8 @@ export default {
     notYetPaid: '客户尚未选择支付方式，订单未付款。',
     paymentConfirmed: '已确认收款 ✓',
     paymentConfirmedMsg: '已确认收款',
+    refunded: '已退款',
+    refundStatus: '退款状态',
     transactionId: '交易单号',
     paymentScreenshot: '付款截图',
     wechat: '微信支付',

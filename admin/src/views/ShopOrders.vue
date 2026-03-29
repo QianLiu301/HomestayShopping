@@ -56,9 +56,10 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('orders.status')" width="110">
+        <el-table-column :label="$t('orders.status')" width="140">
           <template #default="{ row }">
             <el-tag :type="statusTypes[row.status]" size="small">{{ statusLabel(row.status) }}</el-tag>
+            <el-tag v-if="row.refund_status === 1" type="danger" size="small" style="margin-left:4px">{{ $t('orders.refunded') }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column :label="$t('orders.created')" width="170">
@@ -107,6 +108,10 @@
         </el-descriptions-item>
         <el-descriptions-item v-if="current.payment_screenshot" :label="$t('orders.paymentScreenshot')">
           <el-image :src="resolveUrl(current.payment_screenshot)" style="max-width:200px;max-height:200px;border-radius:8px" :preview-src-list="[resolveUrl(current.payment_screenshot)]" fit="contain" />
+        </el-descriptions-item>
+        <el-descriptions-item v-if="current.refund_status === 1" :label="$t('orders.refundStatus')">
+          <el-tag type="danger" size="small">{{ $t('orders.refunded') }}</el-tag>
+          <span v-if="current.refund_time" style="margin-left:8px;color:#999;font-size:12px">{{ formatDateTime(current.refund_time) }}</span>
         </el-descriptions-item>
         <el-descriptions-item v-if="current.remark" :label="$t('orders.remark')">{{ current.remark }}</el-descriptions-item>
         <el-descriptions-item v-if="current.review" :label="$t('orders.review')">

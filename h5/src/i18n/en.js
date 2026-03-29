@@ -96,6 +96,7 @@ export default {
       contactContent: 'If you have any questions about these Terms of Service, please contact us at info@homestay.com.'
     }
   },
+  refund: { requestRefund: 'Request Refund', eligible: 'Free refund within 48 hours of order', expired: 'Refund period (48 hours) has expired', refunded: 'Refunded', confirmTitle: 'Confirm Refund', confirmBtn: 'Confirm Refund', confirmMsg: 'Are you sure you want a full refund?', confirmNote: 'The refund will be processed by our team within 3 business days. Please be patient.', successTitle: 'Refund Approved', successMsg: 'Your refund request has been approved!', successNote: 'Our team will process the refund within 3 business days. The amount will be returned to your original payment method. Please check your account.', failed: 'Refund request failed' },
   review: { title: 'Rate Your Order', writeReview: 'Write a Review', myReview: 'My Review', commentPlaceholder: 'Share your experience (optional)', ratingRequired: 'Please select a rating', submitSuccess: 'Review submitted', submitFailed: 'Failed to submit review' },
   lang: { title: 'Language', zh: '中文', en: 'English', ru: 'Русский', es: 'Español' }
 }

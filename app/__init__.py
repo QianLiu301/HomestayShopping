@@ -28,6 +28,8 @@ def _auto_migrate(app):
         ('shop_orders', 'expected_delivery_date', 'DATE'),
         ('shop_orders', 'expected_delivery_time', 'VARCHAR(10)'),
         ('shop_orders', 'checkout_date', 'DATE'),
+        ('shop_orders', 'refund_status', 'SMALLINT DEFAULT 0'),
+        ('shop_orders', 'refund_time', 'TIMESTAMP'),
     ]
     with app.app_context():
         # 先确保所有表都存在

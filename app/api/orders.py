@@ -471,6 +471,63 @@ def query_order():
     return success_response({'orders': results})
 
 
+# ==================== 退款申请 ====================
+
+@api_bp.route('/orders/refund', methods=['POST'])
+def request_refund():
+    """客户申请退款（仅限商城订单，下单48小时内可全额退款）"""
+    from app.models import china_now
+    from datetime import timedelta
+
+    data = request.get_json()
+    if not data:
+        return error_response('请求数据为空')
+
+    order_no = data.get('order_no', '').strip()
+    contact = data.get('contact', '').strip()
+
+    if not order_no or not contact:
+        return error_response('缺少订单号或联系方式')
+
+    order = ShopOrder.query.filter_by(order_no=order_no).first()
+    if not order:
+        return error_response('订单不存在', 404)
+
+    # 验证联系方式
+    if order.contact_email != contact and order.contact_phone != contact:
+        return error_response('联系方式不匹配')
+
+    # 检查订单状态：已取消或已完成的不能退款
+    if order.status in (3, 4):
+        return error_response('该订单状态不支持退款')
+
+    # 检查是否已退款
+    if order.refund_status == 1:
+        return error_response('该订单已退款')
+
+    # 检查48小时退款期限
+    now = china_now()
+    if not order.created_at:
+        return error_response('订单信息异常')
+
+    hours_since_order = (now - order.created_at).total_seconds() / 3600
+    if hours_since_order > 48:
+        return error_response('已超过48小时退款期限，无法退款')
+
+    # 自动审批通过：标记退款状态，订单状态改为已取消
+    order.refund_status = 1
+    order.refund_time = now
+    order.status = 4  # 已取消
+
+    db.session.commit()
+
+    return success_response({
+        'order_no': order.order_no,
+        'refund_amount': float(order.total_price),
+        'refund_time': order.refund_time.isoformat()
+    }, '退款申请成功')
+
+
 # ==================== 用户确认已支付 ====================
 
 @api_bp.route('/orders/confirm-paid', methods=['POST'])

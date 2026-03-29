@@ -77,6 +77,9 @@ export const uploadFile = (file) => {
   return api.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
 }
 
+// ==================== Refund ====================
+export const requestRefund = (data) => api.post('/orders/refund', data)
+
 // ==================== Reviews ====================
 export const submitReview = (data) => api.post('/reviews', data)
 export const getProductRating = (productId) => api.get(`/products/${productId}/rating`)

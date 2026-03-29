@@ -476,6 +476,8 @@ class ShopOrder(db.Model):
     transaction_id = db.Column(db.String(64))
     payment_screenshot = db.Column(db.String(255))
     status = db.Column(db.SmallInteger, default=0)  # 0待处理 1已确认 2配送中 3已完成 4已取消
+    refund_status = db.Column(db.SmallInteger, default=0)  # 0无退款 1已退款
+    refund_time = db.Column(db.DateTime)      # 退款时间
     delivery_time = db.Column(db.DateTime)    # 开始配送时间
     completed_time = db.Column(db.DateTime)   # 完成配送时间
     remark = db.Column(db.Text)
@@ -511,6 +513,8 @@ class ShopOrder(db.Model):
             'transaction_id': self.transaction_id,
             'payment_screenshot': self.payment_screenshot,
             'status': self.status,
+            'refund_status': self.refund_status or 0,
+            'refund_time': self.refund_time.isoformat() if self.refund_time else None,
             'delivery_time': self.delivery_time.isoformat() if self.delivery_time else None,
             'completed_time': self.completed_time.isoformat() if self.completed_time else None,
             'items': [item.to_dict() for item in self.items],

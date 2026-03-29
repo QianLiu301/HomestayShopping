@@ -197,6 +197,8 @@ export default {
     notYetPaid: 'Customer has not selected a payment method. Order is unpaid.',
     paymentConfirmed: 'Payment confirmed ✓',
     paymentConfirmedMsg: 'Payment confirmed',
+    refunded: 'Refunded',
+    refundStatus: 'Refund Status',
     transactionId: 'Transaction ID',
     paymentScreenshot: 'Payment Screenshot',
     wechat: 'WeChat Pay',

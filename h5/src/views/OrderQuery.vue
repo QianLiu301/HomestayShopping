@@ -174,6 +174,31 @@
           </div>
         </div>
 
+        <!-- Refund section (shop orders only) -->
+        <template v-if="expandedIdx === idx && item.type === 'shop'">
+          <!-- Already refunded -->
+          <div v-if="item.order.refund_status === 1" class="refund-section refund-done">
+            <van-icon name="checked" size="16" color="#52c41a" />
+            <span>{{ t('refund.refunded') }}</span>
+            <span v-if="item.order.refund_time" class="refund-time">{{ formatTime(item.order.refund_time) }}</span>
+          </div>
+          <!-- Can refund (within 48h, not cancelled/completed) -->
+          <div v-else-if="canRefund(item)" class="refund-section">
+            <div class="refund-hint">
+              <van-icon name="clock-o" size="14" />
+              <span>{{ t('refund.eligible') }}</span>
+            </div>
+            <van-button size="small" type="danger" plain round :loading="refundLoading" @click.stop="onRefund(item)">
+              {{ t('refund.requestRefund') }}
+            </van-button>
+          </div>
+          <!-- Past 48h, show expired hint -->
+          <div v-else-if="item.order.status !== 4 && item.order.status !== 3" class="refund-section refund-expired">
+            <van-icon name="info-o" size="14" />
+            <span>{{ t('refund.expired') }}</span>
+          </div>
+        </template>
+
         <!-- Review section -->
         <template v-if="expandedIdx === idx && item.type === 'shop'">
           <div v-if="item.order.review" class="review-section">
@@ -195,6 +220,36 @@
     </template>
 
     <van-empty v-if="searched && !results.length && !errorMsg" :description="t('common.noData')" />
+
+    <!-- Refund confirmation dialog -->
+    <van-dialog
+      v-model:show="refundVisible"
+      :title="t('refund.confirmTitle')"
+      show-cancel-button
+      :confirm-button-text="t('refund.confirmBtn')"
+      :cancel-button-text="t('common.cancel')"
+      :confirm-button-color="'#ee0a24'"
+      @confirm="onConfirmRefund"
+    >
+      <div style="padding: 16px; text-align: center;">
+        <p style="font-size: 15px; color: #333; margin-bottom: 8px;">{{ t('refund.confirmMsg') }}</p>
+        <p style="font-size: 18px; font-weight: 700; color: #ee0a24; margin-bottom: 8px;">¥{{ refundOrder?.order?.total_price }}</p>
+        <p style="font-size: 13px; color: #999;">{{ t('refund.confirmNote') }}</p>
+      </div>
+    </van-dialog>
+
+    <!-- Refund success dialog -->
+    <van-dialog
+      v-model:show="refundSuccessVisible"
+      :title="t('refund.successTitle')"
+      :confirm-button-text="t('common.confirm')"
+    >
+      <div style="padding: 20px; text-align: center;">
+        <van-icon name="checked" size="48" color="#52c41a" />
+        <p style="font-size: 15px; color: #333; margin-top: 12px;">{{ t('refund.successMsg') }}</p>
+        <p style="font-size: 13px; color: #999; margin-top: 8px;">{{ t('refund.successNote') }}</p>
+      </div>
+    </van-dialog>
 
     <!-- Review dialog -->
     <van-dialog
@@ -226,7 +281,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { queryOrder, submitReview } from '../api'
+import { queryOrder, submitReview, requestRefund } from '../api'
 import { showToast } from 'vant'
 
 const { t } = useI18n()
@@ -243,6 +298,10 @@ const reviewVisible = ref(false)
 const reviewRating = ref(5)
 const reviewComment = ref('')
 const reviewOrderId = ref(null)
+const refundVisible = ref(false)
+const refundSuccessVisible = ref(false)
+const refundLoading = ref(false)
+const refundOrder = ref(null)
 
 function openReview(order) {
   reviewOrderId.value = order.id
@@ -274,6 +333,43 @@ async function onSubmitReview() {
     }
   } catch (e) {
     showToast(e.message || t('review.submitFailed'))
+  }
+}
+
+function canRefund(item) {
+  if (item.type !== 'shop') return false
+  if (item.order.refund_status === 1) return false
+  if (item.order.status === 3 || item.order.status === 4) return false
+  if (!item.order.created_at) return false
+  const created = new Date(item.order.created_at)
+  const now = new Date()
+  const hours = (now - created) / (1000 * 60 * 60)
+  return hours <= 48
+}
+
+function onRefund(item) {
+  refundOrder.value = item
+  refundVisible.value = true
+}
+
+async function onConfirmRefund() {
+  if (!refundOrder.value) return
+  refundLoading.value = true
+  try {
+    await requestRefund({
+      order_no: refundOrder.value.order.order_no,
+      contact: contact.value.trim()
+    })
+    // Update local state
+    refundOrder.value.order.refund_status = 1
+    refundOrder.value.order.status = 4
+    refundOrder.value.order.refund_time = new Date().toISOString()
+    refundVisible.value = false
+    refundSuccessVisible.value = true
+  } catch (e) {
+    showToast(e.message || t('refund.failed'))
+  } finally {
+    refundLoading.value = false
   }
 }
 
@@ -465,6 +561,42 @@ onMounted(() => {
   color: #ff4d4f;
   font-size: 14px;
   font-weight: 500;
+}
+
+.refund-section {
+  margin-top: 12px;
+  padding: 10px 0;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.refund-section.refund-done {
+  color: #52c41a;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.refund-section.refund-done .refund-time {
+  font-weight: 400;
+  color: #999;
+  font-size: 12px;
+  margin-left: auto;
+}
+
+.refund-section.refund-expired {
+  color: #999;
+  font-size: 12px;
+}
+
+.refund-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #ff976a;
 }
 
 .review-section {
