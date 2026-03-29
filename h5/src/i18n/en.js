@@ -84,7 +84,7 @@ export default {
       paymentContent: 'We accept WeChat Pay and Alipay. After submitting your order, please complete payment by scanning the QR code and upload payment proof (screenshot or transaction ID). The order amount is based on the price at the time of submission.',
       cancelTitle: 'Cancellation & Refunds',
       cancelTransfer: 'Transfer service: Full refund for cancellations made more than 24 hours before service. Cancellations within 24 hours may incur partial charges.',
-      cancelShop: 'Product orders: Cancellations are generally not accepted after order confirmation and product preparation. Please contact us for special circumstances.',
+      cancelShop: 'Product orders: Free cancellation with full refund up to 48 hours before the delivery or checkout date. For cancellations within 48 hours, please contact our team. Unpaid orders can be cancelled at any time.',
       liabilityTitle: 'Disclaimer',
       liabilityFlight: 'For transfer time adjustments caused by flight delays, cancellations, or changes beyond our control, we will make our best effort to accommodate but are not liable for additional costs.',
       liabilityForce: 'For service disruptions caused by force majeure (natural disasters, pandemics, policy changes, etc.), we will negotiate refunds or rescheduling but are not liable for breach of contract.',

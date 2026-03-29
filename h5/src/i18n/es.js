@@ -82,7 +82,7 @@ export default {
       paymentContent: 'Aceptamos WeChat Pay y Alipay. Tras realizar el pedido, complete el pago escaneando el código QR y suba el comprobante de pago (captura de pantalla o ID de transacción).',
       cancelTitle: 'Cancelación y reembolsos',
       cancelTransfer: 'Traslado: reembolso completo por cancelaciones realizadas con más de 24 horas de anticipación. Las cancelaciones con menos de 24 horas pueden generar cargos parciales.',
-      cancelShop: 'Productos: las cancelaciones generalmente no se aceptan después de la confirmación y preparación del pedido. Contáctenos para casos especiales.',
+      cancelShop: 'Productos: cancelación gratuita con reembolso completo hasta 48 horas antes de la fecha de entrega o salida. Para cancelaciones con menos de 48 horas, contáctenos. Los pedidos no pagados pueden cancelarse en cualquier momento.',
       liabilityTitle: 'Exención de responsabilidad',
       liabilityFlight: 'Para ajustes de horario causados por retrasos, cancelaciones o cambios de vuelo fuera de nuestro control, haremos nuestro mejor esfuerzo pero no somos responsables de costos adicionales.',
       liabilityForce: 'Para interrupciones por fuerza mayor (desastres naturales, pandemias, etc.), negociaremos reembolsos o reprogramación, pero no somos responsables por incumplimiento.',
