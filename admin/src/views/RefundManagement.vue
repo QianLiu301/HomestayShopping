@@ -149,28 +149,36 @@ const refundStatusTypes = { 0: 'info', 1: 'warning', 2: 'success' }
 const refundStatusLabel = s => t(`refund.${['noRefundNeeded','pendingRefund','refunded'][s] || 'unknown'}`)
 
 function onQuickDate(cmd) {
+  // 使用本地时区格式化日期，避免 UTC 时区偏移导致日期错误
+  const formatLocalDate = (date) => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+  
   const now = new Date()
-  const today = now.toISOString().slice(0, 10)
+  const today = formatLocalDate(now)
   
   if (cmd === 'today') {
     dateRange.value = [today, today]
   } else if (cmd === 'yesterday') {
     const yesterday = new Date(now)
     yesterday.setDate(yesterday.getDate() - 1)
-    const yesterdayStr = yesterday.toISOString().slice(0, 10)
+    const yesterdayStr = formatLocalDate(yesterday)
     dateRange.value = [yesterdayStr, yesterdayStr]
   } else if (cmd === '7d') {
     const d = new Date(now)
     d.setDate(d.getDate() - 7)
-    dateRange.value = [d.toISOString().slice(0, 10), today]
+    dateRange.value = [formatLocalDate(d), today]
   } else if (cmd === '30d') {
     const d = new Date(now)
     d.setDate(d.getDate() - 30)
-    dateRange.value = [d.toISOString().slice(0, 10), today]
+    dateRange.value = [formatLocalDate(d), today]
   } else if (cmd === '3m') {
     const d = new Date(now)
     d.setMonth(d.getMonth() - 3)
-    dateRange.value = [d.toISOString().slice(0, 10), today]
+    dateRange.value = [formatLocalDate(d), today]
   }
   loadData()
 }
