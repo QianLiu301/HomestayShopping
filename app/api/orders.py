@@ -520,7 +520,7 @@ def request_refund():
         return error_response('该订单状态不支持取消')
 
     # 检查是否已退款
-    if order.refund_status == 1:
+    if order.refund_status == 2:
         return error_response('该订单已退款')
 
     now = china_now()
@@ -528,6 +528,9 @@ def request_refund():
     # 未确认订单（未付款）：直接取消
     if order.status == 0:
         order.status = 4  # 已取消
+        order.cancelled_at = now
+        order.refund_status = 0
+        order.refund_amount = 0
         db.session.commit()
 
         # 发送取消通知给客户
@@ -564,8 +567,10 @@ def request_refund():
         return error_response('距离送达/离店日期不足48小时，无法免费取消，请联系客服处理')
 
     # 自动审批通过：标记退款状态，订单状态改为已取消
-    order.refund_status = 1
+    order.refund_status = 2
+    order.refund_amount = order.total_price
     order.refund_time = now
+    order.cancelled_at = now
     order.status = 4  # 已取消
 
     db.session.commit()

@@ -47,6 +47,10 @@ def admin_required(f):
             auth_header = request.headers['Authorization']
             if auth_header.startswith('Bearer '):
                 token = auth_header.split(' ')[1]
+
+        # 兼容文件下载等无法方便设置 Authorization Header 的场景
+        if not token:
+            token = request.args.get('token')
         
         if not token:
             return jsonify({'code': 401, 'message': '缺少认证Token'}), 401

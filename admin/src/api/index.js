@@ -101,6 +101,19 @@ export const updateTransferOrder = (id, data) => http.put(`/admin/orders/transfe
 export const confirmTransferPayment = id => http.post(`/admin/orders/transfer/${id}/confirm-payment`)
 export const batchDeleteShopOrders = ids => http.post('/admin/orders/shop/batch-delete', { ids })
 export const batchDeleteTransferOrders = ids => http.post('/admin/orders/transfer/batch-delete', { ids })
+export const getCancelledOrders = params => http.get('/admin/orders/cancelled', { params })
+export const updateRefundStatus = (orderType, orderId, data) => http.put(`/admin/orders/refund/${orderType}/${orderId}`, data)
+export const exportCancelledOrdersUrl = params => {
+  const search = new URLSearchParams()
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      search.append(key, value)
+    }
+  })
+  const token = localStorage.getItem('admin_token')
+  if (token) search.append('token', token)
+  return `${API_BASE}/api/admin/orders/cancelled/export?${search.toString()}`
+}
 
 // Delivery
 export const getDeliveryOrders = params => http.get('/admin/delivery/orders', { params })

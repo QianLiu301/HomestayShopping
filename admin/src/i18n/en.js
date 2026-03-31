@@ -12,6 +12,7 @@ export default {
     orders: 'Orders',
     shopOrders: 'Shop Orders',
     transferOrders: 'Transfer Orders',
+    refundManagement: 'Refund Management',
     coupons: 'Coupons',
     settings: 'Settings',
     payment: 'Payment',
@@ -241,6 +242,33 @@ export default {
     checkoutDatePlaceholder: 'Select guest checkout date',
     timePeriod: { morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening' },
     review: 'Customer Review'
+  },
+
+  // Refund Management
+  refund: {
+    title: 'Refund Management',
+    searchPlaceholder: 'Search order no / customer / contact...',
+    orderType: 'Order Type',
+    cancelledAt: 'Cancelled At',
+    contact: 'Contact',
+    refundAmount: 'Refund Amount',
+    refundStatus: 'Refund Status',
+    noRefundNeeded: 'No Refund',
+    pendingRefund: 'Pending',
+    refunded: 'Refunded',
+    today: 'Today',
+    yesterday: 'Yesterday',
+    last7days: 'Last 7 Days',
+    last30days: 'Last 30 Days',
+    exportCsv: 'Export CSV',
+    exportStarted: 'Export started, downloading...',
+    actions: 'Actions',
+    editRefund: 'Process Refund',
+    editRefundStatus: 'Edit Refund Status',
+    orderNo: 'Order No',
+    cancel: 'Cancel',
+    save: 'Save',
+    updateSuccess: 'Refund status updated successfully'
   },
 
   // Delivery

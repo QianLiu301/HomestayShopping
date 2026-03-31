@@ -12,6 +12,7 @@ export default {
     orders: '订单管理',
     shopOrders: '商城订单',
     transferOrders: '接送订单',
+    refundManagement: '退款处理',
     coupons: '优惠券',
     settings: '系统设置',
     payment: '支付设置',
@@ -241,6 +242,33 @@ export default {
     checkoutDatePlaceholder: '选择客户退房日期',
     timePeriod: { morning: '上午', afternoon: '下午', evening: '晚上' },
     review: '客户评价'
+  },
+
+  // Refund Management
+  refund: {
+    title: '退款处理',
+    searchPlaceholder: '搜索订单号/客户/联系方式...',
+    orderType: '订单类型',
+    cancelledAt: '取消时间',
+    contact: '联系方式',
+    refundAmount: '退款金额',
+    refundStatus: '退款状态',
+    noRefundNeeded: '无需退款',
+    pendingRefund: '待退款',
+    refunded: '已退款',
+    today: '今天',
+    yesterday: '昨天',
+    last7days: '最近7天',
+    last30days: '最近30天',
+    exportCsv: '导出CSV',
+    exportStarted: '开始导出，正在下载...',
+    actions: '操作',
+    editRefund: '处理退款',
+    editRefundStatus: '编辑退款状态',
+    orderNo: '订单号',
+    cancel: '取消',
+    save: '保存',
+    updateSuccess: '退款状态更新成功'
   },
 
   // Delivery

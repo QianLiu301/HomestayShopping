@@ -635,11 +635,22 @@ def admin_update_shop_order(order_id):
         new_status = data['status']
         old_status = order.status
         order.status = new_status
+        now = china_now()
         # 自动记录配送/完成时间
         if new_status == 2 and old_status != 2 and not order.delivery_time:
-            order.delivery_time = china_now()
+            order.delivery_time = now
         if new_status == 3 and old_status != 3 and not order.completed_time:
-            order.completed_time = china_now()
+            order.completed_time = now
+        if new_status == 4 and old_status != 4 and not order.cancelled_at:
+            order.cancelled_at = now
+            # 只有已支付的订单才需要退款
+            if order.payment_status == 1 and order.refund_status == 0:
+                order.refund_status = 1  # 待退款
+                order.refund_amount = order.total_price
+            elif order.payment_status == 0:
+                # 未支付订单取消，无需退款
+                order.refund_status = 0
+                order.refund_amount = 0
     if 'remark' in data:
         order.remark = data['remark']
     if 'booking_no' in data:
@@ -716,7 +727,20 @@ def admin_update_transfer_order(order_id):
     data = request.get_json()
 
     if 'status' in data:
-        order.status = data['status']
+        from app.models import china_now
+        new_status = data['status']
+        old_status = order.status
+        order.status = new_status
+        if new_status == 3 and old_status != 3 and not order.cancelled_at:
+            order.cancelled_at = china_now()
+            # 只有已支付的订单才需要退款
+            if order.payment_status == 1 and order.refund_status == 0:
+                order.refund_status = 1  # 待退款
+                order.refund_amount = order.total_price
+            elif order.payment_status == 0:
+                # 未支付订单取消，无需退款
+                order.refund_status = 0
+                order.refund_amount = 0
     if 'remark' in data:
         order.remark = data['remark']
     if 'booking_no' in data:
@@ -971,3 +995,294 @@ def admin_delete_coupon(coupon_id):
     db.session.commit()
     
     return success_response(None, '删除成功')
+
+
+# ==================== 已取消订单管理（退款处理） ====================
+
+@api_bp.route('/admin/orders/cancelled', methods=['GET'])
+@admin_required
+def admin_get_cancelled_orders():
+    """获取已取消订单列表（商城+接送机统一查询）"""
+    from datetime import datetime, timedelta
+    from app.models import china_now
+    
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 15, type=int)
+    date_start = request.args.get('date_start', '')
+    date_end = request.args.get('date_end', '')
+    refund_status = request.args.get('refund_status', type=int)
+    keyword = request.args.get('keyword', '')
+    
+    # 不设置默认日期筛选；未选择日期时返回全部已取消订单
+    
+    # 查询商城已取消订单 (status=4)
+    shop_query = ShopOrder.query.filter_by(status=4)
+    if date_start:
+        try:
+            shop_query = shop_query.filter(ShopOrder.cancelled_at >= datetime.fromisoformat(date_start))
+        except ValueError:
+            pass
+    if date_end:
+        try:
+            shop_query = shop_query.filter(ShopOrder.cancelled_at <= datetime.fromisoformat(date_end + 'T23:59:59'))
+        except ValueError:
+            pass
+    if refund_status is not None:
+        shop_query = shop_query.filter_by(refund_status=refund_status)
+    if keyword:
+        shop_query = shop_query.filter(
+            (ShopOrder.order_no.ilike(f'%{keyword}%')) |
+            (ShopOrder.contact_name.ilike(f'%{keyword}%')) |
+            (ShopOrder.contact_phone.ilike(f'%{keyword}%')) |
+            (ShopOrder.contact_email.ilike(f'%{keyword}%'))
+        )
+    
+    # 查询接送机已取消订单 (status=3)
+    transfer_query = TransferOrder.query.filter_by(status=3)
+    if date_start:
+        try:
+            transfer_query = transfer_query.filter(TransferOrder.cancelled_at >= datetime.fromisoformat(date_start))
+        except ValueError:
+            pass
+    if date_end:
+        try:
+            transfer_query = transfer_query.filter(TransferOrder.cancelled_at <= datetime.fromisoformat(date_end + 'T23:59:59'))
+        except ValueError:
+            pass
+    if refund_status is not None:
+        transfer_query = transfer_query.filter_by(refund_status=refund_status)
+    if keyword:
+        transfer_query = transfer_query.filter(
+            (TransferOrder.order_no.ilike(f'%{keyword}%')) |
+            (TransferOrder.contact_name.ilike(f'%{keyword}%')) |
+            (TransferOrder.contact_phone.ilike(f'%{keyword}%')) |
+            (TransferOrder.contact_email.ilike(f'%{keyword}%'))
+        )
+    
+    # 获取所有符合条件的订单
+    shop_orders = shop_query.order_by(ShopOrder.cancelled_at.desc().nullslast(), ShopOrder.created_at.desc()).all()
+    transfer_orders = transfer_query.order_by(TransferOrder.cancelled_at.desc().nullslast(), TransferOrder.created_at.desc()).all()
+    
+    # 合并并标记订单类型
+    all_orders = []
+    for o in shop_orders:
+        order_dict = o.to_dict()
+        order_dict['order_type'] = 'shop'
+        order_dict['service_type'] = '商城'
+        all_orders.append(order_dict)
+    
+    for o in transfer_orders:
+        order_dict = o.to_dict()
+        order_dict['order_type'] = 'transfer'
+        service_type_map = {'pickup': '接机', 'dropoff': '送机', 'combo': '接送组合'}
+        order_dict['service_type'] = service_type_map.get(o.service_type, o.service_type)
+        all_orders.append(order_dict)
+    
+    # 按取消时间倒序排序
+    all_orders.sort(key=lambda x: x.get('cancelled_at') or x.get('created_at') or '', reverse=True)
+    
+    # 手动分页
+    total = len(all_orders)
+    start = (page - 1) * per_page
+    end = start + per_page
+    page_orders = all_orders[start:end]
+    
+    return success_response({
+        'list': page_orders,
+        'total': total,
+        'page': page,
+        'pages': (total + per_page - 1) // per_page
+    })
+
+
+@api_bp.route('/admin/orders/cancelled/export', methods=['GET'])
+@admin_required
+def admin_export_cancelled_orders():
+    """导出已取消订单为 CSV"""
+    import csv
+    import io
+    from datetime import datetime
+    from app.models import china_now
+    from flask import make_response
+    
+    date_start = request.args.get('date_start', '')
+    date_end = request.args.get('date_end', '')
+    refund_status = request.args.get('refund_status', type=int)
+    keyword = request.args.get('keyword', '')
+    
+    # 不设置默认日期筛选；未选择日期时导出全部符合条件的已取消订单
+    
+    # 查询商城已取消订单
+    shop_query = ShopOrder.query.filter_by(status=4)
+    if date_start:
+        try:
+            shop_query = shop_query.filter(ShopOrder.cancelled_at >= datetime.fromisoformat(date_start))
+        except ValueError:
+            pass
+    if date_end:
+        try:
+            shop_query = shop_query.filter(ShopOrder.cancelled_at <= datetime.fromisoformat(date_end + 'T23:59:59'))
+        except ValueError:
+            pass
+    if refund_status is not None:
+        shop_query = shop_query.filter_by(refund_status=refund_status)
+    if keyword:
+        shop_query = shop_query.filter(
+            (ShopOrder.order_no.ilike(f'%{keyword}%')) |
+            (ShopOrder.contact_name.ilike(f'%{keyword}%')) |
+            (ShopOrder.contact_phone.ilike(f'%{keyword}%')) |
+            (ShopOrder.contact_email.ilike(f'%{keyword}%'))
+        )
+    
+    # 查询接送机已取消订单
+    transfer_query = TransferOrder.query.filter_by(status=3)
+    if date_start:
+        try:
+            transfer_query = transfer_query.filter(TransferOrder.cancelled_at >= datetime.fromisoformat(date_start))
+        except ValueError:
+            pass
+    if date_end:
+        try:
+            transfer_query = transfer_query.filter(TransferOrder.cancelled_at <= datetime.fromisoformat(date_end + 'T23:59:59'))
+        except ValueError:
+            pass
+    if refund_status is not None:
+        transfer_query = transfer_query.filter_by(refund_status=refund_status)
+    if keyword:
+        transfer_query = transfer_query.filter(
+            (TransferOrder.order_no.ilike(f'%{keyword}%')) |
+            (TransferOrder.contact_name.ilike(f'%{keyword}%')) |
+            (TransferOrder.contact_phone.ilike(f'%{keyword}%')) |
+            (TransferOrder.contact_email.ilike(f'%{keyword}%'))
+        )
+    
+    shop_orders = shop_query.order_by(ShopOrder.cancelled_at.desc().nullslast()).all()
+    transfer_orders = transfer_query.order_by(TransferOrder.cancelled_at.desc().nullslast()).all()
+    
+    # 生成 CSV
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # 写入表头（带 BOM 以支持 Excel 正确识别 UTF-8）
+    output.write('\ufeff')
+    writer.writerow([
+        '取消日期', '取消时间', '订单类型', '服务类型', '订单号',
+        '客户姓名', '联系电话', '联系邮箱', '支付状态',
+        '订单总金额', '退款金额', '退款状态', '备注'
+    ])
+    
+    # 写入商城订单
+    for o in shop_orders:
+        cancelled_at = o.cancelled_at.strftime('%Y-%m-%d') if o.cancelled_at else ''
+        cancelled_time = o.cancelled_at.strftime('%H:%M:%S') if o.cancelled_at else ''
+        payment_status_text = '已支付' if o.payment_status == 1 else '未支付'
+        refund_status_map = {0: '无需退款', 1: '待退款', 2: '已退款'}
+        refund_status_text = refund_status_map.get(o.refund_status or 0, '未知')
+        
+        writer.writerow([
+            cancelled_at,
+            cancelled_time,
+            '商城',
+            '商城订单',
+            o.order_no,
+            o.contact_name,
+            o.contact_phone or '',
+            o.contact_email or '',
+            payment_status_text,
+            float(o.total_price),
+            float(o.refund_amount) if o.refund_amount is not None else '',
+            refund_status_text,
+            o.remark or ''
+        ])
+    
+    # 写入接送机订单
+    for o in transfer_orders:
+        cancelled_at = o.cancelled_at.strftime('%Y-%m-%d') if o.cancelled_at else ''
+        cancelled_time = o.cancelled_at.strftime('%H:%M:%S') if o.cancelled_at else ''
+        payment_status_text = '已支付' if o.payment_status == 1 else '未支付'
+        refund_status_map = {0: '无需退款', 1: '待退款', 2: '已退款'}
+        refund_status_text = refund_status_map.get(o.refund_status or 0, '未知')
+        service_type_map = {'pickup': '接机', 'dropoff': '送机', 'combo': '接送组合'}
+        service_type_text = service_type_map.get(o.service_type, o.service_type)
+        
+        writer.writerow([
+            cancelled_at,
+            cancelled_time,
+            '接送机',
+            service_type_text,
+            o.order_no,
+            o.contact_name,
+            o.contact_phone or '',
+            o.contact_email or '',
+            payment_status_text,
+            float(o.total_price),
+            float(o.refund_amount) if o.refund_amount is not None else '',
+            refund_status_text,
+            o.remark or ''
+        ])
+    
+    # 生成响应
+    output.seek(0)
+    response = make_response(output.getvalue())
+    response.headers['Content-Type'] = 'text/csv; charset=utf-8'
+    response.headers['Content-Disposition'] = f'attachment; filename=cancelled_orders_{china_now().strftime("%Y%m%d")}.csv'
+    
+    return response
+
+
+# ==================== 退款状态管理 ====================
+
+@api_bp.route('/admin/orders/refund/<string:order_type>/<int:order_id>', methods=['PUT'])
+@admin_required
+def admin_update_refund_status(order_type, order_id):
+    """更新订单退款状态（商城或接送机订单）"""
+    from app.models import china_now
+    
+    if order_type not in ['shop', 'transfer']:
+        return error_response('无效的订单类型', 400)
+    
+    # 查找订单
+    if order_type == 'shop':
+        order = ShopOrder.query.get(order_id)
+    else:
+        order = TransferOrder.query.get(order_id)
+    
+    if not order:
+        return error_response('订单不存在', 404)
+    
+    data = request.get_json()
+    new_refund_status = data.get('refund_status')
+    
+    if new_refund_status is None:
+        return error_response('缺少退款状态参数')
+    
+    # 验证退款状态值
+    if new_refund_status not in [0, 1, 2]:
+        return error_response('无效的退款状态')
+    
+    old_refund_status = order.refund_status or 0
+    order.refund_status = new_refund_status
+    
+    # 如果标记为已退款，记录退款时间和金额
+    if new_refund_status == 2 and old_refund_status != 2:
+        if not order.refund_time:
+            order.refund_time = china_now()
+        if order.refund_amount is None or order.refund_amount == 0:
+            order.refund_amount = order.total_price
+    
+    # 如果改为无需退款，清空退款金额和时间
+    if new_refund_status == 0:
+        order.refund_amount = 0
+        order.refund_time = None
+    
+    # 允许管理员修改退款金额
+    if 'refund_amount' in data:
+        order.refund_amount = data['refund_amount']
+    
+    # 允许管理员添加备注
+    if 'remark' in data:
+        order.remark = data['remark']
+    
+    db.session.commit()
+    
+    return success_response(order.to_dict(), '退款状态更新成功')

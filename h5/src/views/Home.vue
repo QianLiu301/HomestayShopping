@@ -133,7 +133,15 @@
           <div class="footer-links">
             <h4>{{ t('nav.contact') }}</h4>
             <p>Shanghai, China</p>
-            <p><a href="mailto:support@shanghai-tour-guide.com" style="color: inherit; text-decoration: underline;">support@shanghai-tour-guide.com</a></p>
+            <p>
+              <a
+                href="mailto:support@shanghai-tour-guide.com"
+                class="email-link"
+                @click.prevent="openSupportEmail"
+              >
+                support@shanghai-tour-guide.com
+              </a>
+            </p>
           </div>
           <div class="footer-links">
             <h4>{{ t('legal.termsTitle') }}</h4>
@@ -141,7 +149,7 @@
             <router-link to="/terms">{{ t('legal.termsOfService') }}</router-link>
           </div>
         </div>
-        <div class="footer-bottom"><p>© 2024 Homestay. All rights reserved.</p></div>
+        <div class="footer-bottom"><p>© 2026 Homestay. All rights reserved.</p></div>
       </div>
     </footer>
   </div>
@@ -156,6 +164,10 @@ import { getFeaturedProducts, getVehicles, getTransferPrice, queryOrder } from '
 
 const { t } = useI18n()
 const router = useRouter()
+
+const openSupportEmail = () => {
+  window.location.href = 'mailto:support@shanghai-tour-guide.com'
+}
 
 // 本地静态资源 hero 背景图
 const HERO_BG_DESKTOP = '/hero-bg.jpg'
@@ -306,6 +318,7 @@ onUnmounted(() => { window.removeEventListener('resize', onResize) })
 .footer-links h4 { font-size: 14px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 20px; color: var(--accent); }
 .footer-links a, .footer-links p { display: block; font-size: 14px; color: rgba(255,255,255,0.55); text-decoration: none; margin-bottom: 12px; transition: color 0.2s; }
 .footer-links a:hover { color: var(--accent); }
+.email-link { display: inline-block; color: inherit; text-decoration: underline !important; cursor: pointer; word-break: break-word; }
 .footer-bottom { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px; text-align: center; font-size: 13px; color: rgba(255,255,255,0.3); }
 .empty-placeholder { text-align: center; padding: 60px 20px; color: var(--text-light); font-size: 15px; }
 

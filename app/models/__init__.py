@@ -405,6 +405,10 @@ class TransferOrder(db.Model):
     transaction_id = db.Column(db.String(64))
     payment_screenshot = db.Column(db.String(255))
     status = db.Column(db.SmallInteger, default=0)
+    cancelled_at = db.Column(db.DateTime)  # 取消时间
+    refund_status = db.Column(db.SmallInteger, default=0)  # 0无需退款 1待退款 2已退款
+    refund_amount = db.Column(db.Numeric(10, 2))  # 实际退款金额
+    refund_time = db.Column(db.DateTime)  # 退款完成时间
     remark = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=china_now)
     updated_at = db.Column(db.DateTime, default=china_now, onupdate=china_now)
@@ -443,6 +447,10 @@ class TransferOrder(db.Model):
             'transaction_id': self.transaction_id,
             'payment_screenshot': self.payment_screenshot,
             'status': self.status,
+            'cancelled_at': self.cancelled_at.isoformat() if self.cancelled_at else None,
+            'refund_status': self.refund_status or 0,
+            'refund_amount': float(self.refund_amount) if self.refund_amount is not None else None,
+            'refund_time': self.refund_time.isoformat() if self.refund_time else None,
             'remark': self.remark,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
@@ -476,7 +484,9 @@ class ShopOrder(db.Model):
     transaction_id = db.Column(db.String(64))
     payment_screenshot = db.Column(db.String(255))
     status = db.Column(db.SmallInteger, default=0)  # 0待处理 1已确认 2配送中 3已完成 4已取消
-    refund_status = db.Column(db.SmallInteger, default=0)  # 0无退款 1已退款
+    cancelled_at = db.Column(db.DateTime)  # 取消时间
+    refund_status = db.Column(db.SmallInteger, default=0)  # 0无需退款 1待退款 2已退款
+    refund_amount = db.Column(db.Numeric(10, 2))  # 实际退款金额
     refund_time = db.Column(db.DateTime)      # 退款时间
     delivery_time = db.Column(db.DateTime)    # 开始配送时间
     completed_time = db.Column(db.DateTime)   # 完成配送时间
@@ -513,7 +523,9 @@ class ShopOrder(db.Model):
             'transaction_id': self.transaction_id,
             'payment_screenshot': self.payment_screenshot,
             'status': self.status,
+            'cancelled_at': self.cancelled_at.isoformat() if self.cancelled_at else None,
             'refund_status': self.refund_status or 0,
+            'refund_amount': float(self.refund_amount) if self.refund_amount is not None else None,
             'refund_time': self.refund_time.isoformat() if self.refund_time else None,
             'delivery_time': self.delivery_time.isoformat() if self.delivery_time else None,
             'completed_time': self.completed_time.isoformat() if self.completed_time else None,

@@ -30,6 +30,12 @@ def _auto_migrate(app):
         ('shop_orders', 'checkout_date', 'DATE'),
         ('shop_orders', 'refund_status', 'SMALLINT DEFAULT 0'),
         ('shop_orders', 'refund_time', 'TIMESTAMP'),
+        ('shop_orders', 'cancelled_at', 'TIMESTAMP'),
+        ('shop_orders', 'refund_amount', 'NUMERIC(10, 2)'),
+        ('transfer_orders', 'cancelled_at', 'TIMESTAMP'),
+        ('transfer_orders', 'refund_status', 'SMALLINT DEFAULT 0'),
+        ('transfer_orders', 'refund_amount', 'NUMERIC(10, 2)'),
+        ('transfer_orders', 'refund_time', 'TIMESTAMP'),
     ]
     with app.app_context():
         # 先确保所有表都存在
