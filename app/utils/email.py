@@ -24,10 +24,11 @@ def _send_async(app, api_key, payload):
                 json=payload,
                 timeout=15,
             )
-            if resp.status_code == 200:
-                app.logger.info(f'Email sent to {payload["to"]}')
+            body = resp.json() if resp.headers.get('content-type', '').startswith('application/json') else {}
+            if resp.status_code == 200 and body.get('id'):
+                app.logger.info(f'Email sent to {payload["to"]}, id={body["id"]}')
             else:
-                app.logger.error(f'Resend API error {resp.status_code}: {resp.text}')
+                app.logger.error(f'Resend API failed - status={resp.status_code}, body={resp.text[:500]}')
         except Exception as e:
             app.logger.error(f'Failed to send email: {e}')
 
