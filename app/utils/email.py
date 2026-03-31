@@ -1,6 +1,6 @@
 import threading
 import os
-import resend
+import requests as http_requests
 
 
 def _get_resend_config():
@@ -11,14 +11,23 @@ def _get_resend_config():
     return api_key, from_email, notify_to
 
 
-def _send_async(app, params):
-    """在后台线程中通过 Resend 发送邮件"""
+def _send_async(app, api_key, payload):
+    """在后台线程中通过 Resend REST API 发送邮件"""
     with app.app_context():
         try:
-            api_key, _, _ = _get_resend_config()
-            resend.api_key = api_key
-            resend.Emails.send(params)
-            app.logger.info(f'Email sent to {params["to"]}')
+            resp = http_requests.post(
+                'https://api.resend.com/emails',
+                headers={
+                    'Authorization': f'Bearer {api_key}',
+                    'Content-Type': 'application/json',
+                },
+                json=payload,
+                timeout=15,
+            )
+            if resp.status_code == 200:
+                app.logger.info(f'Email sent to {payload["to"]}')
+            else:
+                app.logger.error(f'Resend API error {resp.status_code}: {resp.text}')
         except Exception as e:
             app.logger.error(f'Failed to send email: {e}')
 
@@ -29,14 +38,14 @@ def _send_email(app, to, subject, html):
     if not api_key:
         return  # 未配置，静默跳过
 
-    params = {
+    payload = {
         "from": from_email,
         "to": [to] if isinstance(to, str) else to,
         "subject": subject,
         "html": html,
     }
 
-    thread = threading.Thread(target=_send_async, args=(app, params))
+    thread = threading.Thread(target=_send_async, args=(app, api_key, payload))
     thread.daemon = True
     thread.start()
 
