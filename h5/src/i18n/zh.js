@@ -69,7 +69,7 @@ export default {
       updateTitle: '政策更新',
       updateContent: '我们可能会不时更新本隐私政策。更新后的政策将在本页面发布，并注明最新修订日期。建议您定期查看。',
       contactTitle: '联系我们',
-      contactContent: '如对本隐私政策有任何疑问，请通过 info@homestay.com 联系我们。'
+      contactContent: '如对本隐私政策有任何疑问，请通过 support@shanghai-tour-guide.com 联系我们。'
     },
     terms: {
       acceptTitle: '接受条款',
@@ -93,7 +93,7 @@ export default {
       updateTitle: '条款变更',
       updateContent: '我们保留随时修改本条款的权利。修改后的条款将在网站上发布。继续使用我们的服务即表示您接受修改后的条款。',
       contactTitle: '联系方式',
-      contactContent: '如对本服务条款有任何疑问，请通过 info@homestay.com 联系我们。'
+      contactContent: '如对本服务条款有任何疑问，请通过 support@shanghai-tour-guide.com 联系我们。'
     }
   },
   refund: { requestRefund: '申请退款', eligible: '距离送达/离店日期超过48小时，可免费取消', expired: '距离送达/离店日期不足48小时，如需取消请联系客服', unpaidCancel: '订单尚未付款，可直接取消', cancelOrder: '取消订单', cancelConfirmTitle: '确认取消', cancelConfirmBtn: '确认取消', cancelConfirmMsg: '确认要取消该订单吗？', cancelSuccessTitle: '取消成功', cancelSuccessMsg: '订单已取消。', refunded: '已退款', confirmTitle: '确认退款', confirmBtn: '确认退款', confirmMsg: '确认要申请全额退款吗？', confirmNote: '客服将在3个工作日内与您联系并完成退款，请保持联系方式畅通。', successTitle: '退款成功', successMsg: '您的退款申请已通过！', successNote: '客服将在3个工作日内与您联系并完成退款，请保持联系方式畅通。', failed: '操作失败' },

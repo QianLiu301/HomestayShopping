@@ -133,7 +133,7 @@
           <div class="footer-links">
             <h4>{{ t('nav.contact') }}</h4>
             <p>Shanghai, China</p>
-            <p>info@homestay.com</p>
+            <p><a href="mailto:support@shanghai-tour-guide.com" style="color: inherit; text-decoration: underline;">support@shanghai-tour-guide.com</a></p>
           </div>
           <div class="footer-links">
             <h4>{{ t('legal.termsTitle') }}</h4>

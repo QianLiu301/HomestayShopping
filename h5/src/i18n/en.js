@@ -69,7 +69,7 @@ export default {
       updateTitle: 'Policy Updates',
       updateContent: 'We may update this Privacy Policy from time to time. The updated policy will be posted on this page with the latest revision date. We recommend checking periodically.',
       contactTitle: 'Contact Us',
-      contactContent: 'If you have any questions about this Privacy Policy, please contact us at info@homestay.com.'
+      contactContent: 'If you have any questions about this Privacy Policy, please contact us at support@shanghai-tour-guide.com.'
     },
     terms: {
       acceptTitle: 'Acceptance of Terms',
@@ -93,7 +93,7 @@ export default {
       updateTitle: 'Changes to Terms',
       updateContent: 'We reserve the right to modify these terms at any time. Updated terms will be posted on the website. Continued use of our services constitutes acceptance of the modified terms.',
       contactTitle: 'Contact',
-      contactContent: 'If you have any questions about these Terms of Service, please contact us at info@homestay.com.'
+      contactContent: 'If you have any questions about these Terms of Service, please contact us at support@shanghai-tour-guide.com.'
     }
   },
   refund: { requestRefund: 'Request Refund', eligible: 'Free cancellation (more than 48h before delivery/checkout)', expired: 'Less than 48h before delivery/checkout, please contact us to cancel', unpaidCancel: 'Order is unpaid, you can cancel directly', cancelOrder: 'Cancel Order', cancelConfirmTitle: 'Confirm Cancellation', cancelConfirmBtn: 'Confirm Cancel', cancelConfirmMsg: 'Are you sure you want to cancel this order?', cancelSuccessTitle: 'Cancelled', cancelSuccessMsg: 'Your order has been cancelled.', refunded: 'Refunded', confirmTitle: 'Confirm Refund', confirmBtn: 'Confirm Refund', confirmMsg: 'Are you sure you want a full refund?', confirmNote: 'Our team will contact you within 3 business days to process the refund. Please keep your contact information available.', successTitle: 'Refund Approved', successMsg: 'Your refund request has been approved!', successNote: 'Our team will contact you within 3 business days to process the refund. Please keep your contact information available.', failed: 'Operation failed' },

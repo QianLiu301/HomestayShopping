@@ -67,7 +67,7 @@ export default {
       updateTitle: 'Actualizaciones de la política',
       updateContent: 'Podemos actualizar esta Política de Privacidad periódicamente. La versión actualizada se publicará en esta página con la fecha de la última revisión.',
       contactTitle: 'Contáctenos',
-      contactContent: 'Si tiene preguntas sobre esta Política de Privacidad, contáctenos en info@homestay.com.'
+      contactContent: 'Si tiene preguntas sobre esta Política de Privacidad, contáctenos en support@shanghai-tour-guide.com.'
     },
     terms: {
       acceptTitle: 'Aceptación de términos',
@@ -91,7 +91,7 @@ export default {
       updateTitle: 'Cambios en los términos',
       updateContent: 'Nos reservamos el derecho de modificar estos términos. Los cambios se publicarán en el sitio web. El uso continuado de nuestros servicios constituye aceptación de los términos modificados.',
       contactTitle: 'Contacto',
-      contactContent: 'Si tiene preguntas sobre estos Términos de Servicio, contáctenos en info@homestay.com.'
+      contactContent: 'Si tiene preguntas sobre estos Términos de Servicio, contáctenos en support@shanghai-tour-guide.com.'
     }
   },
   refund: { requestRefund: 'Solicitar reembolso', eligible: 'Cancelación gratuita (más de 48h antes de entrega/salida)', expired: 'Menos de 48h antes de entrega/salida, contáctenos para cancelar', unpaidCancel: 'Pedido no pagado, puede cancelar directamente', cancelOrder: 'Cancelar pedido', cancelConfirmTitle: 'Confirmar cancelación', cancelConfirmBtn: 'Confirmar cancelación', cancelConfirmMsg: '¿Está seguro de que desea cancelar este pedido?', cancelSuccessTitle: 'Cancelado', cancelSuccessMsg: 'Su pedido ha sido cancelado.', refunded: 'Reembolsado', confirmTitle: 'Confirmar reembolso', confirmBtn: 'Confirmar reembolso', confirmMsg: '¿Está seguro de que desea un reembolso completo?', confirmNote: 'Nuestro equipo se pondrá en contacto con usted en 3 días hábiles para procesar el reembolso.', successTitle: 'Reembolso aprobado', successMsg: '¡Su solicitud de reembolso ha sido aprobada!', successNote: 'Nuestro equipo se pondrá en contacto con usted en 3 días hábiles para procesar el reembolso. Por favor, mantenga disponible su información de contacto.', failed: 'Error en la operación' },
