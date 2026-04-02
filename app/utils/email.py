@@ -51,9 +51,71 @@ def _send_email(app, to, subject, html):
     thread.start()
 
 
-# ==================== 管理员通知邮件 ====================
+def _row(label, value):
+    """生成表格行 HTML"""
+    if not value:
+        return ''
+    return f'<tr><td style="padding:8px 12px;color:#888;white-space:nowrap;">{label}</td><td style="padding:8px 12px;">{value}</td></tr>'
 
-def send_new_order_email(app, order_type, order_no, total_price, contact_name, items_summary=''):
+
+def _price_row(label, value):
+    """生成价格行 HTML"""
+    return f'<tr><td style="padding:8px 12px;color:#888;white-space:nowrap;">{label}</td><td style="padding:8px 12px;font-size:18px;color:#e74c3c;font-weight:700;">¥{value}</td></tr>'
+
+
+def _table(rows_html, bg='#faf6f1'):
+    """包裹表格"""
+    return f'<table style="width:100%;border-collapse:collapse;margin:16px 0;background:{bg};border-radius:8px;">{rows_html}</table>'
+
+
+def _delivery_time_label(time_slot, lang='en'):
+    """将 morning/afternoon/evening 转为可读文字"""
+    labels = {
+        'en': {'morning': 'Morning', 'afternoon': 'Afternoon', 'evening': 'Evening'},
+        'zh': {'morning': '上午', 'afternoon': '下午', 'evening': '晚上'},
+        'ru': {'morning': 'Утро', 'afternoon': 'День', 'evening': 'Вечер'},
+        'es': {'morning': 'Mañana', 'afternoon': 'Tarde', 'evening': 'Noche'},
+    }
+    return labels.get(lang, labels['en']).get(time_slot, time_slot or '')
+
+
+def _service_type_label(service_type, lang='en'):
+    """接送机服务类型可读文字"""
+    labels = {
+        'en': {'pickup': 'Airport Pickup', 'dropoff': 'Airport Drop-off', 'combo': 'Pickup + Drop-off'},
+        'zh': {'pickup': '接机', 'dropoff': '送机', 'combo': '接机+送机'},
+        'ru': {'pickup': 'Встреча в аэропорту', 'dropoff': 'Трансфер в аэропорт', 'combo': 'Встреча + Трансфер'},
+        'es': {'pickup': 'Recogida en aeropuerto', 'dropoff': 'Traslado al aeropuerto', 'combo': 'Recogida + Traslado'},
+    }
+    return labels.get(lang, labels['en']).get(service_type, service_type or '')
+
+
+def _airport_name(code):
+    """机场代码转名称"""
+    airports = {'PVG': 'Shanghai Pudong (PVG)', 'SHA': 'Shanghai Hongqiao (SHA)'}
+    return airports.get(code, code or '')
+
+
+def _format_dt(dt_val):
+    """格式化 datetime 为可读字符串"""
+    if not dt_val:
+        return ''
+    if hasattr(dt_val, 'strftime'):
+        return dt_val.strftime('%Y-%m-%d %H:%M')
+    return str(dt_val)
+
+
+# ==================== 管理员通知邮件（中文） ====================
+
+def send_new_order_email(app, order_type, order_no, total_price, contact_name,
+                         items_summary='', contact_phone='', contact_email='',
+                         booking_no='', remark='',
+                         # 商城订单额外字段
+                         expected_delivery_date=None, expected_delivery_time=None,
+                         # 接送机订单额外字段
+                         service_type=None, vehicle_name=None,
+                         flight_no=None, flight_time=None, pickup_airport=None,
+                         dropoff_flight_no=None, dropoff_flight_time=None, dropoff_airport=None):
     """新订单通知邮件 → 发给管理员"""
     _, _, notify_to = _get_resend_config()
     if not notify_to:
@@ -62,49 +124,113 @@ def send_new_order_email(app, order_type, order_no, total_price, contact_name, i
     type_label = '商城订单' if order_type == 'shop' else '接送机订单'
     subject = f'【新订单】{type_label} {order_no} - ¥{total_price}'
 
+    # 构建表格行
+    rows = _row('订单号', order_no)
+    rows += _row('客户', contact_name)
+
+    # 联系方式
+    contact_parts = []
+    if contact_phone:
+        contact_parts.append(contact_phone)
+    if contact_email:
+        contact_parts.append(contact_email)
+    if contact_parts:
+        rows += _row('联系方式', ' / '.join(contact_parts))
+
+    rows += _price_row('金额', total_price)
+
+    if order_type == 'shop':
+        if items_summary:
+            rows += _row('商品', items_summary)
+        if booking_no:
+            rows += _row('预订单号', booking_no)
+        if expected_delivery_date:
+            delivery_str = str(expected_delivery_date)
+            if expected_delivery_time:
+                time_zh = {'morning': '上午', 'afternoon': '下午', 'evening': '晚上'}
+                delivery_str += f' {time_zh.get(expected_delivery_time, expected_delivery_time)}'
+            rows += _row('期望送达', delivery_str)
+    else:
+        if service_type:
+            stype_zh = {'pickup': '接机', 'dropoff': '送机', 'combo': '接机+送机'}
+            rows += _row('服务类型', stype_zh.get(service_type, service_type))
+        if vehicle_name:
+            rows += _row('车型', vehicle_name)
+        if flight_no:
+            rows += _row('接机航班', f'{flight_no}  {_format_dt(flight_time)}')
+        if pickup_airport:
+            rows += _row('接机机场', _airport_name(pickup_airport))
+        if dropoff_flight_no:
+            rows += _row('送机航班', f'{dropoff_flight_no}  {_format_dt(dropoff_flight_time)}')
+        elif service_type == 'dropoff' and flight_no:
+            pass  # already shown above
+        if dropoff_airport:
+            rows += _row('送机机场', _airport_name(dropoff_airport))
+        if booking_no:
+            rows += _row('预订单号', booking_no)
+
+    if remark:
+        rows += _row('备注', remark)
+
     html = f"""
-<div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-  <h2 style="color: #4a3728; border-bottom: 2px solid #e8d5c4; padding-bottom: 10px;">
+<div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:20px;">
+  <h2 style="color:#4a3728;border-bottom:2px solid #e8d5c4;padding-bottom:10px;">
     新{type_label}通知
   </h2>
-  <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
-    <tr><td style="padding: 8px 0; color: #888;">订单号</td><td style="padding: 8px 0; font-weight: 600;">{order_no}</td></tr>
-    <tr><td style="padding: 8px 0; color: #888;">客户</td><td style="padding: 8px 0;">{contact_name}</td></tr>
-    <tr><td style="padding: 8px 0; color: #888;">金额</td><td style="padding: 8px 0; font-size: 18px; color: #e74c3c; font-weight: 700;">¥{total_price}</td></tr>
-    {f'<tr><td style="padding: 8px 0; color: #888;">商品</td><td style="padding: 8px 0;">{items_summary}</td></tr>' if items_summary else ''}
-  </table>
-  <p style="color: #888; font-size: 13px;">请登录管理后台查看详情并处理订单。</p>
+  {_table(rows)}
+  <p style="color:#888;font-size:13px;">请登录管理后台查看详情并处理订单。</p>
 </div>
 """
     _send_email(app, notify_to, subject, html)
 
 
-def send_refund_notify_email(app, order_no, total_price, contact_name):
+def send_refund_notify_email(app, order_no, total_price, contact_name,
+                             contact_phone='', contact_email='', items_summary=''):
     """退款通知 → 发给管理员"""
     _, _, notify_to = _get_resend_config()
     if not notify_to:
         return
 
     subject = f'【退款通知】订单 {order_no} - ¥{total_price}'
+
+    rows = _row('订单号', order_no)
+    rows += _row('客户', contact_name)
+    contact_parts = []
+    if contact_phone:
+        contact_parts.append(contact_phone)
+    if contact_email:
+        contact_parts.append(contact_email)
+    if contact_parts:
+        rows += _row('联系方式', ' / '.join(contact_parts))
+    rows += _price_row('退款金额', total_price)
+    if items_summary:
+        rows += _row('商品', items_summary)
+
     html = f"""
-<div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-  <h2 style="color: #e74c3c; border-bottom: 2px solid #ffccc7; padding-bottom: 10px;">
+<div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:20px;">
+  <h2 style="color:#e74c3c;border-bottom:2px solid #ffccc7;padding-bottom:10px;">
     退款通知
   </h2>
-  <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
-    <tr><td style="padding: 8px 0; color: #888;">订单号</td><td style="padding: 8px 0; font-weight: 600;">{order_no}</td></tr>
-    <tr><td style="padding: 8px 0; color: #888;">客户</td><td style="padding: 8px 0;">{contact_name}</td></tr>
-    <tr><td style="padding: 8px 0; color: #888;">退款金额</td><td style="padding: 8px 0; font-size: 18px; color: #e74c3c; font-weight: 700;">¥{total_price}</td></tr>
-  </table>
-  <p style="color: #888; font-size: 13px;">客户已申请退款，请尽快联系客户处理退款事宜。</p>
+  {_table(rows, '#fff5f5')}
+  <p style="color:#888;font-size:13px;">客户已申请退款，请尽快联系客户处理退款事宜。</p>
 </div>
 """
     _send_email(app, notify_to, subject, html)
 
 
-# ==================== 客户通知邮件 ====================
+# ==================== 客户通知邮件（多语言） ====================
 
-def send_order_confirmation_to_customer(app, email, order_no, total_price, contact_name, items_summary='', lang='zh'):
+def send_order_confirmation_to_customer(app, email, order_no, total_price, contact_name,
+                                        items_summary='', lang='en',
+                                        booking_no='', contact_phone='', contact_email='',
+                                        remark='',
+                                        # 商城订单
+                                        expected_delivery_date=None, expected_delivery_time=None,
+                                        # 接送机订单
+                                        order_type='shop', service_type=None, vehicle_name=None,
+                                        flight_no=None, flight_time=None, pickup_airport=None,
+                                        dropoff_flight_no=None, dropoff_flight_time=None,
+                                        dropoff_airport=None):
     """订单确认邮件 → 发给客户"""
     if not email:
         return
@@ -118,6 +244,16 @@ def send_order_confirmation_to_customer(app, email, order_no, total_price, conta
             'order_no': '订单号',
             'amount': '订单金额',
             'items': '商品',
+            'booking_no': '民宿预订号',
+            'delivery': '期望送达',
+            'contact': '联系方式',
+            'remark': '备注',
+            'service_type': '服务类型',
+            'vehicle': '车型',
+            'flight': '航班',
+            'pickup_airport': '接机机场',
+            'dropoff_flight': '送机航班',
+            'dropoff_airport': '送机机场',
             'footer': '如有任何问题，请回复此邮件或联系我们的客服。',
             'team': 'Shanghai Tour Guide 团队',
         },
@@ -129,6 +265,16 @@ def send_order_confirmation_to_customer(app, email, order_no, total_price, conta
             'order_no': 'Order No.',
             'amount': 'Amount',
             'items': 'Items',
+            'booking_no': 'Booking No.',
+            'delivery': 'Expected Delivery',
+            'contact': 'Contact',
+            'remark': 'Note',
+            'service_type': 'Service',
+            'vehicle': 'Vehicle',
+            'flight': 'Flight',
+            'pickup_airport': 'Pickup Airport',
+            'dropoff_flight': 'Drop-off Flight',
+            'dropoff_airport': 'Drop-off Airport',
             'footer': 'If you have any questions, please reply to this email or contact our team.',
             'team': 'Shanghai Tour Guide Team',
         },
@@ -140,6 +286,16 @@ def send_order_confirmation_to_customer(app, email, order_no, total_price, conta
             'order_no': 'Номер заказа',
             'amount': 'Сумма',
             'items': 'Товары',
+            'booking_no': 'Номер бронирования',
+            'delivery': 'Ожидаемая доставка',
+            'contact': 'Контакт',
+            'remark': 'Примечание',
+            'service_type': 'Услуга',
+            'vehicle': 'Автомобиль',
+            'flight': 'Рейс',
+            'pickup_airport': 'Аэропорт встречи',
+            'dropoff_flight': 'Рейс отправления',
+            'dropoff_airport': 'Аэропорт отправления',
             'footer': 'Если у вас есть вопросы, ответьте на это письмо или свяжитесь с нами.',
             'team': 'Команда Shanghai Tour Guide',
         },
@@ -151,32 +307,85 @@ def send_order_confirmation_to_customer(app, email, order_no, total_price, conta
             'order_no': 'N° de pedido',
             'amount': 'Monto',
             'items': 'Artículos',
+            'booking_no': 'N° de reserva',
+            'delivery': 'Entrega esperada',
+            'contact': 'Contacto',
+            'remark': 'Nota',
+            'service_type': 'Servicio',
+            'vehicle': 'Vehículo',
+            'flight': 'Vuelo',
+            'pickup_airport': 'Aeropuerto de recogida',
+            'dropoff_flight': 'Vuelo de salida',
+            'dropoff_airport': 'Aeropuerto de salida',
             'footer': 'Si tiene alguna pregunta, responda a este correo o contacte a nuestro equipo.',
             'team': 'Equipo Shanghai Tour Guide',
         },
     }
     t = texts.get(lang, texts['en'])
 
-    items_row = f'<tr><td style="padding: 8px 0; color: #888;">{t["items"]}</td><td style="padding: 8px 0;">{items_summary}</td></tr>' if items_summary else ''
+    # 构建详情行
+    rows = _row(t['order_no'], order_no)
+    rows += _price_row(t['amount'], total_price)
+
+    if order_type == 'shop':
+        if items_summary:
+            rows += _row(t['items'], items_summary)
+        if booking_no:
+            rows += _row(t['booking_no'], booking_no)
+        if expected_delivery_date:
+            delivery_str = str(expected_delivery_date)
+            if expected_delivery_time:
+                delivery_str += f' ({_delivery_time_label(expected_delivery_time, lang)})'
+            rows += _row(t['delivery'], delivery_str)
+    else:
+        if service_type:
+            rows += _row(t['service_type'], _service_type_label(service_type, lang))
+        if vehicle_name:
+            rows += _row(t['vehicle'], vehicle_name)
+        if flight_no:
+            flight_str = flight_no
+            if flight_time:
+                flight_str += f'  {_format_dt(flight_time)}'
+            rows += _row(t['flight'], flight_str)
+        if pickup_airport:
+            rows += _row(t['pickup_airport'], _airport_name(pickup_airport))
+        if dropoff_flight_no:
+            df_str = dropoff_flight_no
+            if dropoff_flight_time:
+                df_str += f'  {_format_dt(dropoff_flight_time)}'
+            rows += _row(t['dropoff_flight'], df_str)
+        if dropoff_airport:
+            rows += _row(t['dropoff_airport'], _airport_name(dropoff_airport))
+        if booking_no:
+            rows += _row(t['booking_no'], booking_no)
+
+    # 联系方式
+    contact_parts = []
+    if contact_phone:
+        contact_parts.append(contact_phone)
+    if contact_email:
+        contact_parts.append(contact_email)
+    if contact_parts:
+        rows += _row(t['contact'], ' / '.join(contact_parts))
+
+    if remark:
+        rows += _row(t['remark'], remark)
 
     html = f"""
-<div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-  <h2 style="color: #4a3728; border-bottom: 2px solid #e8d5c4; padding-bottom: 10px;">{t['title']}</h2>
-  <p style="color: #333; margin: 16px 0;">{t['greeting']}</p>
-  <p style="color: #555;">{t['body']}</p>
-  <table style="width: 100%; border-collapse: collapse; margin: 16px 0; background: #faf6f1; border-radius: 8px; padding: 12px;">
-    <tr><td style="padding: 8px 12px; color: #888;">{t['order_no']}</td><td style="padding: 8px 12px; font-weight: 600;">{order_no}</td></tr>
-    <tr><td style="padding: 8px 12px; color: #888;">{t['amount']}</td><td style="padding: 8px 12px; font-size: 18px; color: #e74c3c; font-weight: 700;">¥{total_price}</td></tr>
-    {items_row}
-  </table>
-  <p style="color: #888; font-size: 13px; margin-top: 24px;">{t['footer']}</p>
-  <p style="color: #aaa; font-size: 12px;">— {t['team']}</p>
+<div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:20px;">
+  <h2 style="color:#4a3728;border-bottom:2px solid #e8d5c4;padding-bottom:10px;">{t['title']}</h2>
+  <p style="color:#333;margin:16px 0;">{t['greeting']}</p>
+  <p style="color:#555;">{t['body']}</p>
+  {_table(rows)}
+  <p style="color:#888;font-size:13px;margin-top:24px;">{t['footer']}</p>
+  <p style="color:#aaa;font-size:12px;">— {t['team']}</p>
 </div>
 """
     _send_email(app, email, t['subject'], html)
 
 
-def send_refund_success_to_customer(app, email, order_no, total_price, contact_name, lang='zh'):
+def send_refund_success_to_customer(app, email, order_no, total_price, contact_name,
+                                     lang='en', items_summary=''):
     """退款成功通知 → 发给客户"""
     if not email:
         return
@@ -189,6 +398,7 @@ def send_refund_success_to_customer(app, email, order_no, total_price, contact_n
             'body': '您的退款申请已通过，客服将在 3 个工作日内与您联系并完成退款，请保持联系方式畅通。',
             'order_no': '订单号',
             'amount': '退款金额',
+            'items': '商品',
             'footer': '如有任何问题，请回复此邮件或联系我们的客服。',
             'team': 'Shanghai Tour Guide 团队',
         },
@@ -199,6 +409,7 @@ def send_refund_success_to_customer(app, email, order_no, total_price, contact_n
             'body': 'Your refund request has been approved. Our team will contact you within 3 business days to process the refund. Please keep your contact information available.',
             'order_no': 'Order No.',
             'amount': 'Refund Amount',
+            'items': 'Items',
             'footer': 'If you have any questions, please reply to this email or contact our team.',
             'team': 'Shanghai Tour Guide Team',
         },
@@ -209,6 +420,7 @@ def send_refund_success_to_customer(app, email, order_no, total_price, contact_n
             'body': 'Ваш запрос на возврат одобрен. Наша команда свяжется с вами в течение 3 рабочих дней. Пожалуйста, оставайтесь на связи.',
             'order_no': 'Номер заказа',
             'amount': 'Сумма возврата',
+            'items': 'Товары',
             'footer': 'Если у вас есть вопросы, ответьте на это письмо или свяжитесь с нами.',
             'team': 'Команда Shanghai Tour Guide',
         },
@@ -219,29 +431,33 @@ def send_refund_success_to_customer(app, email, order_no, total_price, contact_n
             'body': 'Su solicitud de reembolso ha sido aprobada. Nuestro equipo se pondrá en contacto con usted en 3 días hábiles. Por favor, mantenga disponible su información de contacto.',
             'order_no': 'N° de pedido',
             'amount': 'Monto del reembolso',
+            'items': 'Artículos',
             'footer': 'Si tiene alguna pregunta, responda a este correo o contacte a nuestro equipo.',
             'team': 'Equipo Shanghai Tour Guide',
         },
     }
     t = texts.get(lang, texts['en'])
 
+    rows = _row(t['order_no'], order_no)
+    rows += f'<tr><td style="padding:8px 12px;color:#888;white-space:nowrap;">{t["amount"]}</td><td style="padding:8px 12px;font-size:18px;color:#52c41a;font-weight:700;">¥{total_price}</td></tr>'
+    if items_summary:
+        rows += _row(t['items'], items_summary)
+
     html = f"""
-<div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-  <h2 style="color: #4a3728; border-bottom: 2px solid #e8d5c4; padding-bottom: 10px;">{t['title']}</h2>
-  <p style="color: #333; margin: 16px 0;">{t['greeting']}</p>
-  <p style="color: #555;">{t['body']}</p>
-  <table style="width: 100%; border-collapse: collapse; margin: 16px 0; background: #f0f9eb; border-radius: 8px; padding: 12px;">
-    <tr><td style="padding: 8px 12px; color: #888;">{t['order_no']}</td><td style="padding: 8px 12px; font-weight: 600;">{order_no}</td></tr>
-    <tr><td style="padding: 8px 12px; color: #888;">{t['amount']}</td><td style="padding: 8px 12px; font-size: 18px; color: #52c41a; font-weight: 700;">¥{total_price}</td></tr>
-  </table>
-  <p style="color: #888; font-size: 13px; margin-top: 24px;">{t['footer']}</p>
-  <p style="color: #aaa; font-size: 12px;">— {t['team']}</p>
+<div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:20px;">
+  <h2 style="color:#4a3728;border-bottom:2px solid #e8d5c4;padding-bottom:10px;">{t['title']}</h2>
+  <p style="color:#333;margin:16px 0;">{t['greeting']}</p>
+  <p style="color:#555;">{t['body']}</p>
+  {_table(rows, '#f0f9eb')}
+  <p style="color:#888;font-size:13px;margin-top:24px;">{t['footer']}</p>
+  <p style="color:#aaa;font-size:12px;">— {t['team']}</p>
 </div>
 """
     _send_email(app, email, t['subject'], html)
 
 
-def send_cancel_notify_to_customer(app, email, order_no, contact_name, lang='zh'):
+def send_cancel_notify_to_customer(app, email, order_no, contact_name, lang='en',
+                                    items_summary='', total_price=None):
     """订单取消通知 → 发给客户（未付款直接取消）"""
     if not email:
         return
@@ -253,6 +469,8 @@ def send_cancel_notify_to_customer(app, email, order_no, contact_name, lang='zh'
             'greeting': f'您好，{contact_name}！',
             'body': '您的订单已成功取消。如需重新下单，欢迎随时访问我们的商城。',
             'order_no': '订单号',
+            'amount': '订单金额',
+            'items': '商品',
             'footer': '如有任何问题，请回复此邮件或联系我们的客服。',
             'team': 'Shanghai Tour Guide 团队',
         },
@@ -262,6 +480,8 @@ def send_cancel_notify_to_customer(app, email, order_no, contact_name, lang='zh'
             'greeting': f'Hello, {contact_name}!',
             'body': 'Your order has been successfully cancelled. Feel free to visit our shop again anytime.',
             'order_no': 'Order No.',
+            'amount': 'Amount',
+            'items': 'Items',
             'footer': 'If you have any questions, please reply to this email or contact our team.',
             'team': 'Shanghai Tour Guide Team',
         },
@@ -271,6 +491,8 @@ def send_cancel_notify_to_customer(app, email, order_no, contact_name, lang='zh'
             'greeting': f'Здравствуйте, {contact_name}!',
             'body': 'Ваш заказ успешно отменён. Будем рады видеть вас снова в нашем магазине.',
             'order_no': 'Номер заказа',
+            'amount': 'Сумма',
+            'items': 'Товары',
             'footer': 'Если у вас есть вопросы, ответьте на это письмо или свяжитесь с нами.',
             'team': 'Команда Shanghai Tour Guide',
         },
@@ -280,22 +502,28 @@ def send_cancel_notify_to_customer(app, email, order_no, contact_name, lang='zh'
             'greeting': f'¡Hola, {contact_name}!',
             'body': 'Su pedido ha sido cancelado exitosamente. No dude en visitar nuestra tienda nuevamente.',
             'order_no': 'N° de pedido',
+            'amount': 'Monto',
+            'items': 'Artículos',
             'footer': 'Si tiene alguna pregunta, responda a este correo o contacte a nuestro equipo.',
             'team': 'Equipo Shanghai Tour Guide',
         },
     }
     t = texts.get(lang, texts['en'])
 
+    rows = _row(t['order_no'], order_no)
+    if total_price is not None:
+        rows += _row(t['amount'], f'¥{total_price}')
+    if items_summary:
+        rows += _row(t['items'], items_summary)
+
     html = f"""
-<div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-  <h2 style="color: #4a3728; border-bottom: 2px solid #e8d5c4; padding-bottom: 10px;">{t['title']}</h2>
-  <p style="color: #333; margin: 16px 0;">{t['greeting']}</p>
-  <p style="color: #555;">{t['body']}</p>
-  <table style="width: 100%; border-collapse: collapse; margin: 16px 0; background: #f5f5f5; border-radius: 8px; padding: 12px;">
-    <tr><td style="padding: 8px 12px; color: #888;">{t['order_no']}</td><td style="padding: 8px 12px; font-weight: 600;">{order_no}</td></tr>
-  </table>
-  <p style="color: #888; font-size: 13px; margin-top: 24px;">{t['footer']}</p>
-  <p style="color: #aaa; font-size: 12px;">— {t['team']}</p>
+<div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:20px;">
+  <h2 style="color:#4a3728;border-bottom:2px solid #e8d5c4;padding-bottom:10px;">{t['title']}</h2>
+  <p style="color:#333;margin:16px 0;">{t['greeting']}</p>
+  <p style="color:#555;">{t['body']}</p>
+  {_table(rows, '#f5f5f5')}
+  <p style="color:#888;font-size:13px;margin-top:24px;">{t['footer']}</p>
+  <p style="color:#aaa;font-size:12px;">— {t['team']}</p>
 </div>
 """
     _send_email(app, email, t['subject'], html)

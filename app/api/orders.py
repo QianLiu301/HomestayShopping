@@ -225,17 +225,34 @@ def create_transfer_order():
 
         # 发送邮件通知
         from flask import current_app
-        lang = request.args.get('lang', 'zh')
+        lang = request.args.get('lang', 'en')
         app_obj = current_app._get_current_object()
-        items_summary = f'{service_type} - {vehicle.name_zh}'
         # 通知管理员
-        send_new_order_email(app_obj, 'transfer', order.order_no,
-                             float(order.total_price), data.get('contact_name'),
-                             items_summary=items_summary)
+        send_new_order_email(
+            app_obj, 'transfer', order.order_no,
+            float(order.total_price), data.get('contact_name'),
+            contact_phone=contact_phone or '', contact_email=contact_email or '',
+            booking_no=booking_no or '', remark=data.get('remark', ''),
+            service_type=service_type, vehicle_name=vehicle.name_zh,
+            flight_no=flight_no, flight_time=flight_time,
+            pickup_airport=pickup_airport,
+            dropoff_flight_no=dropoff_flight_no, dropoff_flight_time=dropoff_flight_time,
+            dropoff_airport=dropoff_airport_val,
+        )
         # 通知客户
-        send_order_confirmation_to_customer(app_obj, contact_email, order.order_no,
-                                            float(order.total_price), data.get('contact_name'),
-                                            items_summary=items_summary, lang=lang)
+        send_order_confirmation_to_customer(
+            app_obj, contact_email, order.order_no,
+            float(order.total_price), data.get('contact_name'),
+            lang=lang, order_type='transfer',
+            booking_no=booking_no or '',
+            contact_phone=contact_phone or '', contact_email=contact_email or '',
+            remark=data.get('remark', ''),
+            service_type=service_type, vehicle_name=vehicle.name_zh,
+            flight_no=flight_no, flight_time=flight_time,
+            pickup_airport=pickup_airport,
+            dropoff_flight_no=dropoff_flight_no, dropoff_flight_time=dropoff_flight_time,
+            dropoff_airport=dropoff_airport_val,
+        )
 
         return success_response({
             'order_no': order.order_no,
@@ -407,16 +424,29 @@ def create_shop_order():
 
     # 发送邮件通知
     from flask import current_app
-    lang = request.args.get('lang', 'zh')
+    lang = request.args.get('lang', 'en')
     items_str = ', '.join(f"{it['product_name']}x{it['quantity']}" for it in order_items)
     app_obj = current_app._get_current_object()
     # 通知管理员
-    send_new_order_email(app_obj, 'shop', order.order_no, float(order.total_price),
-                         contact_name, items_summary=items_str)
+    send_new_order_email(
+        app_obj, 'shop', order.order_no, float(order.total_price),
+        contact_name, items_summary=items_str,
+        contact_phone=contact_phone or '', contact_email=contact_email or '',
+        booking_no=booking_no or '', remark=data.get('remark', ''),
+        expected_delivery_date=expected_delivery_date,
+        expected_delivery_time=expected_delivery_time,
+    )
     # 通知客户
-    send_order_confirmation_to_customer(app_obj, contact_email, order.order_no,
-                                        float(order.total_price), contact_name,
-                                        items_summary=items_str, lang=lang)
+    send_order_confirmation_to_customer(
+        app_obj, contact_email, order.order_no,
+        float(order.total_price), contact_name,
+        items_summary=items_str, lang=lang, order_type='shop',
+        booking_no=booking_no or '',
+        contact_phone=contact_phone or '', contact_email=contact_email or '',
+        remark=data.get('remark', ''),
+        expected_delivery_date=expected_delivery_date,
+        expected_delivery_time=expected_delivery_time,
+    )
 
     return success_response({
         'order_no': order.order_no,
@@ -532,10 +562,12 @@ def request_refund():
 
         # 发送取消通知给客户
         from flask import current_app
-        lang = request.args.get('lang', 'zh')
+        lang = request.args.get('lang', 'en')
+        items_str = ', '.join(f"{it.product_name}x{it.quantity}" for it in order.items)
         send_cancel_notify_to_customer(
             current_app._get_current_object(),
-            order.contact_email, order.order_no, order.contact_name, lang=lang
+            order.contact_email, order.order_no, order.contact_name, lang=lang,
+            items_summary=items_str, total_price=float(order.total_price),
         )
 
         return success_response({
@@ -572,13 +604,18 @@ def request_refund():
 
     # 发送退款通知
     from flask import current_app
-    lang = request.args.get('lang', 'zh')
+    lang = request.args.get('lang', 'en')
     app_obj = current_app._get_current_object()
+    items_str = ', '.join(f"{it.product_name}x{it.quantity}" for it in order.items)
     # 通知管理员
-    send_refund_notify_email(app_obj, order.order_no, float(order.total_price), order.contact_name)
+    send_refund_notify_email(app_obj, order.order_no, float(order.total_price), order.contact_name,
+                             contact_phone=order.contact_phone or '',
+                             contact_email=order.contact_email or '',
+                             items_summary=items_str)
     # 通知客户
     send_refund_success_to_customer(app_obj, order.contact_email, order.order_no,
-                                    float(order.total_price), order.contact_name, lang=lang)
+                                    float(order.total_price), order.contact_name, lang=lang,
+                                    items_summary=items_str)
 
     return success_response({
         'order_no': order.order_no,
