@@ -159,7 +159,12 @@ def create_app(config_name='default'):
         file_path = os.path.join(admin_dist, path)
         if path and os.path.isfile(file_path):
             return send_from_directory(admin_dist, path)
-        return send_from_directory(admin_dist, 'index.html')
+
+        resp = send_from_directory(admin_dist, 'index.html')
+        resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        resp.headers['Pragma'] = 'no-cache'
+        resp.headers['Expires'] = '0'
+        return resp
 
     # 自动迁移：确保所有新列存在
     _auto_migrate(app)
