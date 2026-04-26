@@ -293,13 +293,21 @@ def admin_get_vehicles():
 def admin_create_vehicle():
     """创建车型"""
     data = request.get_json()
-    data = auto_fill_translations(data, ['name', 'desc'])
+    data = auto_fill_translations(data, ['name', 'desc', 'model', 'capacity_desc'])
 
     name_zh = data.get('name_zh') or data.get('name_en')
     name_en = data.get('name_en') or data.get('name_zh')
 
     if not name_zh and not name_en:
         return error_response('车型名称不能为空')
+
+    luggage_28 = int(data.get('luggage_28') or 0)
+    luggage_24 = int(data.get('luggage_24') or 0)
+    luggage_capacity = int(data.get('luggage_capacity') or (luggage_28 + luggage_24) or 0)
+    images = data.get('images') or ([] if not data.get('image') else [data.get('image')])
+    if not isinstance(images, list):
+        images = [images]
+    images = [str(item).strip() for item in images if str(item).strip()]
 
     vehicle = Vehicle(
         name_zh=name_zh,
@@ -310,10 +318,21 @@ def admin_create_vehicle():
         desc_en=data.get('desc_en') or data.get('desc_zh'),
         desc_ru=data.get('desc_ru'),
         desc_es=data.get('desc_es'),
+        model_zh=data.get('model_zh') or data.get('model_en'),
+        model_en=data.get('model_en') or data.get('model_zh'),
+        model_ru=data.get('model_ru'),
+        model_es=data.get('model_es'),
         seats=data.get('seats', 5),
-        luggage_capacity=data.get('luggage_capacity', 2),
+        luggage_capacity=luggage_capacity,
+        luggage_28=luggage_28,
+        luggage_24=luggage_24,
+        capacity_desc_zh=data.get('capacity_desc_zh') or data.get('capacity_desc_en'),
+        capacity_desc_en=data.get('capacity_desc_en') or data.get('capacity_desc_zh'),
+        capacity_desc_ru=data.get('capacity_desc_ru'),
+        capacity_desc_es=data.get('capacity_desc_es'),
         extra_price=data.get('extra_price', 0),
-        image=data.get('image'),
+        image=images[0] if images else data.get('image'),
+        images=images,
         sort_order=data.get('sort_order', 0),
         status=data.get('status', 1)
     )
@@ -333,18 +352,36 @@ def admin_update_vehicle(vehicle_id):
         return error_response('车型不存在', 404)
 
     data = request.get_json()
-    data = auto_fill_translations(data, ['name', 'desc'])
+    data = auto_fill_translations(data, ['name', 'desc', 'model', 'capacity_desc'])
 
     fields = [
         'name_zh', 'name_en', 'name_ru', 'name_es',
         'desc_zh', 'desc_en', 'desc_ru', 'desc_es',
-        'seats', 'luggage_capacity',
-        'extra_price', 'image', 'sort_order', 'status'
+        'model_zh', 'model_en', 'model_ru', 'model_es',
+        'seats', 'luggage_capacity', 'luggage_28', 'luggage_24',
+        'capacity_desc_zh', 'capacity_desc_en', 'capacity_desc_ru', 'capacity_desc_es',
+        'extra_price', 'sort_order', 'status'
     ]
-    
+
     for field in fields:
         if field in data:
             setattr(vehicle, field, data[field])
+
+    if 'luggage_28' in data or 'luggage_24' in data:
+        luggage_28 = vehicle.luggage_28 or 0
+        luggage_24 = vehicle.luggage_24 or 0
+        if 'luggage_capacity' not in data:
+            vehicle.luggage_capacity = luggage_28 + luggage_24
+
+    if 'images' in data or 'image' in data:
+        images = data.get('images')
+        if images is None:
+            images = [] if not data.get('image') else [data.get('image')]
+        if not isinstance(images, list):
+            images = [images]
+        images = [str(item).strip() for item in images if str(item).strip()]
+        vehicle.images = images
+        vehicle.image = images[0] if images else None
     
     db.session.commit()
     

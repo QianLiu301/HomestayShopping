@@ -36,6 +36,17 @@ def _auto_migrate(app):
         ('transfer_orders', 'refund_status', 'SMALLINT DEFAULT 0'),
         ('transfer_orders', 'refund_amount', 'NUMERIC(10, 2)'),
         ('transfer_orders', 'refund_time', 'TIMESTAMP'),
+        ('vehicles', 'model_zh', 'VARCHAR(100)'),
+        ('vehicles', 'model_en', 'VARCHAR(100)'),
+        ('vehicles', 'model_ru', 'VARCHAR(100)'),
+        ('vehicles', 'model_es', 'VARCHAR(100)'),
+        ('vehicles', 'luggage_28', 'INTEGER DEFAULT 0'),
+        ('vehicles', 'luggage_24', 'INTEGER DEFAULT 0'),
+        ('vehicles', 'capacity_desc_zh', 'VARCHAR(100)'),
+        ('vehicles', 'capacity_desc_en', 'VARCHAR(100)'),
+        ('vehicles', 'capacity_desc_ru', 'VARCHAR(100)'),
+        ('vehicles', 'capacity_desc_es', 'VARCHAR(100)'),
+        ('vehicles', 'images', 'JSON'),
     ]
     with app.app_context():
         # 先确保所有表都存在

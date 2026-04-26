@@ -289,6 +289,12 @@ async function handleUpload(options) {
       uploadedImages.value.push(url)
       // 将返回的 URL 存入 file 对象，方便 handleRemove 匹配
       options.file._uploadedUrl = url
+      // 同步更新 fileList 以便立即显示预览
+      fileList.value.push({
+        name: options.file.name,
+        url: resolveUrl(url),
+        uid: options.file.uid
+      })
       options.onSuccess(res)
     } else {
       options.onError(new Error(t('common.uploadFailed')))
@@ -301,16 +307,37 @@ async function handleUpload(options) {
 }
 
 function handleRemove(file) {
-  // 优先使用上传时存储的 URL，其次从 response 中获取
+  // 从 fileList 中移除
+  const fileIdx = fileList.value.findIndex(f => f.uid === file.uid || f.url === file.url)
+  if (fileIdx > -1) {
+    fileList.value.splice(fileIdx, 1)
+  }
+  
+  // 从 uploadedImages 中移除对应的 URL
+  // 优先使用上传时存储的 URL，其次从 response 中��取
   const url = file.raw?._uploadedUrl || file.response?.data?.url || file.url
   if (url) {
-    const idx = uploadedImages.value.indexOf(url)
-    if (idx > -1) uploadedImages.value.splice(idx, 1)
-  }
-  // 对于编辑模式加载的已有图片，直接用 resolveUrl 反查
-  if (url && url.startsWith('http')) {
-    const idx = uploadedImages.value.findIndex(u => resolveUrl(u) === url)
-    if (idx > -1) uploadedImages.value.splice(idx, 1)
+    // 尝试直接匹配
+    let idx = uploadedImages.value.indexOf(url)
+    if (idx > -1) {
+      uploadedImages.value.splice(idx, 1)
+      return
+    }
+    
+    // 对于编辑模式加载的已有图片，用 resolveUrl 反查
+    if (url.startsWith('http')) {
+      idx = uploadedImages.value.findIndex(u => resolveUrl(u) === url)
+      if (idx > -1) {
+        uploadedImages.value.splice(idx, 1)
+        return
+      }
+    }
+    
+    // 最后尝试反向匹配：url 可能是 resolveUrl 后的结果
+    idx = uploadedImages.value.findIndex(u => resolveUrl(u) === url)
+    if (idx > -1) {
+      uploadedImages.value.splice(idx, 1)
+    }
   }
 }
 

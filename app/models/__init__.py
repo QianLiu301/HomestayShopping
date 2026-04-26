@@ -233,21 +233,43 @@ class Vehicle(db.Model):
     desc_en = db.Column(db.String(100))
     desc_ru = db.Column(db.String(100))
     desc_es = db.Column(db.String(100))
+    model_zh = db.Column(db.String(100))
+    model_en = db.Column(db.String(100))
+    model_ru = db.Column(db.String(100))
+    model_es = db.Column(db.String(100))
     seats = db.Column(db.Integer, nullable=False)
     luggage_capacity = db.Column(db.Integer, nullable=False)
+    luggage_28 = db.Column(db.Integer, default=0)
+    luggage_24 = db.Column(db.Integer, default=0)
+    capacity_desc_zh = db.Column(db.String(100))
+    capacity_desc_en = db.Column(db.String(100))
+    capacity_desc_ru = db.Column(db.String(100))
+    capacity_desc_es = db.Column(db.String(100))
     extra_price = db.Column(db.Numeric(10, 2), default=0)
     image = db.Column(db.String(255))
+    images = db.Column(db.JSON, default=[])
     sort_order = db.Column(db.Integer, default=0)
     status = db.Column(db.SmallInteger, default=1)
     created_at = db.Column(db.DateTime, default=china_now)
 
     def to_dict(self, lang='zh'):
         # 标准化图片 URL（与 Product 保持一致）
-        image_url = None
-        if self.image:
-            normalized = _normalize_image_urls([self.image])
-            image_url = normalized[0] if normalized else None
-        
+        image_list = _normalize_image_urls(self.images or ([] if not self.image else [self.image]))
+        image_url = image_list[0] if image_list else None
+
+        capacity_desc = _localized(self, 'capacity_desc', lang)
+        model_name = _localized(self, 'model', lang)
+        luggage_28 = self.luggage_28 if self.luggage_28 is not None else 0
+        luggage_24 = self.luggage_24 if self.luggage_24 is not None else 0
+
+        if not capacity_desc:
+            parts = []
+            if luggage_28:
+                parts.append(f'{luggage_28} x 28"')
+            if luggage_24:
+                parts.append(f'{luggage_24} x 24"')
+            capacity_desc = ' + '.join(parts) if parts else None
+
         return {
             'id': self.id,
             'name': _localized(self, 'name', lang),
@@ -260,10 +282,23 @@ class Vehicle(db.Model):
             'desc_en': self.desc_en,
             'desc_ru': self.desc_ru,
             'desc_es': self.desc_es,
+            'model': model_name,
+            'model_zh': self.model_zh,
+            'model_en': self.model_en,
+            'model_ru': self.model_ru,
+            'model_es': self.model_es,
             'seats': self.seats,
             'luggage_capacity': self.luggage_capacity,
+            'luggage_28': luggage_28,
+            'luggage_24': luggage_24,
+            'capacity_desc': capacity_desc,
+            'capacity_desc_zh': self.capacity_desc_zh,
+            'capacity_desc_en': self.capacity_desc_en,
+            'capacity_desc_ru': self.capacity_desc_ru,
+            'capacity_desc_es': self.capacity_desc_es,
             'extra_price': float(self.extra_price) if self.extra_price else 0,
             'image': image_url,
+            'images': image_list,
             'sort_order': self.sort_order,
             'status': self.status
         }

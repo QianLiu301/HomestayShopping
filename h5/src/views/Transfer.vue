@@ -33,18 +33,23 @@
           >
             <div class="vehicle-icon">
               <img
-                v-if="v.image"
-                :src="$resolveUrl(v.image)"
+                v-if="vehiclePrimaryImage(v)"
+                :src="$resolveUrl(vehiclePrimaryImage(v))"
                 :alt="v.name"
                 class="vehicle-img"
                 @click.stop="previewVehicle(v)"
               />
               <van-icon v-else name="logistics" size="28" :color="form.vehicle_id === v.id ? '#1a73e8' : '#999'" />
+              <div v-if="(v.images?.length || 0) > 1" class="vehicle-image-badge">{{ v.images.length }}</div>
             </div>
             <div class="vehicle-info">
               <div class="vehicle-name">{{ v.name }}</div>
+              <div v-if="v.model" class="vehicle-model">{{ t('transfer.vehicleModel') }}：{{ v.model }}</div>
               <div class="vehicle-desc">
-                {{ t('transfer.seats', { n: v.seats }) }} · {{ t('transfer.luggage', { n: v.luggage_capacity }) }}
+                {{ t('transfer.seats', { n: v.seats }) }}
+              </div>
+              <div v-if="vehicleCapacityText(v)" class="vehicle-capacity">
+                {{ t('transfer.capacityInfo') }}：{{ vehicleCapacityText(v) }}
               </div>
             </div>
             <div class="vehicle-price">
@@ -259,7 +264,22 @@
           class="image-preview-img"
           @click.stop
         />
-        <div v-if="previewTitle" class="image-preview-title">{{ previewTitle }}</div>
+        <div v-if="previewTitle" class="image-preview-title">
+          {{ previewTitle }}
+          <span v-if="previewImages.length > 1" class="image-preview-count">{{ previewIndex + 1 }} / {{ previewImages.length }}</span>
+        </div>
+        <div v-if="previewImages.length > 1" class="image-preview-thumbs" @click.stop>
+          <button
+            v-for="(img, index) in previewImages"
+            :key="`${img}-${index}`"
+            type="button"
+            class="image-preview-thumb"
+            :class="{ active: index === previewIndex }"
+            @click="setPreviewIndex(index)"
+          >
+            <img :src="img" :alt="`${previewTitle}-${index + 1}`" />
+          </button>
+        </div>
       </div>
     </van-popup>
 
@@ -313,6 +333,8 @@ const agreeTerms = ref(false)
 const showImagePreview = ref(false)
 const previewImage = ref('')
 const previewTitle = ref('')
+const previewImages = ref([])
+const previewIndex = ref(0)
 
 const now = new Date()
 const datePickerValue = ref([
@@ -348,6 +370,30 @@ function formatDate(d) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
+function vehicleCapacityText(vehicle) {
+  if (!vehicle) return ''
+  if (vehicle.capacity_desc) return vehicle.capacity_desc
+
+  const parts = []
+  if (vehicle.luggage_28) parts.push(t('transfer.luggageSize28', { n: vehicle.luggage_28 }))
+  if (vehicle.luggage_24) parts.push(t('transfer.luggageSize24', { n: vehicle.luggage_24 }))
+  if (parts.length) return parts.join(' + ')
+  if (vehicle.luggage_capacity) return t('transfer.luggage', { n: vehicle.luggage_capacity })
+  return ''
+}
+
+function vehiclePrimaryImage(vehicle) {
+  if (!vehicle) return ''
+  if (Array.isArray(vehicle.images) && vehicle.images.length) return vehicle.images[0]
+  return vehicle.image || ''
+}
+
+function vehicleImageList(vehicle) {
+  if (!vehicle) return []
+  const images = Array.isArray(vehicle.images) && vehicle.images.length ? vehicle.images : (vehicle.image ? [vehicle.image] : [])
+  return images.map(img => resolveUrl(img)).filter(Boolean)
+}
+
 function onDateConfirm({ selectedValues }) {
   const [y, m, d] = selectedValues
   const val = `${y}-${m}-${d}T00:00:00`
@@ -359,10 +405,17 @@ function onDateConfirm({ selectedValues }) {
   showDatePicker.value = false
 }
 
+function setPreviewIndex(index) {
+  previewIndex.value = index
+  previewImage.value = previewImages.value[index] || ''
+}
+
 function previewVehicle(vehicle) {
-  if (!vehicle?.image) return
-  previewImage.value = resolveUrl(vehicle.image)
+  const images = vehicleImageList(vehicle)
+  if (!images.length) return
+  previewImages.value = images
   previewTitle.value = vehicle.name || ''
+  setPreviewIndex(0)
   showImagePreview.value = true
 }
 
@@ -647,6 +700,7 @@ onMounted(async () => {
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
+  position: relative;
 }
 
 .vehicle-img {
@@ -660,6 +714,21 @@ onMounted(async () => {
   background: rgba(26, 115, 232, 0.1);
 }
 
+.vehicle-image-badge {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+}
+
 .vehicle-info {
   flex: 1;
 }
@@ -669,9 +738,21 @@ onMounted(async () => {
   font-weight: 600;
 }
 
+.vehicle-model {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
 .vehicle-desc {
   font-size: 12px;
   color: var(--text-light);
+  margin-top: 2px;
+}
+
+.vehicle-capacity {
+  font-size: 12px;
+  color: var(--accent);
   margin-top: 2px;
 }
 
@@ -773,12 +854,52 @@ onMounted(async () => {
   position: absolute;
   left: 16px;
   right: 16px;
-  bottom: 20px;
+  bottom: 92px;
   text-align: center;
   color: #fff;
   font-size: 14px;
   font-weight: 500;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+.image-preview-count {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.image-preview-thumbs {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 20px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px;
+}
+
+.image-preview-thumb {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.15);
+  flex: 0 0 auto;
+}
+
+.image-preview-thumb.active {
+  border-color: #fff;
+}
+
+.image-preview-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 @keyframes shake {

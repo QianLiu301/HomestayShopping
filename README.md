@@ -146,6 +146,42 @@ GET /api/admin/products?page=1&per_page=10
    - `FLASK_ENV`: production
 4. 部署！
 
+## 车型图片静态资源说明
+
+当前后台已支持多张车型图片上传，数据库会保存图片数组，第一张图片会作为封面图用于前台车型卡片展示。
+
+但要注意部署环境：
+- 如果后端走对象存储（如 R2），多图上传适合长期使用
+- 如果后端回退到 Render 本地 `uploads` 目录，运行时上传的图片在重新部署后可能丢失
+
+因此建议分两种方式：
+
+### 方案 A：后台多图上传
+适合：你希望在后台直接多选上传并立即使用。
+
+说明：
+1. 在车辆管理页可直接多选上传图片
+2. 第一张图为封面图，可在后台调整封面
+3. 若当前环境使用本地存储，Render 重新部署后图片可能丢失
+
+### 方案 B：项目静态目录 + 部署
+适合：你希望图片长期稳定保留。
+
+推荐目录：
+- `uploads/vehicles/`
+
+推荐文件命名示例：
+- `uploads/vehicles/sedan-5.jpg`
+- `uploads/vehicles/lantu-dreamer.jpg`
+- `uploads/vehicles/buick-gl8.jpg`
+- `uploads/vehicles/benz-9-seat.jpg`
+- `uploads/vehicles/coaster.jpg`
+
+说明：
+- 这类固定车型图数量少，最适合跟随代码一起部署
+- Render 每次部署都会带上这些静态资源
+- 如果要长期稳定，建议将最终保留图片同步到仓库，或启用对象存储
+
 ## 默认管理员账号
 
 - 用户名: `admin`
