@@ -235,11 +235,11 @@ def admin_create_category():
     data = request.get_json()
     data = auto_fill_translations(data, ['name'])
 
-    name_zh = data.get('name_zh') or data.get('name_en')
+    name_zh = data.get('name_zh')
     name_en = data.get('name_en') or data.get('name_zh')
 
-    if not name_zh and not name_en:
-        return error_response('分类名称不能为空')
+    if not name_zh:
+        return error_response('请填写中文分类名称')
 
     category = Category(
         name_zh=name_zh,
@@ -267,6 +267,9 @@ def admin_update_category(category_id):
 
     data = request.get_json()
     data = auto_fill_translations(data, ['name'])
+
+    if 'name_zh' in data and not data.get('name_zh'):
+        return error_response('请填写中文分类名称')
 
     fields = ['name_zh', 'name_en', 'name_ru', 'name_es', 'icon', 'sort_order', 'status']
     for field in fields:

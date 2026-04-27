@@ -8,8 +8,8 @@
     <el-card shadow="hover">
       <el-table :data="list" v-loading="loading" stripe>
         <el-table-column prop="id" label="ID" width="70" />
-        <el-table-column prop="name_en" :label="$t('categories.nameEn')" />
         <el-table-column prop="name_zh" :label="$t('categories.nameZh')" />
+        <el-table-column prop="name_en" :label="$t('categories.nameEn')" />
         <el-table-column prop="icon" :label="$t('categories.icon')" width="80" />
         <el-table-column prop="sort_order" :label="$t('common.sort')" width="80" />
         <el-table-column :label="$t('common.status')" width="90">
@@ -82,7 +82,7 @@ function openDialog(row) {
 }
 
 async function onSave() {
-  if (!form.name_en && !form.name_zh) return ElMessage.warning(t('common.nameRequired'))
+  if (!form.name_zh) return ElMessage.warning('请填写中文分类名称')
   saving.value = true
   try {
     if (isEdit.value) { await updateCategory(editId.value, form); ElMessage.success(t('common.updated')) }

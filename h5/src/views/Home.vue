@@ -90,11 +90,11 @@
         <div class="section-label">{{ t('home.howLabel') }}</div>
         <h2 class="section-title-lg">{{ t('home.howTitle') }}</h2>
         <div class="steps-grid">
-          <div class="step" v-for="(step, i) in steps" :key="i">
+          <button class="step" v-for="(step, i) in steps" :key="i" type="button" @click="goToStep(step.action)">
             <div class="step-number">{{ String(i + 1).padStart(2, '0') }}</div>
             <h3 class="step-title">{{ t(step.title) }}</h3>
             <p class="step-desc">{{ t(step.desc) }}</p>
-          </div>
+          </button>
         </div>
       </div>
     </section>
@@ -175,9 +175,11 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { showToast } from 'vant'
 import { getFeaturedProducts, getVehicles, getTransferPrice, queryOrder } from '../api'
+import { useCartStore } from '../stores/cart'
 
 const { t } = useI18n()
 const router = useRouter()
+const cart = useCartStore()
 
 const openSupportEmail = () => {
   window.location.href = 'mailto:support@shanghai-tour-guide.com'
@@ -218,14 +220,34 @@ const serviceTypes = computed(() => {
 })
 
 const steps = [
-  { title: 'home.step1Title', desc: 'home.step1Desc' },
-  { title: 'home.step2Title', desc: 'home.step2Desc' },
-  { title: 'home.step3Title', desc: 'home.step3Desc' },
-  { title: 'home.step4Title', desc: 'home.step4Desc' }
+  { title: 'home.step1Title', desc: 'home.step1Desc', action: 'shop' },
+  { title: 'home.step2Title', desc: 'home.step2Desc', action: 'checkout' },
+  { title: 'home.step3Title', desc: 'home.step3Desc', action: 'orders' },
+  { title: 'home.step4Title', desc: 'home.step4Desc', action: 'orders' }
 ]
 
 function goToTransfer(serviceType) {
   router.push({ path: '/transfer', query: { service_type: serviceType } })
+}
+
+function goToStep(action) {
+  if (action === 'shop') {
+    router.push('/shop')
+    return
+  }
+
+  if (action === 'checkout') {
+    if (cart.items?.length) {
+      router.push('/checkout')
+    } else {
+      router.push('/shop')
+    }
+    return
+  }
+
+  if (action === 'orders') {
+    router.push('/order-query')
+  }
 }
 
 async function onQueryOrder() {
@@ -310,8 +332,8 @@ onUnmounted(() => { window.removeEventListener('resize', onResize) })
 /* ===== HOW IT WORKS ===== */
 .how-section { background: var(--white); }
 .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 40px; margin-top: 50px; }
-.step { text-align: center; padding: 24px 16px; border-radius: 16px; transition: background 0.3s; }
-.step:hover { background: var(--accent-light); }
+.step { text-align: center; padding: 24px 16px; border-radius: 16px; transition: background 0.3s, transform 0.2s; border: none; width: 100%; background: transparent; cursor: pointer; }
+.step:hover { background: var(--accent-light); transform: translateY(-2px); }
 .step-number { font-family: var(--font-display); font-size: 48px; font-weight: 700; color: var(--accent); opacity: 0.4; line-height: 1; margin-bottom: 16px; }
 .step-title { font-size: 18px; font-weight: 600; margin-bottom: 10px; }
 .step-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
