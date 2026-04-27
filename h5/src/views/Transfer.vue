@@ -1,4 +1,4 @@
-<template>
+ dian<template>
   <div class="page-container">
     <van-nav-bar :title="t('transfer.title')" left-arrow @click-left="$router.back()" />
 

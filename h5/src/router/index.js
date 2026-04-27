@@ -4,12 +4,14 @@ const routes = [
   {
     path: '/',
     name: 'Home',
-    component: () => import('../views/Home.vue')
+    component: () => import('../views/Home.vue'),
+    meta: { tabBar: true }
   },
   {
     path: '/shop',
     name: 'Shop',
-    component: () => import('../views/Shop.vue')
+    component: () => import('../views/Shop.vue'),
+    meta: { tabBar: true }
   },
   {
     path: '/product/:id',
@@ -19,7 +21,8 @@ const routes = [
   {
     path: '/cart',
     name: 'Cart',
-    component: () => import('../views/Cart.vue')
+    component: () => import('../views/Cart.vue'),
+    meta: { tabBar: true }
   },
   {
     path: '/transfer',
@@ -39,7 +42,8 @@ const routes = [
   {
     path: '/order-query',
     name: 'OrderQuery',
-    component: () => import('../views/OrderQuery.vue')
+    component: () => import('../views/OrderQuery.vue'),
+    meta: { tabBar: true }
   },
   {
     path: '/privacy',

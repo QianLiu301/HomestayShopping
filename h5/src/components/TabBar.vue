@@ -3,7 +3,7 @@
     <van-tabbar-item name="Home" to="/" icon="home-o">{{ t('common.home') }}</van-tabbar-item>
     <van-tabbar-item name="Shop" to="/shop" icon="shop-o">{{ t('common.shop') }}</van-tabbar-item>
     <van-tabbar-item name="Cart" to="/cart" icon="cart-o" :badge="cartCount || ''">{{ t('common.cart') }}</van-tabbar-item>
-    <van-tabbar-item name="OrderQuery" to="/order-query" icon="orders-o">{{ t('common.orders') }}</van-tabbar-item>
+    <van-tabbar-item name="OrderQuery" to="/order-query" icon="description">{{ t('common.orders') }}</van-tabbar-item>
   </van-tabbar>
 </template>
 

@@ -1,9 +1,15 @@
 <template>
-  <div class="page-container page-with-tabbar">
+  <div class="page-container page-with-tabbar order-page">
     <van-nav-bar :title="t('order.queryTitle')" />
 
+    <div class="order-page-hero">
+      <div class="order-page-badge">{{ t('common.orders') }}</div>
+      <h1 class="order-page-title">{{ t('order.queryTitle') }}</h1>
+      <p class="order-page-subtitle">{{ t('order.querySubtitle') }}</p>
+    </div>
+
     <!-- Search form -->
-    <div class="card">
+    <div class="card order-search-card">
       <van-field
         v-model="contact"
         :label="t('order.contactLabel')"
@@ -17,7 +23,7 @@
         :placeholder="t('order.orderNoOptional')"
         clearable
       />
-      <div style="padding: 12px 0 4px;">
+      <div class="order-search-actions">
         <van-button round block type="primary" :loading="loading" @click="onQuery">
           {{ t('order.query') }}
         </van-button>
@@ -490,6 +496,49 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.order-page {
+  padding-bottom: 76px;
+}
+
+.order-page-hero {
+  margin: 12px 16px 0;
+  padding: 24px 20px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--dark-bg) 0%, var(--warm-hero) 100%);
+  color: #fff;
+}
+
+.order-page-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.14);
+  font-size: 12px;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+.order-page-title {
+  font-size: 26px;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.order-page-subtitle {
+  font-size: 13px;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.74);
+}
+
+.order-search-card {
+  margin-top: 14px;
+}
+
+.order-search-actions {
+  padding: 12px 0 4px;
+}
+
 .results-header {
   padding: 12px 16px 4px;
   font-size: 13px;

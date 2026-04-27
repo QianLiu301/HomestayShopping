@@ -193,10 +193,13 @@ def admin_delete_product(product_id):
     product = Product.query.get(product_id)
     if not product:
         return error_response('商品不存在', 404)
-    
+
+    if product.order_items:
+        return error_response('该商品已有历史订单关联，无法删除，请改为下架处理', 400)
+
     db.session.delete(product)
     db.session.commit()
-    
+
     return success_response(None, '删除成功')
 
 

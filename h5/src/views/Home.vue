@@ -62,7 +62,7 @@
         <h2 class="section-title-lg">{{ t('home.shopTitle') }}</h2>
         <p class="section-subtitle">{{ t('home.shopSubtitle') }}</p>
 
-        <div class="shop-grid">
+        <div class="shop-grid" :class="{ 'shop-grid-mobile': isMobile }">
           <div v-for="product in featured" :key="product.id" class="shop-item" @click="$router.push(`/product/${product.id}`)">
             <div class="si-image">
               <img v-if="product.images?.length" :src="$resolveUrl(product.images[0])" :alt="product.name" />
@@ -77,7 +77,10 @@
         </div>
 
         <div v-if="!featured.length && !loading" class="empty-placeholder"><p>{{ t('home.productsComingSoon') }}</p></div>
-        <div class="shop-cta"><button class="btn btn-dark" @click="$router.push('/shop')">{{ t('home.viewAllProducts') }} →</button></div>
+        <div v-else-if="isMobile" class="shop-entry-mobile">
+          <button class="shop-entry-link" @click="$router.push('/shop')">{{ t('home.viewAllProducts') }} →</button>
+        </div>
+        <div v-else class="shop-cta"><button class="btn btn-dark" @click="$router.push('/shop')">{{ t('home.viewAllProducts') }} →</button></div>
       </div>
     </section>
 
@@ -99,7 +102,18 @@
     <!-- ===== SECTION 5: ORDER QUERY ===== -->
     <section id="orders" class="section orders-section">
       <div class="section-container">
-        <div class="orders-card">
+        <div v-if="isMobile" class="orders-mobile-card">
+          <div>
+            <div class="section-label orders-mobile-label">{{ t('nav.orders') }}</div>
+            <h2 class="section-title-lg orders-mobile-title">{{ t('home.ordersTitle') }}</h2>
+            <p class="orders-mobile-subtitle">{{ t('home.ordersSubtitle') }}</p>
+          </div>
+          <button class="btn btn-primary orders-mobile-btn" @click="router.push('/order-query')">
+            {{ t('order.query') }} →
+          </button>
+        </div>
+
+        <div v-else class="orders-card">
           <div class="oc-left">
             <div class="section-label" style="color:rgba(255,255,255,0.7)">{{ t('nav.orders') }}</div>
             <h2 class="section-title-lg" style="color:#fff">{{ t('home.ordersTitle') }}</h2>
@@ -290,6 +304,8 @@ onUnmounted(() => { window.removeEventListener('resize', onResize) })
 .si-info h3 { font-size: 15px; font-weight: 500; line-height: 1.4; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .si-price { font-size: 18px; font-weight: 700; color: var(--accent); }
 .shop-cta { text-align: center; margin-top: 48px; }
+.shop-entry-mobile { display: none; }
+.shop-entry-link { background: none; border: none; padding: 0; color: var(--accent-dark); font-size: 14px; font-weight: 600; cursor: pointer; }
 
 /* ===== HOW IT WORKS ===== */
 .how-section { background: var(--white); }
@@ -302,13 +318,19 @@ onUnmounted(() => { window.removeEventListener('resize', onResize) })
 
 /* ===== ORDER QUERY ===== */
 .orders-section { background: var(--warm-bg); padding: 80px 0; }
-.orders-card { background: linear-gradient(135deg, var(--dark-bg) 0%, var(--warm-hero) 100%); border-radius: 24px; padding: 60px; display: flex; gap: 60px; align-items: center; }
+.orders-card, .orders-mobile-card { background: linear-gradient(135deg, var(--dark-bg) 0%, var(--warm-hero) 100%); }
+.orders-card { border-radius: 24px; padding: 60px; display: flex; gap: 60px; align-items: center; }
+.orders-mobile-card { border-radius: 20px; padding: 28px 20px; }
 .oc-left { flex: 1; }
 .oc-right { flex: 0 0 360px; }
 .oc-form { display: flex; flex-direction: column; gap: 12px; }
 .oc-input { width: 100%; padding: 14px 20px; border: 1.5px solid rgba(255,255,255,0.2); border-radius: 10px; background: rgba(255,255,255,0.1); color: #fff; font-size: 14px; font-family: var(--font-body); outline: none; transition: border-color 0.2s; }
 .oc-input::placeholder { color: rgba(255,255,255,0.4); }
 .oc-input:focus { border-color: var(--accent); }
+.orders-mobile-label { color: rgba(255,255,255,0.7); margin-bottom: 14px; }
+.orders-mobile-title { color: #fff; margin-bottom: 10px; font-size: 28px; }
+.orders-mobile-subtitle { color: rgba(255,255,255,0.72); margin-bottom: 18px; line-height: 1.7; font-size: 14px; }
+.orders-mobile-btn { width: 100%; }
 
 /* ===== FOOTER ===== */
 .footer-section { background: var(--dark-bg); color: #fff; padding: 80px 0 30px; }
@@ -341,11 +363,31 @@ onUnmounted(() => { window.removeEventListener('resize', onResize) })
   .vc-image { height: 180px; padding: 10px; }
 
   /* Shop mobile */
-  .shop-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .shop-grid-mobile {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    padding: 4px 16px 10px 0;
+    grid-template-columns: none;
+  }
+  .shop-grid-mobile::-webkit-scrollbar { display: none; }
+  .shop-grid-mobile .shop-item {
+    flex: 0 0 72%;
+    min-width: 72%;
+    scroll-snap-align: start;
+    box-shadow: 0 6px 20px rgba(74,55,40,0.08);
+  }
   .si-info { padding: 12px; }
   .si-info h3 { font-size: 13px; }
   .si-price { font-size: 15px; }
-  .shop-cta { margin-top: 32px; }
+  .shop-cta { display: none; }
+  .shop-entry-mobile {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 14px;
+  }
 
   /* Steps mobile - 2 columns */
   .steps-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 32px; }
@@ -355,9 +397,9 @@ onUnmounted(() => { window.removeEventListener('resize', onResize) })
   .step-desc { font-size: 13px; }
 
   /* Orders mobile */
-  .orders-section { padding: 48px 0; }
-  .orders-card { flex-direction: column; padding: 32px 20px; gap: 24px; border-radius: 16px; }
-  .oc-right { flex: none; width: 100%; }
+  .orders-section { padding: 40px 0 20px; }
+  .orders-mobile-card { margin-bottom: 8px; }
+  .orders-mobile-title { font-size: 24px; }
 
   /* Footer mobile */
   .footer-section { padding: 48px 0 24px; }
