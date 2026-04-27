@@ -4,7 +4,7 @@
       <div class="header-filters">
         <el-input v-model="keyword" :placeholder="$t('products.searchPlaceholder')" clearable style="width:240px" @keyup.enter="loadData" />
         <el-select v-model="categoryFilter" :placeholder="$t('products.category')" clearable style="width:160px" @change="loadData">
-          <el-option v-for="c in categories" :key="c.id" :label="c.name_en || c.name_zh" :value="c.id" />
+          <el-option v-for="c in categories" :key="c.id" :label="c.name_zh || c.name_en" :value="c.id" />
         </el-select>
       </div>
       <el-button type="primary" @click="openDialog()">
@@ -81,7 +81,7 @@
 
         <el-form-item :label="$t('products.category')" required>
           <el-select v-model="form.category_id" style="width:100%">
-            <el-option v-for="c in categories" :key="c.id" :label="c.name_en || c.name_zh" :value="c.id" />
+            <el-option v-for="c in categories" :key="c.id" :label="c.name_zh || c.name_en" :value="c.id" />
           </el-select>
         </el-form-item>
 
@@ -219,7 +219,7 @@ const form = reactive(defaultForm())
 
 function getCategoryName(id) {
   const c = categories.value.find(x => x.id === id)
-  return c ? (c.name_en || c.name_zh) : '-'
+  return c ? (c.name_zh || c.name_en) : '-'
 }
 
 async function loadData() {
