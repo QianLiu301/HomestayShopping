@@ -133,6 +133,16 @@ def admin_create_product():
     if not data.get('price'):
         return error_response('价格不能为空')
 
+    name_fields = {
+        'name_zh': name_zh,
+        'name_en': name_en,
+        'name_ru': data.get('name_ru'),
+        'name_es': data.get('name_es')
+    }
+    for field_name, field_value in name_fields.items():
+        if field_value and len(str(field_value)) > 1000:
+            return error_response(f'{field_name} 不可以超过1000个字符')
+
     product = Product(
         category_id=data.get('category_id'),
         name_zh=name_zh,
@@ -168,6 +178,11 @@ def admin_update_product(product_id):
 
     data = request.get_json()
     data = auto_fill_translations(data, ['name', 'desc'])
+
+    name_fields = ['name_zh', 'name_en', 'name_ru', 'name_es']
+    for field in name_fields:
+        if field in data and data[field] and len(str(data[field])) > 1000:
+            return error_response(f'{field} 不可以超过1000个字符')
 
     # 更新字段
     fields = [

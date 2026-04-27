@@ -59,22 +59,22 @@
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item :label="$t('products.nameEn')" required>
-              <el-input v-model="form.name_en" />
+              <el-input v-model="form.name_en" :maxlength="1000" show-word-limit />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('products.nameZh')">
-              <el-input v-model="form.name_zh" />
+              <el-input v-model="form.name_zh" :maxlength="1000" show-word-limit />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('products.nameRu')">
-              <el-input v-model="form.name_ru" />
+              <el-input v-model="form.name_ru" :maxlength="1000" show-word-limit />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('products.nameEs')">
-              <el-input v-model="form.name_es" />
+              <el-input v-model="form.name_es" :maxlength="1000" show-word-limit />
             </el-form-item>
           </el-col>
         </el-row>
@@ -364,11 +364,31 @@ function onDrop(event, dropIndex) {
   draggedIndex.value = null
 }
 
+function validateNameLengths() {
+  const nameFields = [
+    ['name_en', t('products.nameEn')],
+    ['name_zh', t('products.nameZh')],
+    ['name_ru', t('products.nameRu')],
+    ['name_es', t('products.nameEs')]
+  ]
+
+  for (const [field, label] of nameFields) {
+    const value = form[field]
+    if (value && value.length > 1000) {
+      ElMessage.warning(t('products.nameTooLong', { field: label, max: 1000 }))
+      return false
+    }
+  }
+
+  return true
+}
+
 async function onSave() {
   if (!form.name_en && !form.name_zh) return ElMessage.warning(t('common.nameRequired'))
   if (!form.category_id) return ElMessage.warning(t('products.categoryRequired'))
   if (!form.price) return ElMessage.warning(t('products.priceRequired'))
   if (uploadingCount.value > 0) return ElMessage.warning('图片仍在上传中，请等待上传完成后再保存')
+  if (!validateNameLengths()) return
 
   saving.value = true
   const data = { ...form, images: [...uploadedImages.value] }

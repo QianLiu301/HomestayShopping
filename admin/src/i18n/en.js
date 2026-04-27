@@ -117,7 +117,8 @@ export default {
     categoryRequired: 'Category is required',
     priceRequired: 'Price is required',
     imageError: 'Only image files are allowed',
-    imageSizeError: 'Image must be less than 10MB'
+    imageSizeError: 'Image must be less than 10MB',
+    nameTooLong: '{field} cannot exceed {max} characters'
   },
 
   // Categories

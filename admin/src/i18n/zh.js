@@ -117,7 +117,8 @@ export default {
     categoryRequired: '请选择分类',
     priceRequired: '请填写价格',
     imageError: '仅支持图片文件',
-    imageSizeError: '图片大小不能超过10MB'
+    imageSizeError: '图片大小不能超过10MB',
+    nameTooLong: '{field} 不可以超过 {max} 个字符'
   },
 
   // Categories
