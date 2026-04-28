@@ -73,6 +73,7 @@ const page = ref(1)
 const loadingMore = ref(false)
 const finished = ref(false)
 const refreshing = ref(false)
+const isFetching = ref(false)
 
 onMounted(async () => {
   try {
@@ -81,31 +82,43 @@ onMounted(async () => {
   } catch (e) {
     console.error(e)
   }
-  loadMore()
 })
 
 async function loadMore() {
+  if (isFetching.value || finished.value) return
+
+  isFetching.value = true
+  loadingMore.value = true
+  const currentPage = page.value
+
   try {
-    const params = { page: page.value, per_page: 10 }
+    const params = { page: currentPage, per_page: 10 }
     if (activeCategory.value) {
       params.category_id = activeCategory.value
     }
     const res = await getProducts(params)
     const list = res.data?.list || []
 
-    if (page.value === 1) {
+    if (currentPage === 1) {
       products.value = list
     } else {
-      products.value.push(...list)
+      const merged = [...products.value, ...list]
+      const uniqueMap = new Map()
+      merged.forEach(item => {
+        if (item?.id != null) uniqueMap.set(item.id, item)
+      })
+      products.value = Array.from(uniqueMap.values())
     }
 
-    if (products.value.length >= (res.data?.total || 0)) {
+    if (products.value.length >= (res.data?.total || 0) || !list.length) {
       finished.value = true
+    } else {
+      page.value = currentPage + 1
     }
-    page.value++
   } catch (e) {
     finished.value = true
   } finally {
+    isFetching.value = false
     loadingMore.value = false
     refreshing.value = false
   }
@@ -115,12 +128,15 @@ function onCategoryChange() {
   page.value = 1
   finished.value = false
   products.value = []
+  isFetching.value = false
   loadMore()
 }
 
 function onRefresh() {
   page.value = 1
   finished.value = false
+  products.value = []
+  isFetching.value = false
   loadMore()
 }
 </script>
