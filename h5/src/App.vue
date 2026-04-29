@@ -20,7 +20,10 @@ const route = useRoute()
 const hideNavBarPages = ['OrderResult']
 const isMobile = ref(window.innerWidth <= 768)
 
-const showNavBar = computed(() => !hideNavBarPages.includes(route.name))
+const showNavBar = computed(() => {
+  // 只在首页显示导航栏，其他页面由各自的页面级导航头负责
+  return route.path === '/'
+})
 const showTabBar = computed(() => isMobile.value && route.meta?.tabBar)
 
 function onResize() {

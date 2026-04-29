@@ -23,19 +23,64 @@
       <!-- Vehicle selection -->
       <div class="card">
         <div class="card-title">{{ t('transfer.selectVehicle') }} <span class="required">*</span></div>
+        <div class="vehicle-intro">
+          <div class="vehicle-intro-title">{{ t('transfer.featuredVehicles') }}</div>
+          <div class="vehicle-intro-desc">{{ t('transfer.featuredVehiclesDesc') }}</div>
+        </div>
+
+        <div class="vehicle-showcase">
+          <button
+            v-for="v in vehicles"
+            :key="`showcase-${v.id}`"
+            type="button"
+            class="showcase-card"
+            :class="{ active: form.vehicle_id === v.id }"
+            @click="selectVehicle(v.id)"
+          >
+            <div class="showcase-image-wrap">
+              <img
+                v-if="vehiclePrimaryImage(v)"
+                :src="$resolveUrl(vehiclePrimaryImage(v))"
+                :alt="vehicleDisplayName(v)"
+                class="showcase-image"
+              />
+              <div v-else class="showcase-image placeholder">
+                <van-icon name="logistics" size="30" color="#999" />
+              </div>
+              <div class="showcase-badge">{{ v.seats >= 9 ? t('transfer.groupPreferred') : t('transfer.familyPreferred') }}</div>
+            </div>
+            <div class="showcase-content">
+              <div class="showcase-name">{{ vehicleDisplayName(v) }}</div>
+              <div v-if="v.model" class="showcase-model">{{ v.model }}</div>
+              <div class="showcase-meta">
+                <span class="showcase-meta-item">{{ t('transfer.seats', { n: v.seats }) }}</span>
+                <span v-if="vehicleCapacityText(v)" class="showcase-meta-item">{{ vehicleCapacityText(v) }}</span>
+              </div>
+              <div class="showcase-footer">
+                <div class="showcase-price">
+                  <span class="showcase-price-label">{{ t('transfer.approxPrice') }}</span>
+                  <strong>{{ vehiclePriceLabel(v) }}</strong>
+                </div>
+                <span class="showcase-action">{{ form.vehicle_id === v.id ? t('transfer.selectedVehicle') : t('transfer.selectThisVehicle') }}</span>
+              </div>
+            </div>
+          </button>
+        </div>
+
         <div class="vehicle-list">
-          <div
+          <button
             v-for="v in vehicles"
             :key="v.id"
+            type="button"
             class="vehicle-card"
             :class="{ active: form.vehicle_id === v.id }"
-            @click="form.vehicle_id = v.id"
+            @click="selectVehicle(v.id)"
           >
             <div class="vehicle-icon">
               <img
                 v-if="vehiclePrimaryImage(v)"
                 :src="$resolveUrl(vehiclePrimaryImage(v))"
-                :alt="v.name"
+                :alt="vehicleDisplayName(v)"
                 class="vehicle-img"
                 @click.stop="previewVehicle(v)"
               />
@@ -43,19 +88,24 @@
               <div v-if="(v.images?.length || 0) > 1" class="vehicle-image-badge">{{ v.images.length }}</div>
             </div>
             <div class="vehicle-info">
-              <div class="vehicle-name">{{ v.name }}</div>
+              <div class="vehicle-name-row">
+                <div class="vehicle-name">{{ vehicleDisplayName(v) }}</div>
+                <span class="vehicle-state-tag">{{ form.vehicle_id === v.id ? t('transfer.selectedVehicle') : t('transfer.recommendedVehicle') }}</span>
+              </div>
               <div v-if="v.model" class="vehicle-model">{{ t('transfer.vehicleModel') }}：{{ v.model }}</div>
-              <div class="vehicle-desc">
-                {{ t('transfer.seats', { n: v.seats }) }}
+              <div class="vehicle-highlights">
+                <span class="vehicle-highlight-chip">{{ t('transfer.seats', { n: v.seats }) }}</span>
+                <span v-if="vehicleCapacityText(v)" class="vehicle-highlight-chip">{{ vehicleCapacityText(v) }}</span>
+                <span class="vehicle-highlight-chip">{{ vehiclePriceLabel(v) }}</span>
               </div>
-              <div v-if="vehicleCapacityText(v)" class="vehicle-capacity">
-                {{ t('transfer.capacityInfo') }}：{{ vehicleCapacityText(v) }}
-              </div>
+              <div class="vehicle-desc">{{ t('transfer.vehicleGalleryHint') }}</div>
             </div>
-            <div class="vehicle-price">
-              {{ v.extra_price > 0 ? t('transfer.extraPrice', { price: v.extra_price }) : t('transfer.noExtra') }}
+            <div class="vehicle-side">
+              <div class="vehicle-price-label">{{ t('transfer.approxPrice') }}</div>
+              <div class="vehicle-price">{{ vehiclePriceLabel(v) }}</div>
+              <div class="vehicle-side-tip">{{ t('transfer.tapToPreview') }}</div>
             </div>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -344,6 +394,21 @@ const datePickerValue = ref([
 ])
 
 const selectedVehicle = computed(() => vehicles.value.find(v => v.id === form.vehicle_id))
+
+function selectVehicle(vehicleId) {
+  form.vehicle_id = vehicleId
+}
+
+function vehicleDisplayName(vehicle) {
+  if (!vehicle) return ''
+  return vehicle.name || vehicle.model || ''
+}
+
+function vehiclePriceLabel(vehicle) {
+  const price = Number(vehicle?.extra_price || 0)
+  if (price > 0) return `¥${price}`
+  return t('transfer.priceToConfirm')
+}
 
 const basePrice = computed(() => {
   if (!pricing.value) return 0
@@ -668,21 +733,159 @@ onMounted(async () => {
   border-radius: 6px;
 }
 
+.vehicle-intro {
+  margin-bottom: 14px;
+}
+
+.vehicle-intro-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.vehicle-intro-desc {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.vehicle-showcase {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.showcase-card {
+  padding: 0;
+  border: 1px solid #ebe7df;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+  text-align: left;
+  box-shadow: 0 8px 20px rgba(28, 26, 22, 0.06);
+}
+
+.showcase-card.active {
+  border-color: var(--primary);
+  box-shadow: 0 12px 28px rgba(26, 115, 232, 0.16);
+}
+
+.showcase-image-wrap {
+  position: relative;
+  height: 168px;
+  background: #f6f4ef;
+}
+
+.showcase-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.showcase-image.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.showcase-badge {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.62);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.showcase-content {
+  padding: 14px;
+}
+
+.showcase-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.showcase-model {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.showcase-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.showcase-meta-item {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #f7f8fa;
+  color: #4f5b6b;
+  font-size: 12px;
+}
+
+.showcase-footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.showcase-price {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--accent);
+}
+
+.showcase-price-label {
+  font-size: 11px;
+  color: var(--text-light);
+}
+
+.showcase-price strong {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.showcase-action {
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: #f3f7ff;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .vehicle-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .vehicle-card {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
   padding: 12px;
   border: 2px solid var(--border);
-  border-radius: 10px;
+  border-radius: 14px;
   cursor: pointer;
   transition: all 0.2s;
+  background: #fff;
+  text-align: left;
 }
 
 .vehicle-card.active {
@@ -691,9 +894,9 @@ onMounted(async () => {
 }
 
 .vehicle-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 10px;
+  width: 88px;
+  height: 88px;
+  border-radius: 12px;
   background: #f5f5f5;
   display: flex;
   align-items: center;
@@ -731,35 +934,80 @@ onMounted(async () => {
 
 .vehicle-info {
   flex: 1;
+  min-width: 0;
+}
+
+.vehicle-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .vehicle-name {
   font-size: 15px;
+  font-weight: 700;
+}
+
+.vehicle-state-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f6f1e7;
+  color: #8b6f47;
+  font-size: 11px;
   font-weight: 600;
 }
 
 .vehicle-model {
   font-size: 12px;
   color: var(--text-secondary);
-  margin-top: 2px;
+  margin-top: 4px;
+}
+
+.vehicle-highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.vehicle-highlight-chip {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f7f8fa;
+  font-size: 11px;
+  color: #4f5b6b;
 }
 
 .vehicle-desc {
   font-size: 12px;
   color: var(--text-light);
-  margin-top: 2px;
+  margin-top: 8px;
 }
 
-.vehicle-capacity {
-  font-size: 12px;
-  color: var(--accent);
-  margin-top: 2px;
+.vehicle-side {
+  min-width: 84px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.vehicle-price-label {
+  font-size: 11px;
+  color: var(--text-light);
 }
 
 .vehicle-price {
-  font-size: 13px;
+  margin-top: 4px;
+  font-size: 18px;
   color: var(--accent);
-  font-weight: 500;
+  font-weight: 700;
+}
+
+.vehicle-side-tip {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-light);
+  line-height: 1.4;
 }
 
 .booking-tip {
