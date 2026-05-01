@@ -32,7 +32,7 @@
         </div>
 
         <div class="vehicle-grid">
-          <div v-for="v in vehicles" :key="v.id" class="vehicle-card" @click="goToTransfer(activeService)">
+          <div v-for="v in vehicles" :key="v.id" class="vehicle-card" @click="goToTransfer(activeService, v.id)">
             <div class="vc-image">
               <img v-if="v.image" :src="$resolveUrl(v.image)" :alt="v.name" />
               <svg v-else width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9m-6-6h15m-6 0V6"/></svg>
@@ -62,7 +62,7 @@
         <p class="section-subtitle">{{ t('home.shopSubtitle') }}</p>
 
         <div class="shop-grid" :class="{ 'shop-grid-mobile': isMobile }">
-          <div v-for="product in featured" :key="product.id" class="shop-item" @click="$router.push(`/product/${product.id}`)">
+          <div v-for="product in products" :key="product.id" class="shop-item" @click="$router.push(`/product/${product.id}`)">
             <div class="si-image">
               <img v-if="product.images?.length" :src="$resolveUrl(product.images[0])" :alt="product.name" />
               <div v-else class="si-placeholder">{{ product.name?.charAt(0) }}</div>
@@ -75,7 +75,7 @@
           </div>
         </div>
 
-        <div v-if="!featured.length && !loading" class="empty-placeholder"><p>{{ t('home.productsComingSoon') }}</p></div>
+        <div v-if="!products.length && !loading" class="empty-placeholder"><p>{{ t('home.productsComingSoon') }}</p></div>
         <div v-else-if="isMobile" class="shop-entry-mobile">
           <button class="shop-entry-link" @click="$router.push('/shop')">{{ t('home.viewAllProducts') }} →</button>
         </div>
@@ -173,7 +173,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { showToast } from 'vant'
-import { getFeaturedProducts, getVehicles, queryOrder } from '../api'
+import { getProducts, getVehicles, queryOrder } from '../api'
 import { useCartStore } from '../stores/cart'
 
 const { t } = useI18n()
@@ -201,10 +201,10 @@ const heroStyle = computed(() => {
   }
 })
 
-const featured = ref([])
+const products = ref([])
 const vehicles = ref([])
 const loading = ref(true)
-const activeService = ref('combo')
+const activeService = ref('pickup')
 const queryOrderNo = ref('')
 const queryContact = ref('')
 
@@ -233,8 +233,10 @@ const steps = [
   { title: 'home.step4Title', desc: 'home.step4Desc', action: 'orders' }
 ]
 
-function goToTransfer(serviceType) {
-  router.push({ path: '/transfer', query: { service_type: serviceType } })
+function goToTransfer(serviceType, vehicleId = null) {
+  const query = { service_type: serviceType }
+  if (vehicleId) query.vehicle_id = String(vehicleId)
+  router.push({ path: '/transfer', query })
 }
 
 function goToStep(action) {
@@ -269,8 +271,11 @@ const onResize = () => { isMobile.value = window.innerWidth <= 768 }
 onMounted(async () => {
   window.addEventListener('resize', onResize)
   try {
-    const [featRes, vehRes] = await Promise.all([getFeaturedProducts(6), getVehicles()])
-    featured.value = featRes.data || []
+    const [productRes, vehRes] = await Promise.all([
+      getProducts({ page: 1, per_page: 1000 }),
+      getVehicles()
+    ])
+    products.value = productRes.data?.list || []
     vehicles.value = vehRes.data || []
   } catch (e) { console.error(e) }
   finally { loading.value = false }

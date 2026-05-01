@@ -15,7 +15,11 @@
           <van-radio name="dropoff">{{ t('transfer.dropoff') }}</van-radio>
           <van-radio name="combo">{{ t('transfer.combo') }}</van-radio>
         </van-radio-group>
-        <div v-if="servicePriceTip" class="combo-tip">
+        <div v-if="form.service_type === 'combo'" class="combo-tip">
+          <div class="combo-tip-title">接机 + 送机享 9 折</div>
+          <div class="combo-tip-desc">系统自动按组合价计算</div>
+        </div>
+        <div v-else-if="servicePriceTip" class="combo-tip service-tip">
           {{ servicePriceTip }}
         </div>
       </div>
@@ -26,45 +30,6 @@
         <div class="vehicle-intro">
           <div class="vehicle-intro-title">{{ t('transfer.featuredVehicles') }}</div>
           <div class="vehicle-intro-desc">{{ t('transfer.featuredVehiclesDesc') }}</div>
-        </div>
-
-        <div class="vehicle-showcase">
-          <button
-            v-for="v in vehicles"
-            :key="`showcase-${v.id}`"
-            type="button"
-            class="showcase-card"
-            :class="{ active: form.vehicle_id === v.id }"
-            @click="selectVehicle(v.id)"
-          >
-            <div class="showcase-image-wrap">
-              <img
-                v-if="vehiclePrimaryImage(v)"
-                :src="$resolveUrl(vehiclePrimaryImage(v))"
-                :alt="vehicleDisplayName(v)"
-                class="showcase-image"
-              />
-              <div v-else class="showcase-image placeholder">
-                <van-icon name="logistics" size="30" color="#999" />
-              </div>
-              <div class="showcase-badge">{{ v.seats >= 9 ? t('transfer.groupPreferred') : t('transfer.familyPreferred') }}</div>
-            </div>
-            <div class="showcase-content">
-              <div class="showcase-name">{{ vehicleDisplayName(v) }}</div>
-              <div v-if="v.model" class="showcase-model">{{ v.model }}</div>
-              <div class="showcase-meta">
-                <span class="showcase-meta-item">{{ t('transfer.seats', { n: v.seats }) }}</span>
-                <span v-if="vehicleCapacityText(v)" class="showcase-meta-item">{{ vehicleCapacityText(v) }}</span>
-              </div>
-              <div class="showcase-footer">
-                <div class="showcase-price">
-                  <span class="showcase-price-label">{{ t('transfer.approxPrice') }}</span>
-                  <strong>{{ vehiclePriceLabel(v) }}</strong>
-                </div>
-                <span class="showcase-action">{{ form.vehicle_id === v.id ? t('transfer.selectedVehicle') : t('transfer.selectThisVehicle') }}</span>
-              </div>
-            </div>
-          </button>
         </div>
 
         <div class="vehicle-list">
@@ -234,28 +199,12 @@
         <van-field v-model="form.remark" :label="t('transfer.remark')" :placeholder="t('transfer.remarkPlaceholder')" type="textarea" rows="2" autosize />
       </div>
 
-      <!-- Coupon -->
-      <div class="card">
-        <div class="card-title">{{ t('checkout.coupon') }}</div>
-        <div class="coupon-row">
-          <van-field v-model="couponCode" :placeholder="t('checkout.couponPlaceholder')" style="flex:1" />
-          <van-button size="small" type="primary" :loading="couponLoading" @click="onVerifyCoupon">{{ t('checkout.verify') }}</van-button>
-        </div>
-        <div v-if="couponDiscount > 0" class="coupon-msg success">
-          {{ t('checkout.couponValid', { amount: couponDiscount }) }}
-        </div>
-      </div>
-
       <!-- Price detail -->
       <div class="card">
         <div class="card-title">{{ t('transfer.priceDetail') }}</div>
         <div class="price-line">
           <span>{{ t('transfer.selectedServicePrice') }}</span>
           <span>¥{{ basePrice }}</span>
-        </div>
-        <div v-if="couponDiscount > 0" class="price-line discount">
-          <span>{{ t('transfer.discount') }}</span>
-          <span>-¥{{ couponDiscount }}</span>
         </div>
         <div class="price-line total">
           <span>{{ t('transfer.totalPrice') }}</span>
@@ -302,7 +251,21 @@
     </van-popup>
 
     <van-popup v-model:show="showImagePreview" class="image-preview-popup" closeable>
-      <div class="image-preview-wrapper" @click="showImagePreview = false">
+      <div
+        class="image-preview-wrapper"
+        @click="showImagePreview = false"
+        @touchstart.stop="onPreviewTouchStart"
+        @touchend.stop="onPreviewTouchEnd"
+      >
+        <button
+          v-if="previewImages.length > 1"
+          type="button"
+          class="image-nav image-nav-prev"
+          @click.stop="showPrevPreview"
+          aria-label="Previous image"
+        >
+          ‹
+        </button>
         <img
           v-if="previewImage"
           :src="previewImage"
@@ -310,6 +273,15 @@
           class="image-preview-img"
           @click.stop
         />
+        <button
+          v-if="previewImages.length > 1"
+          type="button"
+          class="image-nav image-nav-next"
+          @click.stop="showNextPreview"
+          aria-label="Next image"
+        >
+          ›
+        </button>
         <div v-if="previewTitle" class="image-preview-title">
           {{ previewTitle }}
           <span v-if="previewImages.length > 1" class="image-preview-count">{{ previewIndex + 1 }} / {{ previewImages.length }}</span>
@@ -337,7 +309,7 @@ import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { showToast } from 'vant'
-import { getVehicles, createTransferOrder, verifyCoupon, resolveUrl } from '../api'
+import { getVehicles, createTransferOrder, resolveUrl } from '../api'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -366,10 +338,6 @@ const dropoffAirport = ref('PVG')
 const dropoffFlightNo = ref('')
 const dropoffFlightTime = ref(null)
 
-const couponCode = ref('')
-const couponDiscount = ref(0)
-const couponLoading = ref(false)
-
 const showDatePicker = ref(false)
 const activeDatePicker = ref('pickup') // 'pickup' or 'dropoff'
 const pendingOrderNo = ref('')
@@ -380,6 +348,8 @@ const previewImage = ref('')
 const previewTitle = ref('')
 const previewImages = ref([])
 const previewIndex = ref(0)
+const previewTouchStartX = ref(0)
+const previewTouchStartY = ref(0)
 
 const now = new Date()
 const datePickerValue = ref([
@@ -419,8 +389,8 @@ const servicePriceTip = computed(() => {
   const pickup = vehicleServicePrice(selectedVehicle.value, 'pickup')
   const dropoff = vehicleServicePrice(selectedVehicle.value, 'dropoff')
   const combo = vehicleServicePrice(selectedVehicle.value, 'combo')
-  if (form.service_type === 'combo' && combo > 0) {
-    return t('transfer.comboPriceTip', { combo: combo })
+  if (form.service_type === 'combo') {
+    return ''
   }
   if (form.service_type === 'pickup' && pickup > 0) {
     return t('transfer.servicePriceTip', { price: pickup })
@@ -431,9 +401,7 @@ const servicePriceTip = computed(() => {
   return ''
 })
 
-const totalPrice = computed(() =>
-  Math.max(0, basePrice.value - couponDiscount.value)
-)
+const totalPrice = computed(() => basePrice.value)
 
 function airportName(code) {
   if (code === 'PVG') return t('transfer.pudongAirport') + ' (PVG)'
@@ -487,6 +455,35 @@ function setPreviewIndex(index) {
   previewImage.value = previewImages.value[index] || ''
 }
 
+function onPreviewTouchStart(e) {
+  const touch = e.touches?.[0]
+  if (!touch) return
+  previewTouchStartX.value = touch.clientX
+  previewTouchStartY.value = touch.clientY
+}
+
+function onPreviewTouchEnd(e) {
+  const touch = e.changedTouches?.[0]
+  if (!touch) return
+  const deltaX = touch.clientX - previewTouchStartX.value
+  const deltaY = touch.clientY - previewTouchStartY.value
+  if (Math.abs(deltaX) < 40 || Math.abs(deltaX) < Math.abs(deltaY)) return
+  if (deltaX > 0) showPrevPreview()
+  else showNextPreview()
+}
+
+function showPrevPreview() {
+  if (!previewImages.value.length) return
+  const nextIndex = previewIndex.value <= 0 ? previewImages.value.length - 1 : previewIndex.value - 1
+  setPreviewIndex(nextIndex)
+}
+
+function showNextPreview() {
+  if (!previewImages.value.length) return
+  const nextIndex = previewIndex.value >= previewImages.value.length - 1 ? 0 : previewIndex.value + 1
+  setPreviewIndex(nextIndex)
+}
+
 function previewVehicle(vehicle) {
   const images = vehicleImageList(vehicle)
   if (!images.length) return
@@ -494,24 +491,6 @@ function previewVehicle(vehicle) {
   previewTitle.value = vehicle.name || ''
   setPreviewIndex(0)
   showImagePreview.value = true
-}
-
-async function onVerifyCoupon() {
-  if (!couponCode.value) return
-  couponLoading.value = true
-  try {
-    const res = await verifyCoupon({
-      code: couponCode.value,
-      amount: basePrice.value,
-      apply_to: 'transfer'
-    })
-    couponDiscount.value = res.data?.discount_amount || 0
-  } catch (e) {
-    couponDiscount.value = 0
-    showToast(t('checkout.couponInvalid'))
-  } finally {
-    couponLoading.value = false
-  }
 }
 
 function validationFail(msg) {
@@ -592,11 +571,6 @@ async function onSubmit() {
     data.dropoff_flight_time = dropoffFlightTime.value
   }
 
-  // Coupon
-  if (couponCode.value && couponDiscount.value > 0) {
-    data.coupon_code = couponCode.value
-  }
-
   submitting.value = true
   try {
     const res = await createTransferOrder(data)
@@ -634,7 +608,11 @@ onMounted(async () => {
     ])
     vehicles.value = vRes.data || []
 
-    if (vehicles.value.length) {
+    const routeVehicleId = route.query.vehicle_id ? Number(route.query.vehicle_id) : null
+    const matchedVehicle = routeVehicleId ? vehicles.value.find(v => v.id === routeVehicleId) : null
+    if (matchedVehicle) {
+      form.vehicle_id = matchedVehicle.id
+    } else if (vehicles.value.length) {
       form.vehicle_id = vehicles.value[0].id
     }
   } catch (e) {
@@ -646,6 +624,10 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.page-container {
+  padding-top: 0;
+}
+
 .required {
   color: #ee0a24;
   font-weight: bold;
@@ -737,12 +719,30 @@ onMounted(async () => {
 }
 
 .combo-tip {
-  margin-top: 8px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #fff8ec 0%, #fff3de 100%);
+  border: 1px solid #f2dcc0;
+}
+
+.combo-tip-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #8b5e1a;
+  line-height: 1.4;
+}
+
+.combo-tip-desc {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #a06f2f;
+  line-height: 1.5;
+}
+
+.service-tip {
   font-size: 12px;
   color: var(--accent);
-  background: #fff7f0;
-  padding: 6px 12px;
-  border-radius: 6px;
 }
 
 .vehicle-intro {
@@ -760,124 +760,6 @@ onMounted(async () => {
   font-size: 12px;
   line-height: 1.6;
   color: var(--text-secondary);
-}
-
-.vehicle-showcase {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.showcase-card {
-  padding: 0;
-  border: 1px solid #ebe7df;
-  border-radius: 16px;
-  overflow: hidden;
-  background: #fff;
-  text-align: left;
-  box-shadow: 0 8px 20px rgba(28, 26, 22, 0.06);
-}
-
-.showcase-card.active {
-  border-color: var(--primary);
-  box-shadow: 0 12px 28px rgba(26, 115, 232, 0.16);
-}
-
-.showcase-image-wrap {
-  position: relative;
-  height: 168px;
-  background: #f6f4ef;
-}
-
-.showcase-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.showcase-image.placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.showcase-badge {
-  position: absolute;
-  left: 12px;
-  top: 12px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.62);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.showcase-content {
-  padding: 14px;
-}
-
-.showcase-name {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.showcase-model {
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.showcase-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.showcase-meta-item {
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: #f7f8fa;
-  color: #4f5b6b;
-  font-size: 12px;
-}
-
-.showcase-footer {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 14px;
-}
-
-.showcase-price {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  color: var(--accent);
-}
-
-.showcase-price-label {
-  font-size: 11px;
-  color: var(--text-light);
-}
-
-.showcase-price strong {
-  font-size: 24px;
-  line-height: 1;
-}
-
-.showcase-action {
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: #f3f7ff;
-  color: var(--primary);
-  font-size: 12px;
-  font-weight: 600;
 }
 
 .vehicle-list {
@@ -1029,18 +911,6 @@ onMounted(async () => {
   line-height: 1.5;
 }
 
-.coupon-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.coupon-msg.success {
-  margin-top: 8px;
-  font-size: 13px;
-  color: var(--success);
-}
-
 .price-line {
   display: flex;
   justify-content: space-between;
@@ -1110,6 +980,38 @@ onMounted(async () => {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
 }
 
+.image-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #333;
+  font-size: 36px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+.image-nav:hover {
+  background: #fff;
+}
+
+.image-nav-prev {
+  left: 24px;
+}
+
+.image-nav-next {
+  right: 24px;
+}
+
 .image-preview-title {
   position: absolute;
   left: 16px;
@@ -1160,6 +1062,22 @@ onMounted(async () => {
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+@media (max-width: 768px) {
+  .image-nav {
+    width: 46px;
+    height: 46px;
+    font-size: 30px;
+  }
+
+  .image-nav-prev {
+    left: 12px;
+  }
+
+  .image-nav-next {
+    right: 12px;
+  }
 }
 
 @keyframes shake {
