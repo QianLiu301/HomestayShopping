@@ -28,7 +28,6 @@
           <div class="service-type" v-for="svc in serviceTypes" :key="svc.type" :class="{ active: activeService === svc.type }" @click="activeService = svc.type; goToTransfer(svc.type)">
             <div class="svc-icon">{{ svc.icon }}</div>
             <div class="svc-name">{{ t(svc.label) }}</div>
-            <div class="svc-price">{{ svc.priceLabel }}</div>
           </div>
         </div>
 
@@ -42,7 +41,7 @@
               <h3 class="vc-name">{{ v.name }}</h3>
               <p class="vc-desc">{{ t('transfer.seats', { n: v.seats }) }} · {{ t('transfer.luggage', { n: v.luggage_capacity }) }}</p>
               <div class="vc-bottom">
-                <span class="vc-price">{{ v.extra_price > 0 ? t('transfer.extraPrice', { price: v.extra_price }) : t('transfer.noExtra') }}</span>
+                <span class="vc-price">{{ vehicleServicePriceLabel(v, activeService) }}</span>
                 <span class="vc-book">{{ t('home.bookNow') }} →</span>
               </div>
             </div>
@@ -174,7 +173,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { showToast } from 'vant'
-import { getFeaturedProducts, getVehicles, getTransferPrice, queryOrder } from '../api'
+import { getFeaturedProducts, getVehicles, queryOrder } from '../api'
 import { useCartStore } from '../stores/cart'
 
 const { t } = useI18n()
@@ -204,20 +203,28 @@ const heroStyle = computed(() => {
 
 const featured = ref([])
 const vehicles = ref([])
-const pricing = ref(null)
 const loading = ref(true)
 const activeService = ref('combo')
 const queryOrderNo = ref('')
 const queryContact = ref('')
 
-const serviceTypes = computed(() => {
-  const p = pricing.value
-  return [
-    { type: 'pickup', icon: '✈️', label: 'transfer.pickup', priceLabel: p ? `¥${p.pickup_price}` : '' },
-    { type: 'dropoff', icon: '🛫', label: 'transfer.dropoff', priceLabel: p ? `¥${p.dropoff_price}` : '' },
-    { type: 'combo', icon: '🔄', label: 'transfer.combo', priceLabel: p ? `¥${p.combo_price}` : '' }
-  ]
-})
+const serviceTypes = computed(() => ([
+  { type: 'pickup', icon: '✈️', label: 'transfer.pickup' },
+  { type: 'dropoff', icon: '🛫', label: 'transfer.dropoff' },
+  { type: 'combo', icon: '🔄', label: 'transfer.combo' }
+]))
+
+function vehicleServicePrice(vehicle, serviceType = activeService.value) {
+  if (!vehicle) return 0
+  if (serviceType === 'pickup') return Number(vehicle.pickup_price || 0)
+  if (serviceType === 'dropoff') return Number(vehicle.dropoff_price || 0)
+  return Number(vehicle.combo_price || 0)
+}
+
+function vehicleServicePriceLabel(vehicle, serviceType = activeService.value) {
+  const price = vehicleServicePrice(vehicle, serviceType)
+  return price > 0 ? `¥${price}` : t('transfer.priceToConfirm')
+}
 
 const steps = [
   { title: 'home.step1Title', desc: 'home.step1Desc', action: 'shop' },
@@ -262,10 +269,9 @@ const onResize = () => { isMobile.value = window.innerWidth <= 768 }
 onMounted(async () => {
   window.addEventListener('resize', onResize)
   try {
-    const [featRes, vehRes, priceRes] = await Promise.all([getFeaturedProducts(6), getVehicles(), getTransferPrice()])
+    const [featRes, vehRes] = await Promise.all([getFeaturedProducts(6), getVehicles()])
     featured.value = featRes.data || []
     vehicles.value = vehRes.data || []
-    pricing.value = priceRes.data
   } catch (e) { console.error(e) }
   finally { loading.value = false }
 })

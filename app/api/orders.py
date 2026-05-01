@@ -113,20 +113,22 @@ def create_transfer_order():
     if not contact_phone and not contact_email:
         return error_response('请填写手机号或邮箱')
 
-    # 计算价格
-    pickup_price = float(Setting.get_value('pickup_price', 300))
-    dropoff_price = float(Setting.get_value('dropoff_price', 300))
-    combo_discount_pct = float(Setting.get_value('combo_discount', 10))
-    combo_factor = 1 - combo_discount_pct / 100
+    # 计算价格：按车型独立报价
+    pickup_price = float(vehicle.pickup_price) if vehicle.pickup_price else 0
+    dropoff_price = float(vehicle.dropoff_price) if vehicle.dropoff_price else 0
+    combo_price = float(vehicle.combo_price) if vehicle.combo_price else 0
 
     if service_type == 'pickup':
         base_price = pickup_price
     elif service_type == 'dropoff':
         base_price = dropoff_price
     else:  # combo
-        base_price = round((pickup_price + dropoff_price) * combo_factor, 2)
+        base_price = combo_price
 
-    vehicle_extra = float(vehicle.extra_price) if vehicle.extra_price else 0
+    if base_price <= 0:
+        return error_response('当前车型暂未配置对应服务价格')
+
+    vehicle_extra = 0
     discount_amount = 0
     coupon_id = None
 

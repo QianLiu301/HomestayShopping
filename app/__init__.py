@@ -47,6 +47,9 @@ def _auto_migrate(app):
         ('vehicles', 'capacity_desc_ru', 'VARCHAR(100)'),
         ('vehicles', 'capacity_desc_es', 'VARCHAR(100)'),
         ('vehicles', 'images', 'JSON'),
+        ('vehicles', 'pickup_price', 'NUMERIC(10, 2) DEFAULT 0'),
+        ('vehicles', 'dropoff_price', 'NUMERIC(10, 2) DEFAULT 0'),
+        ('vehicles', 'combo_price', 'NUMERIC(10, 2) DEFAULT 0'),
     ]
     with app.app_context():
         # 先确保所有表都存在

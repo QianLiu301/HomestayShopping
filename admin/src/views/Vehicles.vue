@@ -26,8 +26,14 @@
             {{ row.images?.length || (row.image ? 1 : 0) }}
           </template>
         </el-table-column>
-        <el-table-column :label="$t('vehicles.extraPrice')" width="110">
-          <template #default="{ row }">¥{{ row.extra_price || 0 }}</template>
+        <el-table-column :label="$t('vehicles.pickupPrice')" width="110">
+          <template #default="{ row }">¥{{ row.pickup_price || 0 }}</template>
+        </el-table-column>
+        <el-table-column :label="$t('vehicles.dropoffPrice')" width="110">
+          <template #default="{ row }">¥{{ row.dropoff_price || 0 }}</template>
+        </el-table-column>
+        <el-table-column :label="$t('vehicles.comboPrice')" width="110">
+          <template #default="{ row }">¥{{ row.combo_price || 0 }}</template>
         </el-table-column>
         <el-table-column prop="sort_order" :label="$t('common.sort')" width="70" />
         <el-table-column :label="$t('common.status')" width="90">
@@ -83,8 +89,14 @@
 
         <el-row :gutter="16">
           <el-col :span="8"><el-form-item :label="$t('vehicles.luggage')"><el-input-number v-model="form.luggage_capacity" :min="0" style="width:100%" /></el-form-item></el-col>
-          <el-col :span="8"><el-form-item :label="$t('vehicles.extraPrice')"><el-input-number v-model="form.extra_price" :min="0" :precision="2" style="width:100%" /></el-form-item></el-col>
           <el-col :span="8"><el-form-item :label="$t('common.sort')"><el-input-number v-model="form.sort_order" :min="0" style="width:100%" /></el-form-item></el-col>
+        </el-row>
+
+        <div class="section-title">{{ $t('vehicles.pricingInfo') }}</div>
+        <el-row :gutter="16">
+          <el-col :span="8"><el-form-item :label="$t('vehicles.pickupPrice')"><el-input-number v-model="form.pickup_price" :min="0" :precision="2" style="width:100%" /></el-form-item></el-col>
+          <el-col :span="8"><el-form-item :label="$t('vehicles.dropoffPrice')"><el-input-number v-model="form.dropoff_price" :min="0" :precision="2" style="width:100%" /></el-form-item></el-col>
+          <el-col :span="8"><el-form-item :label="$t('vehicles.comboPrice')"><el-input-number v-model="form.combo_price" :min="0" :precision="2" style="width:100%" /></el-form-item></el-col>
         </el-row>
 
         <div class="section-title">{{ $t('vehicles.imageGallery') }}</div>
@@ -158,6 +170,9 @@ const defaultForm = () => ({
   luggage_24: 0,
   capacity_desc_en: '', capacity_desc_zh: '', capacity_desc_ru: '', capacity_desc_es: '',
   extra_price: 0,
+  pickup_price: 0,
+  dropoff_price: 0,
+  combo_price: 0,
   image: '',
   images: [],
   sort_order: 0,

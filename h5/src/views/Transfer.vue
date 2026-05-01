@@ -15,8 +15,8 @@
           <van-radio name="dropoff">{{ t('transfer.dropoff') }}</van-radio>
           <van-radio name="combo">{{ t('transfer.combo') }}</van-radio>
         </van-radio-group>
-        <div v-if="form.service_type === 'combo' && pricing" class="combo-tip">
-          {{ t('transfer.comboDiscount', { discount: pricing.combo_discount }) }}
+        <div v-if="servicePriceTip" class="combo-tip">
+          {{ servicePriceTip }}
         </div>
       </div>
 
@@ -250,12 +250,8 @@
       <div class="card">
         <div class="card-title">{{ t('transfer.priceDetail') }}</div>
         <div class="price-line">
-          <span>{{ t('transfer.basePrice') }}</span>
+          <span>{{ t('transfer.selectedServicePrice') }}</span>
           <span>¥{{ basePrice }}</span>
-        </div>
-        <div class="price-line">
-          <span>{{ t('transfer.vehicleExtra') }}</span>
-          <span>¥{{ vehicleExtra }}</span>
         </div>
         <div v-if="couponDiscount > 0" class="price-line discount">
           <span>{{ t('transfer.discount') }}</span>
@@ -341,7 +337,7 @@ import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { showToast } from 'vant'
-import { getVehicles, getTransferPrice, createTransferOrder, verifyCoupon, resolveUrl } from '../api'
+import { getVehicles, createTransferOrder, verifyCoupon, resolveUrl } from '../api'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -351,7 +347,6 @@ const pageLoading = ref(true)
 const submitting = ref(false)
 const errorMsg = ref('')
 const vehicles = ref([])
-const pricing = ref(null)
 
 const form = reactive({
   service_type: route.query.service_type || 'pickup',
@@ -404,23 +399,40 @@ function vehicleDisplayName(vehicle) {
   return vehicle.name || vehicle.model || ''
 }
 
-function vehiclePriceLabel(vehicle) {
-  const price = Number(vehicle?.extra_price || 0)
+function vehicleServicePrice(vehicle, serviceType = form.service_type) {
+  if (!vehicle) return 0
+  if (serviceType === 'pickup') return Number(vehicle.pickup_price || 0)
+  if (serviceType === 'dropoff') return Number(vehicle.dropoff_price || 0)
+  return Number(vehicle.combo_price || 0)
+}
+
+function vehiclePriceLabel(vehicle, serviceType = form.service_type) {
+  const price = vehicleServicePrice(vehicle, serviceType)
   if (price > 0) return `¥${price}`
   return t('transfer.priceToConfirm')
 }
 
-const basePrice = computed(() => {
-  if (!pricing.value) return 0
-  if (form.service_type === 'pickup') return pricing.value.pickup_price
-  if (form.service_type === 'dropoff') return pricing.value.dropoff_price
-  return pricing.value.combo_price
+const basePrice = computed(() => vehicleServicePrice(selectedVehicle.value, form.service_type))
+
+const servicePriceTip = computed(() => {
+  if (!selectedVehicle.value) return ''
+  const pickup = vehicleServicePrice(selectedVehicle.value, 'pickup')
+  const dropoff = vehicleServicePrice(selectedVehicle.value, 'dropoff')
+  const combo = vehicleServicePrice(selectedVehicle.value, 'combo')
+  if (form.service_type === 'combo' && combo > 0) {
+    return t('transfer.comboPriceTip', { combo: combo })
+  }
+  if (form.service_type === 'pickup' && pickup > 0) {
+    return t('transfer.servicePriceTip', { price: pickup })
+  }
+  if (form.service_type === 'dropoff' && dropoff > 0) {
+    return t('transfer.servicePriceTip', { price: dropoff })
+  }
+  return ''
 })
 
-const vehicleExtra = computed(() => selectedVehicle.value?.extra_price || 0)
-
 const totalPrice = computed(() =>
-  Math.max(0, basePrice.value + vehicleExtra.value - couponDiscount.value)
+  Math.max(0, basePrice.value - couponDiscount.value)
 )
 
 function airportName(code) {
@@ -490,7 +502,7 @@ async function onVerifyCoupon() {
   try {
     const res = await verifyCoupon({
       code: couponCode.value,
-      amount: basePrice.value + vehicleExtra.value,
+      amount: basePrice.value,
       apply_to: 'transfer'
     })
     couponDiscount.value = res.data?.discount_amount || 0
@@ -549,6 +561,8 @@ async function onSubmit() {
   errorMsg.value = ''
 
   // Build payload
+  if (basePrice.value <= 0) { validationFail(t('transfer.priceNotConfigured')); return }
+
   const data = {
     service_type: st,
     vehicle_id: form.vehicle_id,
@@ -615,12 +629,10 @@ onMounted(async () => {
   }
 
   try {
-    const [vRes, pRes] = await Promise.all([
-      getVehicles(),
-      getTransferPrice()
+    const [vRes] = await Promise.all([
+      getVehicles()
     ])
     vehicles.value = vRes.data || []
-    pricing.value = pRes.data
 
     if (vehicles.value.length) {
       form.vehicle_id = vehicles.value[0].id

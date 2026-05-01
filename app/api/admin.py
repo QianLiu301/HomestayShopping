@@ -352,6 +352,9 @@ def admin_create_vehicle():
         capacity_desc_ru=data.get('capacity_desc_ru'),
         capacity_desc_es=data.get('capacity_desc_es'),
         extra_price=data.get('extra_price', 0),
+        pickup_price=data.get('pickup_price', 0),
+        dropoff_price=data.get('dropoff_price', 0),
+        combo_price=data.get('combo_price', 0),
         image=images[0] if images else data.get('image'),
         images=images,
         sort_order=data.get('sort_order', 0),
@@ -381,7 +384,7 @@ def admin_update_vehicle(vehicle_id):
         'model_zh', 'model_en', 'model_ru', 'model_es',
         'seats', 'luggage_capacity', 'luggage_28', 'luggage_24',
         'capacity_desc_zh', 'capacity_desc_en', 'capacity_desc_ru', 'capacity_desc_es',
-        'extra_price', 'sort_order', 'status'
+        'extra_price', 'pickup_price', 'dropoff_price', 'combo_price', 'sort_order', 'status'
     ]
 
     for field in fields:

@@ -246,6 +246,9 @@ class Vehicle(db.Model):
     capacity_desc_ru = db.Column(db.String(100))
     capacity_desc_es = db.Column(db.String(100))
     extra_price = db.Column(db.Numeric(10, 2), default=0)
+    pickup_price = db.Column(db.Numeric(10, 2), default=0)
+    dropoff_price = db.Column(db.Numeric(10, 2), default=0)
+    combo_price = db.Column(db.Numeric(10, 2), default=0)
     image = db.Column(db.String(255))
     images = db.Column(db.JSON, default=[])
     sort_order = db.Column(db.Integer, default=0)
@@ -297,6 +300,9 @@ class Vehicle(db.Model):
             'capacity_desc_ru': self.capacity_desc_ru,
             'capacity_desc_es': self.capacity_desc_es,
             'extra_price': float(self.extra_price) if self.extra_price else 0,
+            'pickup_price': float(self.pickup_price) if self.pickup_price else 0,
+            'dropoff_price': float(self.dropoff_price) if self.dropoff_price else 0,
+            'combo_price': float(self.combo_price) if self.combo_price else 0,
             'image': image_url,
             'images': image_list,
             'sort_order': self.sort_order,
