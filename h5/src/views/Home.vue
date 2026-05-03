@@ -402,7 +402,7 @@ onUnmounted(() => {
 .vehicle-card:hover .vc-book { color: var(--accent); }
 
 /* ===== SHOP ===== */
-.shop-section { background: var(--bg); }
+.shop-section { background: var(--bg); padding-bottom: 40px; }
 .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; margin-top: 40px; }
 .shop-item { background: var(--white); border-radius: 16px; overflow: hidden; cursor: pointer; transition: all 0.3s; }
 .shop-item:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(74,55,40,0.1); }
@@ -418,13 +418,66 @@ onUnmounted(() => {
 .si-price { font-size: 18px; font-weight: 700; color: var(--accent); }
 
 /* ===== HOW IT WORKS ===== */
-.how-section { background: var(--white); }
-.steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 40px; margin-top: 50px; }
-.step { text-align: center; padding: 24px 16px; border-radius: 16px; transition: background 0.3s, transform 0.2s; border: none; width: 100%; background: transparent; cursor: pointer; }
-.step:hover { background: var(--accent-light); transform: translateY(-2px); }
-.step-number { font-family: var(--font-display); font-size: 48px; font-weight: 700; color: var(--accent); opacity: 0.4; line-height: 1; margin-bottom: 16px; }
-.step-title { font-size: 18px; font-weight: 600; margin-bottom: 10px; }
-.step-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+.how-section { background: var(--warm-bg); padding-top: 56px; padding-bottom: 84px; }
+.steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 40px; margin-top: 42px; }
+.step {
+  text-align: center;
+  padding: 24px 16px;
+  border-radius: 18px;
+  transition: background 0.28s, transform 0.22s, box-shadow 0.28s, border-color 0.28s;
+  border: 1px solid transparent;
+  width: 100%;
+  background: transparent;
+  cursor: pointer;
+}
+.step:hover,
+.step:focus-visible,
+.step:active {
+  background: rgba(255, 252, 247, 0.78);
+  border-color: rgba(200, 169, 126, 0.24);
+  box-shadow: 0 16px 36px rgba(74, 55, 40, 0.08);
+  transform: translateY(-4px);
+}
+.step:focus-visible { outline: none; }
+.step-number {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--accent);
+  opacity: 0.4;
+  line-height: 1;
+  margin-bottom: 16px;
+  transition: color 0.28s, opacity 0.28s, transform 0.28s;
+}
+.step-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  transition: color 0.28s;
+}
+.step-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  transition: color 0.28s;
+}
+.step:hover .step-number,
+.step:focus-visible .step-number,
+.step:active .step-number {
+  color: var(--accent-dark);
+  opacity: 0.82;
+  transform: translateY(-2px);
+}
+.step:hover .step-title,
+.step:focus-visible .step-title,
+.step:active .step-title {
+  color: var(--accent-dark);
+}
+.step:hover .step-desc,
+.step:focus-visible .step-desc,
+.step:active .step-desc {
+  color: var(--text);
+}
 
 /* ===== ORDER QUERY ===== */
 .orders-section { background: var(--warm-bg); padding: 80px 0; }
@@ -520,6 +573,9 @@ onUnmounted(() => {
   .hero-actions { flex-direction: column; align-items: center; gap: 12px; }
   .hero-actions .btn { width: 200px; padding: 12px 28px; font-size: 13px; }
 
+  .shop-section { padding-bottom: 24px; }
+  .how-section { padding-top: 36px; padding-bottom: 48px; }
+
   /* Services mobile */
   .service-types { flex-direction: column; gap: 10px; margin: 24px 0 20px; }
   .service-type { min-width: unset; padding: 16px; display: flex; align-items: center; gap: 12px; text-align: left; border-radius: 12px; }
@@ -552,6 +608,17 @@ onUnmounted(() => {
   /* Steps mobile - 2 columns */
   .steps-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 32px; }
   .step { padding: 16px 12px; }
+  .step:first-child {
+    background: rgba(255, 252, 247, 0.82);
+    border-color: rgba(200, 169, 126, 0.28);
+    box-shadow: 0 12px 28px rgba(74, 55, 40, 0.07);
+  }
+  .step:first-child .step-number {
+    color: var(--accent-dark);
+    opacity: 0.82;
+  }
+  .step:first-child .step-title { color: var(--accent-dark); }
+  .step:first-child .step-desc { color: var(--text); }
   .step-number { font-size: 36px; margin-bottom: 10px; }
   .step-title { font-size: 15px; margin-bottom: 6px; }
   .step-desc { font-size: 13px; }
