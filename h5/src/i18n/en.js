@@ -11,7 +11,7 @@ export default {
     servicesComingSoon: 'Vehicle options coming soon', bookNow: 'Book Now',
     shopTitle: 'Curated Gift Collection',
     shopSubtitle: 'Handpicked souvenirs and local specialties — ordered today, delivered to your room before checkout.',
-    productsComingSoon: 'Products coming soon', viewAllProducts: 'View All Products',
+    productsComingSoon: 'Products coming soon', viewAllProducts: 'View All Products', allProductsLoaded: 'All products loaded',
     howLabel: 'How It Works', howTitle: 'Simple Steps to a Better Stay',
     step1Title: 'Browse & Select', step1Desc: 'Explore our curated collection of gifts or choose your airport transfer service.',
     step2Title: 'Place Your Order', step2Desc: 'Fill in your room details and contact information, then confirm your order.',

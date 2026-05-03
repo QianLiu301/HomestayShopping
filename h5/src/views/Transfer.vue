@@ -1,4 +1,4 @@
- dian<template>
+<template>
   <div class="page-container">
     <van-nav-bar :title="t('transfer.title')" left-arrow @click-left="$router.back()" />
 
@@ -16,8 +16,8 @@
           <van-radio name="combo">{{ t('transfer.combo') }}</van-radio>
         </van-radio-group>
         <div v-if="form.service_type === 'combo'" class="combo-tip">
-          <div class="combo-tip-title">接机 + 送机享 9 折</div>
-          <div class="combo-tip-desc">系统自动按组合价计算</div>
+          <div class="combo-tip-title">{{ t('transfer.combo') }}</div>
+          <div class="combo-tip-desc">{{ t('transfer.comboPriceTip', { combo: vehicleServicePrice(selectedVehicle, 'combo') }) }}</div>
         </div>
         <div v-else-if="servicePriceTip" class="combo-tip service-tip">
           {{ servicePriceTip }}

@@ -9,7 +9,7 @@ export default {
     servicesTitle: 'Трансфер из/в аэропорт', servicesSubtitle: 'Профессиональные водители, комфортные автомобили, пунктуальный сервис.',
     servicesComingSoon: 'Автомобили скоро появятся', bookNow: 'Забронировать',
     shopTitle: 'Коллекция подарков', shopSubtitle: 'Сувениры и местные специальности — заказ сегодня, доставка в номер до выезда.',
-    productsComingSoon: 'Товары скоро появятся', viewAllProducts: 'Все товары',
+    productsComingSoon: 'Товары скоро появятся', viewAllProducts: 'Все товары', allProductsLoaded: 'Все товары загружены',
     howLabel: 'Как это работает', howTitle: 'Простые шаги',
     step1Title: 'Выберите', step1Desc: 'Просмотрите коллекцию подарков или выберите трансфер.',
     step2Title: 'Закажите', step2Desc: 'Укажите номер комнаты и контактные данные.',

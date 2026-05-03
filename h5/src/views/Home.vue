@@ -61,7 +61,7 @@
         <h2 class="section-title-lg">{{ t('home.shopTitle') }}</h2>
         <p class="section-subtitle">{{ t('home.shopSubtitle') }}</p>
 
-        <div class="shop-grid" :class="{ 'shop-grid-mobile': isMobile }">
+        <div class="shop-grid">
           <div v-for="product in products" :key="product.id" class="shop-item" @click="$router.push(`/product/${product.id}`)">
             <div class="si-image">
               <img v-if="product.images?.length" :src="$resolveUrl(product.images[0])" :alt="product.name" />
@@ -75,11 +75,25 @@
           </div>
         </div>
 
-        <div v-if="!products.length && !loading" class="empty-placeholder"><p>{{ t('home.productsComingSoon') }}</p></div>
-        <div v-else-if="isMobile" class="shop-entry-mobile">
-          <button class="shop-entry-link" @click="$router.push('/shop')">{{ t('home.viewAllProducts') }} →</button>
+        <div v-if="!products.length && !loadingProducts" class="empty-placeholder"><p>{{ t('home.productsComingSoon') }}</p></div>
+        
+        <!-- 加载更多提示 -->
+        <div v-if="loadingProducts && products.length" class="products-status products-status-loading">
+          <span class="status-line"></span>
+          <span class="status-text">
+            <span class="status-dot"></span>
+            {{ t('common.loading') }}
+          </span>
+          <span class="status-line"></span>
         </div>
-        <div v-else class="shop-cta"><button class="btn btn-dark" @click="$router.push('/shop')">{{ t('home.viewAllProducts') }} →</button></div>
+        <div v-else-if="hasMoreProducts && products.length" class="load-more-trigger" ref="loadMoreTrigger">
+          <!-- 滚动到此处自动加载 -->
+        </div>
+        <div v-else-if="!hasMoreProducts && products.length" class="products-status products-status-finished">
+          <span class="status-line"></span>
+          <span class="status-text">{{ t('home.allProductsLoaded') }}</span>
+          <span class="status-line"></span>
+        </div>
       </div>
     </section>
 
@@ -169,7 +183,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { showToast } from 'vant'
@@ -204,6 +218,11 @@ const heroStyle = computed(() => {
 const products = ref([])
 const vehicles = ref([])
 const loading = ref(true)
+const loadingProducts = ref(false)
+const currentPage = ref(1)
+const totalPages = ref(1)
+const hasMoreProducts = computed(() => currentPage.value < totalPages.value)
+const loadMoreTrigger = ref(null)
 const activeService = ref('pickup')
 const queryOrderNo = ref('')
 const queryContact = ref('')
@@ -268,20 +287,81 @@ async function onQueryOrder() {
 
 const onResize = () => { isMobile.value = window.innerWidth <= 768 }
 
+async function fetchProducts(page = 1) {
+  if (loadingProducts.value) return
+  loadingProducts.value = true
+  try {
+    const res = await getProducts({ page, per_page: 12 })
+    const list = res.data?.list || []
+
+    if (page === 1) {
+      products.value = list
+    } else {
+      products.value.push(...list)
+    }
+
+    currentPage.value = res.data?.page || 1
+    totalPages.value = res.data?.pages || 1
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loadingProducts.value = false
+    await nextTick()
+    setupObserver()
+  }
+}
+
+async function loadMoreProducts() {
+  if (!hasMoreProducts.value || loadingProducts.value) return
+  await fetchProducts(currentPage.value + 1)
+}
+
+let observer = null
+
+function teardownObserver() {
+  if (observer) {
+    observer.disconnect()
+    observer = null
+  }
+}
+
+function setupObserver() {
+  teardownObserver()
+
+  if (!loadMoreTrigger.value || !hasMoreProducts.value || loadingProducts.value) return
+
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0]?.isIntersecting) {
+        teardownObserver()
+        loadMoreProducts()
+      }
+    },
+    { rootMargin: '200px 0px' }
+  )
+
+  observer.observe(loadMoreTrigger.value)
+}
+
 onMounted(async () => {
   window.addEventListener('resize', onResize)
+
   try {
-    const [productRes, vehRes] = await Promise.all([
-      getProducts({ page: 1, per_page: 1000 }),
-      getVehicles()
-    ])
-    products.value = productRes.data?.list || []
+    const vehRes = await getVehicles()
     vehicles.value = vehRes.data || []
-  } catch (e) { console.error(e) }
-  finally { loading.value = false }
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loading.value = false
+  }
+
+  await fetchProducts(1)
 })
 
-onUnmounted(() => { window.removeEventListener('resize', onResize) })
+onUnmounted(() => {
+  window.removeEventListener('resize', onResize)
+  teardownObserver()
+})
 </script>
 
 <style scoped>
@@ -300,13 +380,13 @@ onUnmounted(() => { window.removeEventListener('resize', onResize) })
 
 /* ===== SERVICES ===== */
 .services-section { background: var(--white); }
-.service-types { display: flex; gap: 16px; margin: 40px 0 32px; flex-wrap: wrap; }
-.service-type { flex: 1; min-width: 160px; padding: 24px 20px; border: 2px solid var(--border); border-radius: 16px; text-align: center; cursor: pointer; transition: all 0.3s; background: var(--white); }
+.service-types { display: flex; gap: 16px; margin: 36px 0 28px; flex-wrap: wrap; }
+.service-type { flex: 1; min-width: 160px; padding: 18px 20px; border: 2px solid var(--border); border-radius: 16px; text-align: center; cursor: pointer; transition: all 0.3s; background: var(--white); }
 .service-type:hover { border-color: var(--accent); background: var(--accent-light); }
 .service-type.active { border-color: var(--accent); background: var(--accent-light); }
-.svc-icon { font-size: 28px; margin-bottom: 8px; }
-.svc-name { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.35; }
-.svc-price { font-size: 20px; font-weight: 700; color: var(--accent); margin-top: 4px; }
+.svc-icon { font-size: 24px; margin-bottom: 4px; line-height: 1; }
+.svc-name { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.25; }
+.svc-price { font-size: 20px; font-weight: 700; color: var(--accent); margin-top: 2px; }
 
 .vehicle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 16px; }
 .vehicle-card { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; cursor: pointer; transition: all 0.3s; background: var(--white); }
@@ -336,9 +416,6 @@ onUnmounted(() => { window.removeEventListener('resize', onResize) })
 .si-info { padding: 16px 20px; }
 .si-info h3 { font-size: 15px; font-weight: 500; line-height: 1.4; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .si-price { font-size: 18px; font-weight: 700; color: var(--accent); }
-.shop-cta { text-align: center; margin-top: 48px; }
-.shop-entry-mobile { display: none; }
-.shop-entry-link { background: none; border: none; padding: 0; color: var(--accent-dark); font-size: 14px; font-weight: 600; cursor: pointer; }
 
 /* ===== HOW IT WORKS ===== */
 .how-section { background: var(--white); }
@@ -377,6 +454,63 @@ onUnmounted(() => { window.removeEventListener('resize', onResize) })
 .footer-bottom { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px; text-align: center; font-size: 13px; color: rgba(255,255,255,0.3); }
 .empty-placeholder { text-align: center; padding: 60px 20px; color: var(--text-light); font-size: 15px; }
 
+/* 加载更多和无更多商品提示 */
+.products-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 28px;
+  padding: 8px 0 4px;
+  color: var(--text-light);
+}
+
+.status-line {
+  flex: 1;
+  max-width: 120px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(216, 161, 102, 0), rgba(216, 161, 102, 0.35), rgba(216, 161, 102, 0));
+}
+
+.status-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 6px rgba(216, 161, 102, 0.12);
+  animation: statusPulse 1.4s ease-in-out infinite;
+}
+
+.products-status-finished .status-text {
+  color: var(--text-secondary);
+}
+
+.load-more-trigger {
+  height: 1px;
+  visibility: hidden;
+}
+
+@keyframes statusPulse {
+  0%, 100% {
+    opacity: 0.55;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @media (max-width: 768px) {
   /* Hero mobile */
   .hero { min-height: 100vh; }
@@ -396,30 +530,23 @@ onUnmounted(() => { window.removeEventListener('resize', onResize) })
   .vc-image { height: 180px; padding: 10px; }
 
   /* Shop mobile */
-  .shop-grid-mobile {
-    display: flex;
-    gap: 12px;
+  .shop-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
     margin-top: 24px;
-    overflow-x: auto;
-    scroll-snap-type: x proximity;
-    padding: 4px 16px 10px 0;
-    grid-template-columns: none;
-  }
-  .shop-grid-mobile::-webkit-scrollbar { display: none; }
-  .shop-grid-mobile .shop-item {
-    flex: 0 0 72%;
-    min-width: 72%;
-    scroll-snap-align: start;
-    box-shadow: 0 6px 20px rgba(74,55,40,0.08);
   }
   .si-info { padding: 12px; }
   .si-info h3 { font-size: 13px; }
   .si-price { font-size: 15px; }
-  .shop-cta { display: none; }
-  .shop-entry-mobile {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 14px;
+  .products-status {
+    gap: 10px;
+    margin-top: 20px;
+    padding-bottom: 0;
+  }
+  .status-line { max-width: none; }
+  .status-text {
+    font-size: 12px;
+    letter-spacing: 0.04em;
   }
 
   /* Steps mobile - 2 columns */

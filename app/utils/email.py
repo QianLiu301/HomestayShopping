@@ -157,7 +157,8 @@ def send_new_order_email(app, order_type, order_no, total_price, contact_name,
         if vehicle_name:
             rows += _row('车型', vehicle_name)
         if flight_no:
-            rows += _row('接机航班', f'{flight_no}  {_format_dt(flight_time)}')
+            flight_label = '接机航班' if service_type in ['pickup', 'combo'] else '送机航班'
+            rows += _row(flight_label, f'{flight_no}  {_format_dt(flight_time)}')
         if pickup_airport:
             rows += _row('接机机场', _airport_name(pickup_airport))
         if dropoff_flight_no:

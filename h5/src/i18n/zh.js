@@ -11,7 +11,7 @@ export default {
     servicesComingSoon: '车型即将上线', bookNow: '立即预订',
     shopTitle: '精选礼品系列',
     shopSubtitle: '精心挑选的纪念品和本地特产 — 今日下单，离店前送至房间。',
-    productsComingSoon: '商品即将上线', viewAllProducts: '查看全部商品',
+    productsComingSoon: '商品即将上线', viewAllProducts: '查看全部商品', allProductsLoaded: '已加载全部商品',
     howLabel: '使用流程', howTitle: '简单四步，轻松搞定',
     step1Title: '浏览选购', step1Desc: '探索我们精选的礼品系列，或选择您需要的接送机服务。',
     step2Title: '下单确认', step2Desc: '填写您的房间信息和联系方式，确认订单。',

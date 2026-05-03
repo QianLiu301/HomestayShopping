@@ -9,7 +9,7 @@ export default {
     servicesTitle: 'Servicio de traslado al aeropuerto', servicesSubtitle: 'Conductores profesionales, vehículos de lujo y un servicio puntual.',
     servicesComingSoon: 'Vehículos próximamente', bookNow: 'Reservar',
     shopTitle: 'Colección de regalos', shopSubtitle: 'Souvenirs y especialidades locales — pedido hoy, entregado en tu habitación.',
-    productsComingSoon: 'Productos próximamente', viewAllProducts: 'Ver todos los productos',
+    productsComingSoon: 'Productos próximamente', viewAllProducts: 'Ver todos los productos', allProductsLoaded: 'Todos los productos cargados',
     howLabel: 'Cómo funciona', howTitle: 'Pasos simples para una mejor estadía',
     step1Title: 'Explora', step1Desc: 'Descubre nuestra colección de regalos o elige tu servicio de traslado.',
     step2Title: 'Haz tu pedido', step2Desc: 'Ingresa tu número de habitación y datos de contacto.',

@@ -149,7 +149,6 @@ async function fetchExchangeRate() {
     const data = await response.json()
     if (data && data.rates && data.rates.USD) {
       exchangeRate.value = 1 / data.rates.USD // CNY to USD
-      console.log('实时汇率已更新:', exchangeRate.value)
     }
   } catch (error) {
     console.warn('获取汇率失败，使用默认汇率 7.2:', error)
@@ -323,6 +322,7 @@ function onBuyNow() {
 }
 
 .product-detail-page {
+  padding-top: 0;
   padding-bottom: 70px;
 }
 
