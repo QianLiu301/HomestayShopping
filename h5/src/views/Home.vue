@@ -64,7 +64,7 @@
         <div class="shop-grid">
           <div v-for="product in products" :key="product.id" class="shop-item" @click="$router.push(`/product/${product.id}`)">
             <div class="si-image">
-              <img v-if="product.images?.length" :src="$resolveUrl(product.images[0])" :alt="product.name" />
+              <img v-if="product.images?.length" :src="$resolveUrl(product.images[0])" :alt="product.name" loading="lazy" decoding="async" />
               <div v-else class="si-placeholder">{{ product.name?.charAt(0) }}</div>
               <div class="si-overlay"><span class="si-view">{{ t('common.viewMore') }}</span></div>
             </div>
@@ -219,6 +219,7 @@ const products = ref([])
 const vehicles = ref([])
 const loading = ref(true)
 const loadingProducts = ref(false)
+const HOMEPAGE_PRODUCTS_PER_PAGE = 300
 const currentPage = ref(1)
 const totalPages = ref(1)
 const hasMoreProducts = computed(() => currentPage.value < totalPages.value)
@@ -291,7 +292,7 @@ async function fetchProducts(page = 1) {
   if (loadingProducts.value) return
   loadingProducts.value = true
   try {
-    const res = await getProducts({ page, per_page: 12 })
+    const res = await getProducts({ page, per_page: HOMEPAGE_PRODUCTS_PER_PAGE })
     const list = res.data?.list || []
 
     if (page === 1) {
@@ -337,7 +338,7 @@ function setupObserver() {
         loadMoreProducts()
       }
     },
-    { rootMargin: '200px 0px' }
+    { rootMargin: '1200px 0px' }
   )
 
   observer.observe(loadMoreTrigger.value)
