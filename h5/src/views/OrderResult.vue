@@ -150,6 +150,10 @@ function fallbackCopy(text) {
 </script>
 
 <style scoped>
+.page-container {
+  padding-top: 0;
+}
+
 .result-content {
   text-align: center;
   padding: 40px 24px;

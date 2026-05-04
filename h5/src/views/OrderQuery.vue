@@ -497,6 +497,7 @@ onMounted(() => {
 
 <style scoped>
 .order-page {
+  padding-top: 0;
   padding-bottom: 76px;
 }
 

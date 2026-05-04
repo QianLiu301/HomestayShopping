@@ -10,6 +10,10 @@
       <!-- Service type -->
       <div class="card">
         <div class="card-title">{{ t('transfer.title') }}</div>
+        <div class="entry-discount-banner" :class="{ active: form.service_type === 'combo' }">
+          <div class="entry-discount-badge">90%</div>
+          <div class="entry-discount-text">{{ t('transfer.comboPromoBanner') }}</div>
+        </div>
         <van-radio-group v-model="form.service_type" direction="horizontal" class="service-radios">
           <van-radio name="pickup">{{ t('transfer.pickup') }}</van-radio>
           <van-radio name="dropoff">{{ t('transfer.dropoff') }}</van-radio>
@@ -716,6 +720,46 @@ onMounted(async () => {
 
 .service-radios {
   gap: 12px;
+}
+
+.entry-discount-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: fit-content;
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fffaf2 0%, #fff4e4 100%);
+  border: 1px solid #f2dcc0;
+  box-shadow: none;
+}
+
+.entry-discount-banner.active {
+  border-color: #eccfaa;
+  box-shadow: none;
+}
+
+.entry-discount-badge {
+  flex-shrink: 0;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #f6ead5;
+  color: #b68443;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 34px;
+  text-align: center;
+}
+
+.entry-discount-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: #b68443;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 
 .combo-tip {

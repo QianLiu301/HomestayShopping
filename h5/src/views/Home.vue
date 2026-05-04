@@ -75,6 +75,12 @@
           </div>
         </div>
 
+        <div v-if="products.length" class="shop-cta-row">
+          <button class="shop-more-btn" type="button" @click="$router.push('/shop')">
+            {{ t('home.viewAllProducts') }}
+          </button>
+        </div>
+
         <div v-if="!products.length && !loadingProducts" class="empty-placeholder"><p>{{ t('home.productsComingSoon') }}</p></div>
         
         <!-- 加载更多提示 -->
@@ -248,7 +254,7 @@ function vehicleServicePriceLabel(vehicle, serviceType = activeService.value) {
 
 const steps = [
   { title: 'home.step1Title', desc: 'home.step1Desc', action: 'shop' },
-  { title: 'home.step2Title', desc: 'home.step2Desc', action: 'checkout' },
+  { title: 'home.step2Title', desc: 'home.step2Desc', action: 'order-lookup' },
   { title: 'home.step3Title', desc: 'home.step3Desc', action: 'orders' },
   { title: 'home.step4Title', desc: 'home.step4Desc', action: 'orders' }
 ]
@@ -265,12 +271,13 @@ function goToStep(action) {
     return
   }
 
-  if (action === 'checkout') {
-    if (cart.items?.length) {
-      router.push('/checkout')
-    } else {
-      router.push('/shop')
+  if (action === 'order-lookup') {
+    const target = document.getElementById('orders')
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      return
     }
+    router.push('/order-query')
     return
   }
 
@@ -417,6 +424,32 @@ onUnmounted(() => {
 .si-info { padding: 16px 20px; }
 .si-info h3 { font-size: 15px; font-weight: 500; line-height: 1.4; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .si-price { font-size: 18px; font-weight: 700; color: var(--accent); }
+.shop-cta-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 28px;
+}
+.shop-more-btn {
+  min-width: 180px;
+  padding: 12px 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(200, 169, 126, 0.45);
+  background: rgba(255, 252, 247, 0.92);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 10px 24px rgba(74, 55, 40, 0.06);
+}
+.shop-more-btn:hover {
+  color: var(--accent-dark);
+  border-color: rgba(200, 169, 126, 0.72);
+  background: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(74, 55, 40, 0.1);
+}
 
 /* ===== HOW IT WORKS ===== */
 .how-section { background: var(--warm-bg); padding-top: 56px; padding-bottom: 84px; }
@@ -604,6 +637,14 @@ onUnmounted(() => {
   .status-text {
     font-size: 12px;
     letter-spacing: 0.04em;
+  }
+
+  .shop-cta-row { margin-top: 20px; }
+  .shop-more-btn {
+    width: 100%;
+    max-width: 220px;
+    padding: 11px 20px;
+    font-size: 13px;
   }
 
   /* Steps mobile - 2 columns */
