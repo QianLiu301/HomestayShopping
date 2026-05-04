@@ -95,11 +95,6 @@
         <div v-else-if="hasMoreProducts && products.length" class="load-more-trigger" ref="loadMoreTrigger">
           <!-- 滚动到此处自动加载 -->
         </div>
-        <div v-else-if="!hasMoreProducts && products.length" class="products-status products-status-finished">
-          <span class="status-line"></span>
-          <span class="status-text">{{ t('home.allProductsLoaded') }}</span>
-          <span class="status-line"></span>
-        </div>
       </div>
     </section>
 
@@ -225,7 +220,8 @@ const products = ref([])
 const vehicles = ref([])
 const loading = ref(true)
 const loadingProducts = ref(false)
-const HOMEPAGE_PRODUCTS_PER_PAGE = 300
+const HOMEPAGE_PRODUCTS_PER_PAGE_DESKTOP = 300
+const HOMEPAGE_PRODUCTS_PER_PAGE_MOBILE = 24
 const currentPage = ref(1)
 const totalPages = ref(1)
 const hasMoreProducts = computed(() => currentPage.value < totalPages.value)
@@ -299,7 +295,8 @@ async function fetchProducts(page = 1) {
   if (loadingProducts.value) return
   loadingProducts.value = true
   try {
-    const res = await getProducts({ page, per_page: HOMEPAGE_PRODUCTS_PER_PAGE })
+    const perPage = isMobile.value ? HOMEPAGE_PRODUCTS_PER_PAGE_MOBILE : HOMEPAGE_PRODUCTS_PER_PAGE_DESKTOP
+    const res = await getProducts({ page, per_page: perPage })
     const list = res.data?.list || []
 
     if (page === 1) {
