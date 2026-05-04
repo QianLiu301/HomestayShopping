@@ -22,15 +22,13 @@ import re
 def _normalize_image_urls(images):
     """
     标准化图片 URL：
-    - R2 文件统一转为后端代理路径 /api/images/<key>
-    - 本地文件保持 /uploads/<key>
+    - 本地上传文件保持 /uploads/<key>
+    - R2 文件优先转为 R2_PUBLIC_URL 直链（CDN 直达）
+    - 未配置 R2_PUBLIC_URL 时，回退到后端代理路径 /api/images/<key>
     - 兼容多种历史格式：完整 R2/CDN URL、代理路径、本地路径、纯文件名
-
-    说明：
-    这里不再优先输出 R2_PUBLIC_URL，避免本地开发环境直接请求公网图片域名时
-    因响应头或错误页导致 CORB，统一走后端代理最稳。
     """
     result = []
+    r2_public_url = os.getenv('R2_PUBLIC_URL', '').rstrip('/')
 
     for url in images:
         if not url:
@@ -60,6 +58,8 @@ def _normalize_image_urls(images):
         if re.match(r'^[a-f0-9]{32}\.\w+$', key):
             if is_local_upload:
                 result.append(f'/uploads/{key}')
+            elif r2_public_url:
+                result.append(f'{r2_public_url}/{key}')
             else:
                 result.append(f'/api/images/{key}')
             continue
@@ -74,8 +74,11 @@ def _normalize_image_urls(images):
             result.append(url)
             continue
 
-        # 纯文件名历史数据，默认走图片代理
-        result.append(f'/api/images/{key}')
+        # 纯文件名历史数据：优先走 CDN 直链，没有再回退代理
+        if r2_public_url:
+            result.append(f'{r2_public_url}/{key}')
+        else:
+            result.append(f'/api/images/{key}')
 
     return result
 
