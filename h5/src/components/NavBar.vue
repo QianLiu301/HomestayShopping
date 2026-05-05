@@ -6,9 +6,12 @@
       <div class="nav-links" :class="{ open: menuOpen }">
         <a v-for="item in navItems" :key="item.id" :href="item.href" class="nav-link" @click="onNavClick(item, $event)">{{ t(item.label) }}</a>
         <div class="nav-link mobile-lang" @click.stop="showLang = !showLang">
-          {{ langLabels[currentLang] }}
-          <div v-if="showLang" class="lang-dropdown mobile">
-            <div v-for="l in langs" :key="l.value" class="lang-item" @click="switchLang(l.value)">{{ l.name }}</div>
+          <div class="mobile-lang__trigger">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <span>{{ langLabels[currentLang] }}</span>
+          </div>
+          <div v-if="showLang" class="mobile-lang__dropdown">
+            <div v-for="l in langs" :key="l.value" class="lang-item" :class="{ active: currentLang === l.value }" @click="switchLang(l.value)">{{ l.name }}</div>
           </div>
         </div>
       </div>
@@ -22,13 +25,6 @@
           </div>
         </div>
 
-        <div class="lang-btn mobile-lang-btn" @click.stop="showLang = !showLang">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-          <span>{{ langLabels[currentLang] }}</span>
-          <div v-if="showLang" class="lang-dropdown">
-            <div v-for="l in langs" :key="l.value" class="lang-item" :class="{ active: currentLang === l.value }" @click.stop="switchLang(l.value)">{{ l.name }}</div>
-          </div>
-        </div>
 
         <div class="cart-btn" @click="$router.push('/cart')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
@@ -59,7 +55,7 @@ const langStore = useLangStore()
 const isScrolled = ref(false)
 const menuOpen = ref(false)
 const showLang = ref(false)
-const currentLang = ref(langStore.current)
+const currentLang = computed(() => langStore.current)
 
 const isHome = computed(() => route.path === '/')
 const cartCount = computed(() => cart.totalCount || 0)
@@ -186,12 +182,33 @@ onUnmounted(() => { window.removeEventListener('scroll', onScroll); document.rem
     position: relative;
     width: 100%;
     padding: 14px 0 0;
+    border-bottom: 1px solid rgba(74, 55, 40, 0.08);
   }
-  .mobile-lang .lang-dropdown { position: relative; margin-top: 10px; box-shadow: none; background: var(--bg); border-radius: 8px; }
+  .mobile-lang__trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    font-size: 16px;
+    color: var(--text);
+    letter-spacing: 0.08em;
+  }
+  .mobile-lang__trigger span {
+    flex: 1;
+  }
+  .mobile-lang__dropdown {
+    margin-top: 12px;
+    background: var(--bg);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(74, 55, 40, 0.08);
+  }
+  .mobile-lang__dropdown .lang-item {
+    padding: 12px 16px;
+  }
   .hamburger { display: block; }
   .desktop-lang { display: none; }
-  .mobile-lang-btn { display: flex; font-size: 12px; gap: 4px; padding: 4px 8px; border-radius: 16px; background: rgba(0,0,0,0.05); }
-  .navbar.dark-mode .mobile-lang-btn { background: rgba(255,255,255,0.15); }
-  .navbar.scrolled .mobile-lang-btn { background: rgba(0,0,0,0.05); }
+  .mobile-lang-btn { display: none; }
 }
 </style>
