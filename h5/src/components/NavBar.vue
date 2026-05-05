@@ -146,11 +146,48 @@ onUnmounted(() => { window.removeEventListener('scroll', onScroll); document.rem
 .hamburger span.open::after { top: 0; transform: rotate(-45deg); }
 
 @media (max-width: 768px) {
-  .nav-links { position: fixed; top: var(--nav-height); left: 0; right: 0; bottom: 0; background: var(--white); flex-direction: column; justify-content: center; gap: 24px; transform: translateX(100%); transition: transform 0.3s ease; }
-  .nav-links.open { transform: translateX(0); }
-  .nav-links .nav-link { font-size: 18px; color: var(--text); }
-  .mobile-lang { display: block; position: relative; }
-  .mobile-lang .lang-dropdown { position: relative; margin-top: 8px; box-shadow: none; background: var(--bg); border-radius: 8px; }
+  .nav-links {
+    position: fixed;
+    top: var(--nav-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 998;
+    padding: 20px 24px calc(28px + env(safe-area-inset-bottom));
+    background: rgba(255, 252, 247, 0.98);
+    backdrop-filter: blur(16px);
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 0;
+    overflow-y: auto;
+    transform: translateY(-8px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+  }
+  .nav-links.open {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  .nav-links .nav-link {
+    width: 100%;
+    padding: 14px 0;
+    font-size: 16px;
+    color: var(--text);
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid rgba(74, 55, 40, 0.08);
+  }
+  .mobile-lang {
+    display: block;
+    position: relative;
+    width: 100%;
+    padding: 14px 0 0;
+  }
+  .mobile-lang .lang-dropdown { position: relative; margin-top: 10px; box-shadow: none; background: var(--bg); border-radius: 8px; }
   .hamburger { display: block; }
   .desktop-lang { display: none; }
   .mobile-lang-btn { display: flex; font-size: 12px; gap: 4px; padding: 4px 8px; border-radius: 16px; background: rgba(0,0,0,0.05); }
