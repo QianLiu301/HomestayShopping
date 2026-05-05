@@ -386,28 +386,30 @@ function onRefresh() {
   }
 
   .shop-grid-wrap {
-    padding: 12px;
+    padding: 4px 12px 12px;
   }
 
   .shop-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
   }
 
   .shop-card__content {
-    padding: 16px;
+    padding: 12px;
   }
 
   .shop-card__name {
-    font-size: 22px;
+    font-size: 14px;
   }
 
   .shop-card__price {
-    font-size: 24px;
+    font-size: 16px;
   }
 
   .shop-card__cta {
     width: 100%;
+    font-size: 12px;
+    padding: 8px 12px;
   }
 }
 </style>
