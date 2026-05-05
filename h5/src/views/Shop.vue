@@ -33,7 +33,7 @@
             >
               <div class="shop-card__media">
                 <span v-if="product.is_featured || product.original_price" class="shop-card__flag">
-                  {{ product.is_featured ? '推荐商品' : '透明报价' }}
+                  {{ product.is_featured ? t('shop.featuredFlag') : t('shop.priceFlag') }}
                 </span>
                 <img
                   v-if="product.images?.length"
@@ -47,12 +47,12 @@
 
               <div class="product-info shop-card__content">
                 <div class="shop-card__topline">
-                  <span class="shop-card__badge">精品推荐</span>
-                  <span v-if="product.original_price" class="shop-card__badge shop-card__badge--muted">限时好物</span>
+                  <span class="shop-card__badge">{{ t('shop.featuredBadge') }}</span>
+                  <span v-if="product.original_price" class="shop-card__badge shop-card__badge--muted">{{ t('shop.limitedBadge') }}</span>
                 </div>
 
                 <div class="product-name shop-card__name">{{ product.name }}</div>
-                <div class="shop-card__meta">甄选品质商品，支持查看详情与在线下单</div>
+                <div class="shop-card__meta">{{ t('shop.meta') }}</div>
 
                 <div class="shop-card__price-row">
                   <div class="product-price shop-card__price">
@@ -62,17 +62,17 @@
                 </div>
 
                 <div class="shop-card__desc">
-                  {{ product.desc || '精选商品展示，价格与规格请以商品详情页信息为准。' }}
+                  {{ product.desc || t('shop.descFallback') }}
                 </div>
 
                 <div class="shop-card__footer">
                   <div class="shop-card__tips">
-                    <span>支持下单</span>
-                    <span>查看详情</span>
-                    <span>品质甄选</span>
+                    <span>{{ t('shop.tipOrder') }}</span>
+                    <span>{{ t('shop.tipDetail') }}</span>
+                    <span>{{ t('shop.tipQuality') }}</span>
                   </div>
                   <button class="shop-card__cta" type="button">
-                    查看商品
+                    {{ t('shop.viewProduct') }}
                   </button>
                 </div>
               </div>
