@@ -143,12 +143,13 @@ onUnmounted(() => { window.removeEventListener('scroll', onScroll); document.rem
 
 @media (max-width: 768px) {
   .nav-links {
-    position: fixed;
-    top: var(--nav-height);
+    position: absolute;
+    top: 100%;
     left: 0;
     right: 0;
-    bottom: 0;
     z-index: 998;
+    height: calc(100dvh - var(--nav-height));
+    max-height: calc(100dvh - var(--nav-height));
     padding: 20px 24px calc(28px + env(safe-area-inset-bottom));
     background: rgba(255, 252, 247, 0.98);
     backdrop-filter: blur(16px);
@@ -157,6 +158,7 @@ onUnmounted(() => { window.removeEventListener('scroll', onScroll); document.rem
     justify-content: flex-start;
     gap: 0;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     transform: translateY(-8px);
     opacity: 0;
     visibility: hidden;
