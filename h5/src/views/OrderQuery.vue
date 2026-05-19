@@ -133,6 +133,34 @@
             </div>
           </template>
 
+          <!-- Ticket specific -->
+          <template v-if="item.type === 'ticket'">
+            <div class="detail-row">
+              <span>{{ t('tickets.package') }}</span>
+              <span>{{ ticketPackageNames(item.order) }}</span>
+            </div>
+            <div v-if="item.order.visit_date" class="detail-row">
+              <span>{{ t('tickets.visitDate') }}</span>
+              <span>{{ item.order.visit_date }}</span>
+            </div>
+            <div v-if="item.order.need_transfer" class="detail-row">
+              <span>{{ t('tickets.transfer') }}</span>
+              <span>{{ item.order.transfer_vehicle?.name || item.order.transfer_vehicle?.name_zh || t('tickets.needTransfer') }}</span>
+            </div>
+            <div v-if="item.order.vouchers?.length" class="voucher-section">
+              <div class="voucher-title">{{ t('tickets.vouchers') }}</div>
+              <a
+                v-for="voucher in item.order.vouchers"
+                :key="voucher.id"
+                class="voucher-link"
+                :href="$resolveUrl(voucher.file_url)"
+                target="_blank"
+              >
+                {{ voucher.file_name || voucher.file_url }}
+              </a>
+            </div>
+          </template>
+
           <!-- Common fields -->
           <div class="detail-row">
             <span>{{ t('transfer.contactName') }}</span>
@@ -460,6 +488,11 @@ function formatTime(iso) {
 
 function toggleDetail(idx) {
   expandedIdx.value = expandedIdx.value === idx ? -1 : idx
+}
+
+function ticketPackageNames(order) {
+  const list = order?.package_snapshot || []
+  return list.map(item => `${item.package_name} x${item.quantity}`).join(', ') || '-'
 }
 
 async function onQuery() {

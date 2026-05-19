@@ -38,6 +38,17 @@
           <el-menu-item index="/locations">{{ $t('nav.locations') }}</el-menu-item>
         </el-sub-menu>
 
+        <el-sub-menu index="tickets-mgmt">
+          <template #title>
+            <el-icon><Ticket /></el-icon>
+            <span>{{ $t('nav.tickets') }}</span>
+          </template>
+          <el-menu-item index="/tickets/attractions">{{ $t('nav.ticketAttractions') }}</el-menu-item>
+          <el-menu-item index="/tickets/packages">{{ $t('nav.ticketPackages') }}</el-menu-item>
+          <el-menu-item index="/tickets/transport-pricing">{{ $t('nav.ticketTransportPricing') }}</el-menu-item>
+          <el-menu-item index="/tickets/orders">{{ $t('nav.ticketOrders') }}</el-menu-item>
+        </el-sub-menu>
+
         <el-sub-menu index="order-mgmt">
           <template #title>
             <el-icon><List /></el-icon>
@@ -50,7 +61,7 @@
         </el-sub-menu>
 
         <el-menu-item index="/coupons">
-          <el-icon><Ticket /></el-icon>
+          <el-icon><Discount /></el-icon>
           <template #title>{{ $t('nav.coupons') }}</template>
         </el-menu-item>
 
@@ -108,7 +119,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
-import { DataAnalysis, ShoppingBag, Van, List, Ticket, CreditCard, Fold, Expand, UserFilled, ArrowDown } from '@element-plus/icons-vue'
+import { DataAnalysis, ShoppingBag, Van, List, Ticket, Discount, CreditCard, Fold, Expand, UserFilled, ArrowDown } from '@element-plus/icons-vue'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
@@ -130,6 +141,10 @@ const titleMap = {
   '/transfer/pricing': 'nav.transferPricing',
   '/vehicles': 'nav.vehicles',
   '/locations': 'nav.locations',
+  '/tickets/attractions': 'nav.ticketAttractions',
+  '/tickets/packages': 'nav.ticketPackages',
+  '/tickets/transport-pricing': 'nav.ticketTransportPricing',
+  '/tickets/orders': 'nav.ticketOrders',
   '/orders/shop': 'nav.shopOrders',
   '/orders/transfer': 'nav.transferOrders',
   '/orders/refund': 'nav.refundManagement',

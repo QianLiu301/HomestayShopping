@@ -4,7 +4,7 @@ from flask import request, current_app
 from app.api import api_bp
 from app.models import (
     Product, Vehicle, Location, Setting, Coupon, CouponUsage,
-    TransferOrder, ShopOrder, OrderItem
+    TransferOrder, ShopOrder, OrderItem, TicketOrder
 )
 from app import db
 from app.utils import success_response, error_response, generate_order_no, get_lang
@@ -470,27 +470,40 @@ def query_order():
     contact = data.get('contact', '').strip()
 
     if not contact:
-        return error_response('请填写手机号或邮箱')
+        return error_response('请填写联系人姓名、手机号或邮箱')
+
+    def _matches(order):
+        return contact in {
+            (order.contact_name or '').strip(),
+            (order.contact_phone or '').strip(),
+            (order.contact_email or '').strip()
+        }
 
     # 如果提供了订单号，精确查询单个订单
     if order_no:
         shop_order = ShopOrder.query.filter_by(order_no=order_no).first()
         if shop_order:
-            if shop_order.contact_email == contact or shop_order.contact_phone == contact:
+            if _matches(shop_order):
                 return success_response({
                     'orders': [{'type': 'shop', 'order': shop_order.to_dict()}]
                 })
-            else:
-                return error_response('联系方式不匹配')
+            return error_response('联系方式不匹配')
 
         transfer_order = TransferOrder.query.filter_by(order_no=order_no).first()
         if transfer_order:
-            if transfer_order.contact_email == contact or transfer_order.contact_phone == contact:
+            if _matches(transfer_order):
                 return success_response({
                     'orders': [{'type': 'transfer', 'order': transfer_order.to_dict()}]
                 })
-            else:
-                return error_response('联系方式不匹配')
+            return error_response('联系方式不匹配')
+
+        ticket_order = TicketOrder.query.filter_by(order_no=order_no).first()
+        if ticket_order:
+            if _matches(ticket_order):
+                return success_response({
+                    'orders': [{'type': 'ticket', 'order': ticket_order.to_dict()}]
+                })
+            return error_response('联系方式不匹配')
 
         return error_response('订单不存在', 404)
 
@@ -498,16 +511,28 @@ def query_order():
     results = []
 
     shop_orders = ShopOrder.query.filter(
-        (ShopOrder.contact_phone == contact) | (ShopOrder.contact_email == contact)
+        (ShopOrder.contact_name == contact) |
+        (ShopOrder.contact_phone == contact) |
+        (ShopOrder.contact_email == contact)
     ).order_by(ShopOrder.created_at.desc()).limit(50).all()
     for o in shop_orders:
         results.append({'type': 'shop', 'order': o.to_dict()})
 
     transfer_orders = TransferOrder.query.filter(
-        (TransferOrder.contact_phone == contact) | (TransferOrder.contact_email == contact)
+        (TransferOrder.contact_name == contact) |
+        (TransferOrder.contact_phone == contact) |
+        (TransferOrder.contact_email == contact)
     ).order_by(TransferOrder.created_at.desc()).limit(50).all()
     for o in transfer_orders:
         results.append({'type': 'transfer', 'order': o.to_dict()})
+
+    ticket_orders = TicketOrder.query.filter(
+        (TicketOrder.contact_name == contact) |
+        (TicketOrder.contact_phone == contact) |
+        (TicketOrder.contact_email == contact)
+    ).order_by(TicketOrder.created_at.desc()).limit(50).all()
+    for o in ticket_orders:
+        results.append({'type': 'ticket', 'order': o.to_dict()})
 
     # 按创建时间排序
     results.sort(key=lambda x: x['order'].get('created_at', ''), reverse=True)
@@ -648,6 +673,9 @@ def confirm_paid():
     if not order:
         order = TransferOrder.query.filter_by(order_no=order_no).first()
         order_type = 'transfer'
+    if not order:
+        order = TicketOrder.query.filter_by(order_no=order_no).first()
+        order_type = 'ticket'
 
     if not order:
         return error_response('订单不存在', 404)
@@ -660,8 +688,10 @@ def confirm_paid():
     if payment_screenshot:
         order.payment_screenshot = payment_screenshot
 
-    # 标记为"用户已点击支付"（payment_status=0仍为未确认，status改为1待确认）
-    if order.status == 0:
+    # 标记为"用户已点击支付"（payment_status=0仍为未确认）
+    # 门票订单的状态 1 表示已确认，不能直接复用商城/接送机的待确认语义，
+    # 因此仅为门票订单保存付款凭证，不自动推进订单状态。
+    if order_type in ['shop', 'transfer'] and order.status == 0:
         order.status = 1  # 待确认（管理员需核实收款）
     db.session.commit()
 

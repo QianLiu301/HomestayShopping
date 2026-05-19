@@ -7,8 +7,18 @@
         <h1 class="hero-title fade-in-up delay-1">{{ t('home.heroTitle') }}</h1>
         <p class="hero-subtitle fade-in-up delay-2">{{ t('home.heroSubtitle') }}</p>
         <div class="hero-actions fade-in-up delay-3">
-          <a href="#services" class="btn btn-primary">{{ t('home.bookTransfer') }}</a>
-          <a href="#shop" class="btn btn-outline">{{ t('home.exploreShop') }}</a>
+          <a href="#services" class="btn btn-primary hero-action-btn hero-action-btn--primary">
+            <span class="hero-action-btn__title">{{ t('home.bookTransfer') }}</span>
+            <span class="hero-action-btn__hint">{{ t('home.transferCtaHint') }}</span>
+          </a>
+          <a href="#shop" class="btn btn-outline hero-action-btn hero-action-btn--outline">
+            <span class="hero-action-btn__title">{{ t('home.exploreShop') }}</span>
+            <span class="hero-action-btn__hint">{{ t('home.shopCtaHint') }}</span>
+          </a>
+          <button type="button" class="btn btn-outline hero-action-btn hero-action-btn--outline hero-ticket-btn" @click="goToTickets">
+            <span class="hero-action-btn__title">{{ t('home.ticketsTitle') }}</span>
+            <span class="hero-action-btn__hint">{{ t('home.ticketsCtaHint') }}</span>
+          </button>
         </div>
       </div>
       <div class="hero-scroll-hint">
@@ -261,6 +271,10 @@ function goToTransfer(serviceType, vehicleId = null) {
   router.push({ path: '/transfer', query })
 }
 
+function goToTickets() {
+  router.push('/tickets')
+}
+
 function goToStep(action) {
   if (action === 'shop') {
     router.push('/shop')
@@ -377,8 +391,37 @@ onUnmounted(() => {
 .hero-scroll-hint { z-index: 2; }
 .hero-label { font-size: 13px; letter-spacing: 4px; text-transform: uppercase; color: #e8d5b8; margin-bottom: 20px; opacity: 0; }
 .hero-title { font-family: var(--font-display); font-size: clamp(36px, 7vw, 72px); font-weight: 700; line-height: 1.1; margin-bottom: 20px; opacity: 0; }
-.hero-subtitle { font-size: 18px; color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 40px; max-width: 500px; margin-left: auto; margin-right: auto; opacity: 0; }
-.hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; opacity: 0; }
+.hero-subtitle { font-size: 18px; color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 34px; max-width: 500px; margin-left: auto; margin-right: auto; opacity: 0; }
+.hero-actions { display: flex; gap: 18px; justify-content: center; align-items: stretch; flex-wrap: wrap; opacity: 0; }
+.hero-actions .btn { min-width: 220px; }
+.hero-action-btn {
+  white-space: normal;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.hero-action-btn__title { display: block; font-size: 16px; font-weight: 700; line-height: 1.1; }
+.hero-action-btn__hint { display: block; font-size: 11px; line-height: 1.35; color: rgba(255,255,255,0.72); letter-spacing: 0.02em; }
+.hero-action-btn--primary .hero-action-btn__hint { color: rgba(255,255,255,0.86); }
+.hero-action-btn--outline:hover,
+.hero-action-btn--outline:focus-visible,
+.hero-action-btn--outline:active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(200,169,126,0.4);
+}
+.hero-action-btn--outline:hover .hero-action-btn__hint,
+.hero-action-btn--outline:focus-visible .hero-action-btn__hint,
+.hero-action-btn--outline:active .hero-action-btn__hint {
+  color: rgba(255,255,255,0.86);
+}
 .hero-scroll-hint { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); text-align: center; color: rgba(255,255,255,0.5); font-size: 12px; letter-spacing: 2px; }
 .scroll-arrow { width: 1px; height: 40px; background: rgba(255,255,255,0.3); margin: 12px auto 0; position: relative; }
 .scroll-arrow::after { content: ''; position: absolute; bottom: 0; left: -3px; width: 7px; height: 7px; border-right: 1px solid rgba(255,255,255,0.5); border-bottom: 1px solid rgba(255,255,255,0.5); transform: rotate(45deg); }
@@ -600,13 +643,16 @@ onUnmounted(() => {
   .hero { min-height: 100vh; }
   .hero-content { padding: 0 20px; max-width: 100%; }
   .hero-title { font-size: 32px; }
-  .hero-subtitle { font-size: 15px; margin-bottom: 28px; }
+  .hero-subtitle { font-size: 15px; margin-bottom: 24px; }
   .hero-actions { flex-direction: column; align-items: center; gap: 12px; }
-  .hero-actions .btn { width: 200px; padding: 12px 28px; font-size: 13px; }
-
+  .hero-actions .btn { width: min(220px, 100%); min-width: 0; padding: 12px 28px; font-size: 13px; }
+  .hero-action-btn { gap: 3px; padding-top: 11px; padding-bottom: 11px; }
+  .hero-action-btn__title { font-size: 15px; }
+  .hero-action-btn__hint { font-size: 10px; line-height: 1.3; }
+ 
   .shop-section { padding-bottom: 24px; }
   .how-section { padding-top: 36px; padding-bottom: 48px; }
-
+ 
   /* Services mobile */
   .service-types { flex-direction: column; gap: 10px; margin: 24px 0 20px; }
   .service-type { min-width: unset; padding: 16px; display: flex; align-items: center; gap: 12px; text-align: left; border-radius: 12px; }

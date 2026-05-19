@@ -3,7 +3,9 @@ from flask import request, current_app, Response
 from app.api import api_bp
 from app.models import (
     Admin, Product, Category, Vehicle, Location, Setting, Coupon,
-    TransferOrder, ShopOrder
+    TransferOrder, ShopOrder,
+    TicketAttraction, TicketPackage, TicketOrder, TicketTraveler,
+    TicketVoucher, TicketTransportPrice
 )
 from app import db, bcrypt
 from app.utils import (
@@ -1347,3 +1349,523 @@ def admin_update_refund_status(order_type, order_id):
     db.session.commit()
     
     return success_response(order.to_dict(), '退款状态更新成功')
+
+
+# ==================== 景点管理 ====================
+
+@api_bp.route('/admin/ticket-attractions', methods=['GET'])
+@admin_required
+def admin_get_ticket_attractions():
+    """获取景点列表（管理端）"""
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 15, type=int)
+    status = request.args.get('status', type=int)
+    city = request.args.get('city')
+    keyword = request.args.get('keyword', '')
+
+    query = TicketAttraction.query
+    if status is not None:
+        query = query.filter_by(status=status)
+    if city:
+        query = query.filter_by(city=city)
+    if keyword:
+        query = query.filter(
+            (TicketAttraction.name_zh.ilike(f'%{keyword}%')) |
+            (TicketAttraction.name_en.ilike(f'%{keyword}%'))
+        )
+
+    query = query.order_by(TicketAttraction.sort_order.desc(), TicketAttraction.id.desc())
+    result = paginate_query(query, page, per_page)
+
+    return success_response({
+        'list': [a.to_dict() for a in result['items']],
+        'total': result['total'],
+        'page': result['page'],
+        'pages': result['pages']
+    })
+
+
+@api_bp.route('/admin/ticket-attractions', methods=['POST'])
+@admin_required
+def admin_create_ticket_attraction():
+    """创建景点"""
+    data = request.get_json()
+    data = auto_fill_translations(data, ['name', 'subtitle', 'desc', 'address', 'open_hours', 'visit_notice', 'refund_rule'])
+
+    name_zh = data.get('name_zh') or data.get('name_en')
+    if not name_zh:
+        return error_response('景点名称不能为空')
+
+    attraction = TicketAttraction(
+        name_zh=name_zh,
+        name_en=data.get('name_en'),
+        name_ru=data.get('name_ru'),
+        name_es=data.get('name_es'),
+        subtitle_zh=data.get('subtitle_zh'), subtitle_en=data.get('subtitle_en'),
+        subtitle_ru=data.get('subtitle_ru'), subtitle_es=data.get('subtitle_es'),
+        desc_zh=data.get('desc_zh'), desc_en=data.get('desc_en'),
+        desc_ru=data.get('desc_ru'), desc_es=data.get('desc_es'),
+        address_zh=data.get('address_zh'), address_en=data.get('address_en'),
+        address_ru=data.get('address_ru'), address_es=data.get('address_es'),
+        open_hours_zh=data.get('open_hours_zh'), open_hours_en=data.get('open_hours_en'),
+        open_hours_ru=data.get('open_hours_ru'), open_hours_es=data.get('open_hours_es'),
+        visit_notice_zh=data.get('visit_notice_zh'), visit_notice_en=data.get('visit_notice_en'),
+        visit_notice_ru=data.get('visit_notice_ru'), visit_notice_es=data.get('visit_notice_es'),
+        refund_rule_zh=data.get('refund_rule_zh'), refund_rule_en=data.get('refund_rule_en'),
+        refund_rule_ru=data.get('refund_rule_ru'), refund_rule_es=data.get('refund_rule_es'),
+        cover_image=data.get('cover_image'),
+        images=data.get('images', []),
+        city=data.get('city'),
+        category=data.get('category'),
+        tags=data.get('tags', []),
+        featured=data.get('featured', False),
+        real_name_required=data.get('real_name_required', False),
+        passport_required=data.get('passport_required', False),
+        sort_order=data.get('sort_order', 0),
+        status=data.get('status', 1)
+    )
+    db.session.add(attraction)
+    db.session.commit()
+
+    return success_response(attraction.to_dict(), '创建成功')
+
+
+@api_bp.route('/admin/ticket-attractions/<int:attraction_id>', methods=['PUT'])
+@admin_required
+def admin_update_ticket_attraction(attraction_id):
+    """更新景点"""
+    attraction = TicketAttraction.query.get(attraction_id)
+    if not attraction:
+        return error_response('景点不存在', 404)
+
+    data = request.get_json()
+    data = auto_fill_translations(data, ['name', 'subtitle', 'desc', 'address', 'open_hours', 'visit_notice', 'refund_rule'])
+
+    fields = [
+        'name_zh', 'name_en', 'name_ru', 'name_es',
+        'subtitle_zh', 'subtitle_en', 'subtitle_ru', 'subtitle_es',
+        'desc_zh', 'desc_en', 'desc_ru', 'desc_es',
+        'address_zh', 'address_en', 'address_ru', 'address_es',
+        'open_hours_zh', 'open_hours_en', 'open_hours_ru', 'open_hours_es',
+        'visit_notice_zh', 'visit_notice_en', 'visit_notice_ru', 'visit_notice_es',
+        'refund_rule_zh', 'refund_rule_en', 'refund_rule_ru', 'refund_rule_es',
+        'cover_image', 'images', 'city', 'category', 'tags',
+        'featured', 'real_name_required', 'passport_required',
+        'sort_order', 'status'
+    ]
+
+    for field in fields:
+        if field in data:
+            setattr(attraction, field, data[field])
+
+    db.session.commit()
+    return success_response(attraction.to_dict(), '更新成功')
+
+
+@api_bp.route('/admin/ticket-attractions/<int:attraction_id>', methods=['DELETE'])
+@admin_required
+def admin_delete_ticket_attraction(attraction_id):
+    """删除景点"""
+    attraction = TicketAttraction.query.get(attraction_id)
+    if not attraction:
+        return error_response('景点不存在', 404)
+
+    db.session.delete(attraction)
+    db.session.commit()
+    return success_response(None, '删除成功')
+
+
+# ==================== 票种管理 ====================
+
+@api_bp.route('/admin/ticket-packages', methods=['GET'])
+@admin_required
+def admin_get_ticket_packages():
+    """获取票种列表（管理端）"""
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
+    attraction_id = request.args.get('attraction_id', type=int)
+    ticket_type = request.args.get('ticket_type')
+    status = request.args.get('status', type=int)
+    keyword = request.args.get('keyword', '')
+
+    query = TicketPackage.query
+    if attraction_id:
+        query = query.filter_by(attraction_id=attraction_id)
+    if ticket_type:
+        query = query.filter_by(ticket_type=ticket_type)
+    if status is not None:
+        query = query.filter_by(status=status)
+    if keyword:
+        query = query.filter(
+            (TicketPackage.package_name_zh.ilike(f'%{keyword}%')) |
+            (TicketPackage.package_name_en.ilike(f'%{keyword}%'))
+        )
+
+    query = query.order_by(TicketPackage.sort_order.desc(), TicketPackage.id.desc())
+    result = paginate_query(query, page, per_page)
+
+    return success_response({
+        'list': [p.to_dict() for p in result['items']],
+        'total': result['total'],
+        'page': result['page'],
+        'pages': result['pages']
+    })
+
+
+@api_bp.route('/admin/ticket-packages', methods=['POST'])
+@admin_required
+def admin_create_ticket_package():
+    """创建票种"""
+    data = request.get_json()
+    data = auto_fill_translations(data, ['package_name', 'age_rule', 'booking_notice', 'refund_rule'])
+
+    date_rules = data.get('date_rules')
+    if date_rules and isinstance(date_rules, list):
+        available_days = [item.get('date') for item in date_rules if item.get('date') and item.get('enabled', True)]
+        data['available_days'] = available_days
+
+    attraction_id = data.get('attraction_id')
+    if not attraction_id:
+        return error_response('请选择所属景点')
+
+    attraction = TicketAttraction.query.get(attraction_id)
+    if not attraction:
+        return error_response('景点不存在', 404)
+
+    package_name_zh = data.get('package_name_zh') or data.get('package_name_en')
+    if not package_name_zh:
+        return error_response('票种名称不能为空')
+    if not data.get('sale_price'):
+        return error_response('售价不能为空')
+
+    pkg = TicketPackage(
+        attraction_id=attraction_id,
+        package_name_zh=package_name_zh,
+        package_name_en=data.get('package_name_en'),
+        package_name_ru=data.get('package_name_ru'),
+        package_name_es=data.get('package_name_es'),
+        ticket_type=data.get('ticket_type', 'adult'),
+        sale_price=data.get('sale_price'),
+        original_price=data.get('original_price'),
+        age_rule_zh=data.get('age_rule_zh'), age_rule_en=data.get('age_rule_en'),
+        age_rule_ru=data.get('age_rule_ru'), age_rule_es=data.get('age_rule_es'),
+        booking_notice_zh=data.get('booking_notice_zh'), booking_notice_en=data.get('booking_notice_en'),
+        booking_notice_ru=data.get('booking_notice_ru'), booking_notice_es=data.get('booking_notice_es'),
+        refund_rule_zh=data.get('refund_rule_zh'), refund_rule_en=data.get('refund_rule_en'),
+        refund_rule_ru=data.get('refund_rule_ru'), refund_rule_es=data.get('refund_rule_es'),
+        inventory_mode=data.get('inventory_mode', 'unlimited'),
+        quota_total=data.get('quota_total'),
+        quota_used=0,
+        available_days=data.get('available_days'),
+        date_rules=data.get('date_rules'),
+        sort_order=data.get('sort_order', 0),
+        status=data.get('status', 1)
+    )
+    db.session.add(pkg)
+    db.session.commit()
+
+    return success_response(pkg.to_dict(), '创建成功')
+
+
+@api_bp.route('/admin/ticket-packages/<int:package_id>', methods=['PUT'])
+@admin_required
+def admin_update_ticket_package(package_id):
+    """更新票种"""
+    pkg = TicketPackage.query.get(package_id)
+    if not pkg:
+        return error_response('票种不存在', 404)
+
+    data = request.get_json()
+    data = auto_fill_translations(data, ['package_name', 'age_rule', 'booking_notice', 'refund_rule'])
+
+    date_rules = data.get('date_rules')
+    if date_rules and isinstance(date_rules, list):
+        available_days = [item.get('date') for item in date_rules if item.get('date') and item.get('enabled', True)]
+        data['available_days'] = available_days
+
+    fields = [
+        'package_name_zh', 'package_name_en', 'package_name_ru', 'package_name_es',
+        'ticket_type', 'sale_price', 'original_price',
+        'age_rule_zh', 'age_rule_en', 'age_rule_ru', 'age_rule_es',
+        'booking_notice_zh', 'booking_notice_en', 'booking_notice_ru', 'booking_notice_es',
+        'refund_rule_zh', 'refund_rule_en', 'refund_rule_ru', 'refund_rule_es',
+        'inventory_mode', 'quota_total', 'available_days', 'date_rules', 'sort_order', 'status'
+    ]
+
+    for field in fields:
+        if field in data:
+            setattr(pkg, field, data[field])
+
+    db.session.commit()
+    return success_response(pkg.to_dict(), '更新成功')
+
+
+@api_bp.route('/admin/ticket-packages/<int:package_id>', methods=['DELETE'])
+@admin_required
+def admin_delete_ticket_package(package_id):
+    """删除票种"""
+    pkg = TicketPackage.query.get(package_id)
+    if not pkg:
+        return error_response('票种不存在', 404)
+
+    db.session.delete(pkg)
+    db.session.commit()
+    return success_response(None, '删除成功')
+
+
+# ==================== 门票加购用车价格管理 ====================
+
+@api_bp.route('/admin/ticket-transport-pricing', methods=['GET'])
+@admin_required
+def admin_get_ticket_transport_pricing():
+    """获取门票加购用车价格列表"""
+    attraction_id = request.args.get('attraction_id', type=int)
+    query = TicketTransportPrice.query
+    if attraction_id:
+        query = query.filter_by(attraction_id=attraction_id)
+
+    options = query.order_by(TicketTransportPrice.sort_order.desc()).all()
+    return success_response([o.to_dict() for o in options])
+
+
+@api_bp.route('/admin/ticket-transport-pricing', methods=['POST'])
+@admin_required
+def admin_create_ticket_transport_price():
+    """创建门票加购用车价格"""
+    data = request.get_json()
+
+    if not data.get('attraction_id') or not data.get('vehicle_id'):
+        return error_response('景点和车型不能为空')
+    if not data.get('service_type'):
+        return error_response('服务类型不能为空')
+    if not data.get('price'):
+        return error_response('价格不能为空')
+
+    option = TicketTransportPrice(
+        attraction_id=data['attraction_id'],
+        vehicle_id=data['vehicle_id'],
+        service_type=data['service_type'],
+        price=data['price'],
+        sort_order=data.get('sort_order', 0),
+        status=data.get('status', 1)
+    )
+    db.session.add(option)
+    db.session.commit()
+
+    return success_response(option.to_dict(), '创建成功')
+
+
+@api_bp.route('/admin/ticket-transport-pricing/<int:price_id>', methods=['PUT'])
+@admin_required
+def admin_update_ticket_transport_price(price_id):
+    """更新门票加购用车价格"""
+    option = TicketTransportPrice.query.get(price_id)
+    if not option:
+        return error_response('记录不存在', 404)
+
+    data = request.get_json()
+    for field in ['attraction_id', 'vehicle_id', 'service_type', 'price', 'sort_order', 'status']:
+        if field in data:
+            setattr(option, field, data[field])
+
+    db.session.commit()
+    return success_response(option.to_dict(), '更新成功')
+
+
+@api_bp.route('/admin/ticket-transport-pricing/<int:price_id>', methods=['DELETE'])
+@admin_required
+def admin_delete_ticket_transport_price(price_id):
+    """删除门票加购用车价格"""
+    option = TicketTransportPrice.query.get(price_id)
+    if not option:
+        return error_response('记录不存在', 404)
+
+    db.session.delete(option)
+    db.session.commit()
+    return success_response(None, '删除成功')
+
+
+# ==================== 门票订单管理 ====================
+
+@api_bp.route('/admin/ticket-orders', methods=['GET'])
+@admin_required
+def admin_get_ticket_orders():
+    """获取门票订单列表"""
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 15, type=int)
+    status = request.args.get('status', type=int)
+    payment_status = request.args.get('payment_status', type=int)
+    keyword = request.args.get('keyword', '')
+    date_start = request.args.get('date_start', '')
+    date_end = request.args.get('date_end', '')
+
+    query = TicketOrder.query
+
+    if status is not None:
+        query = query.filter_by(status=status)
+    if payment_status is not None:
+        query = query.filter_by(payment_status=payment_status)
+    if keyword:
+        query = query.filter(
+            (TicketOrder.order_no.ilike(f'%{keyword}%')) |
+            (TicketOrder.contact_name.ilike(f'%{keyword}%')) |
+            (TicketOrder.contact_phone.ilike(f'%{keyword}%')) |
+            (TicketOrder.contact_email.ilike(f'%{keyword}%')) |
+            (TicketOrder.booking_no.ilike(f'%{keyword}%'))
+        )
+    if date_start:
+        try:
+            from datetime import datetime
+            query = query.filter(TicketOrder.visit_date >= datetime.fromisoformat(date_start).date())
+        except ValueError:
+            pass
+    if date_end:
+        try:
+            from datetime import datetime
+            query = query.filter(TicketOrder.visit_date <= datetime.fromisoformat(date_end + 'T23:59:59').date())
+        except ValueError:
+            pass
+
+    query = query.order_by(TicketOrder.created_at.desc())
+    result = paginate_query(query, page, per_page)
+
+    return success_response({
+        'list': [o.to_dict() for o in result['items']],
+        'total': result['total'],
+        'page': result['page'],
+        'pages': result['pages']
+    })
+
+
+@api_bp.route('/admin/ticket-orders/<int:order_id>', methods=['GET'])
+@admin_required
+def admin_get_ticket_order(order_id):
+    """获取门票订单详情"""
+    order = TicketOrder.query.get(order_id)
+    if not order:
+        return error_response('订单不存在', 404)
+
+    return success_response(order.to_dict())
+
+
+@api_bp.route('/admin/ticket-orders/<int:order_id>/status', methods=['PUT'])
+@admin_required
+def admin_update_ticket_order_status(order_id):
+    """更新门票订单状态"""
+    order = TicketOrder.query.get(order_id)
+    if not order:
+        return error_response('订单不存在', 404)
+
+    data = request.get_json()
+    new_status = data.get('status')
+    if new_status is None:
+        return error_response('缺少状态参数')
+
+    if new_status not in [0, 1, 2, 3]:
+        return error_response('无效的状态值')
+
+    old_status = order.status
+    order.status = new_status
+
+    if new_status == 3:  # 已取消
+        order.cancelled_at = china_now()
+
+    # 管理员备注
+    if 'admin_note' in data:
+        order.admin_note = data['admin_note']
+
+    db.session.commit()
+    return success_response(order.to_dict(), '状态更新成功')
+
+
+@api_bp.route('/admin/ticket-orders/<int:order_id>/payment', methods=['PUT'])
+@admin_required
+def admin_update_ticket_order_payment(order_id):
+    """标记门票订单为已支付（后台确认）"""
+    order = TicketOrder.query.get(order_id)
+    if not order:
+        return error_response('订单不存在', 404)
+
+    data = request.get_json()
+    order.payment_status = 1
+    order.payment_time = china_now()
+    if 'transaction_id' in data:
+        order.transaction_id = data['transaction_id']
+    if 'payment_method' in data:
+        order.payment_method = data['payment_method']
+
+    db.session.commit()
+    return success_response(order.to_dict(), '支付状态更新成功')
+
+
+@api_bp.route('/admin/ticket-orders/<int:order_id>/voucher', methods=['POST'])
+@admin_required
+def admin_upload_ticket_voucher(order_id):
+    """上传票据文件"""
+    order = TicketOrder.query.get(order_id)
+    if not order:
+        return error_response('订单不存在', 404)
+
+    from flask import request as flask_request
+    if 'file' not in flask_request.files:
+        return error_response('没有选择文件')
+
+    file = flask_request.files['file']
+    if file.filename == '':
+        return error_response('没有选择文件')
+
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    subfolder = os.path.join(upload_folder, 'tickets', 'vouchers')
+    os.makedirs(subfolder, exist_ok=True)
+
+    try:
+        url = upload_file(file, subfolder)
+        file_type = url.rsplit('.', 1)[-1].lower() if '.' in url else ''
+        voucher = TicketVoucher(
+            order_id=order_id,
+            file_url=url,
+            file_name=file.filename,
+            file_type=file_type,
+            uploaded_by=flask_request.admin_id
+        )
+        db.session.add(voucher)
+        db.session.commit()
+        return success_response(voucher.to_dict(), '票据上传成功')
+    except Exception as e:
+        current_app.logger.error(f'票据上传失败: {e}')
+        return error_response(f'上传失败: {str(e)}', 500)
+
+
+@api_bp.route('/admin/ticket-orders/<int:order_id>/voucher', methods=['DELETE'])
+@admin_required
+def admin_delete_ticket_voucher(order_id):
+    """删除票据文件"""
+    voucher_id = request.args.get('voucher_id', type=int)
+    if not voucher_id:
+        return error_response('缺少票据ID')
+
+    voucher = TicketVoucher.query.get(voucher_id)
+    if not voucher or voucher.order_id != order_id:
+        return error_response('票据不存在', 404)
+
+    db.session.delete(voucher)
+    db.session.commit()
+    return success_response(None, '删除成功')
+
+
+@api_bp.route('/admin/ticket-orders/<int:order_id>/send-voucher', methods=['POST'])
+@admin_required
+def admin_send_ticket_voucher(order_id):
+    """标记票据已发送给客户"""
+    order = TicketOrder.query.get(order_id)
+    if not order:
+        return error_response('订单不存在', 404)
+
+    order.voucher_delivery_status = 1
+    for v in order.vouchers:
+        if not v.sent_to_customer:
+            v.sent_to_customer = True
+            v.sent_at = china_now()
+
+    db.session.commit()
+    return success_response(order.to_dict(), '已标记为已发送')

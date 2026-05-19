@@ -25,6 +25,33 @@ const routes = [
     meta: { tabBar: true }
   },
   {
+    path: '/tickets',
+    name: 'Tickets',
+    component: () => import('../views/Tickets.vue'),
+    meta: { tabBar: true }
+  },
+  {
+    path: '/tickets/:id',
+    name: 'TicketDetail',
+    component: () => import('../views/TicketDetail.vue')
+  },
+  {
+    path: '/ticket-checkout',
+    name: 'TicketCheckout',
+    component: () => import('../views/TicketCheckout.vue')
+  },
+  {
+    path: '/ticket-order-result',
+    name: 'TicketOrderResult',
+    component: () => import('../views/TicketOrderResult.vue')
+  },
+  {
+    path: '/ticket-order-query',
+    name: 'TicketOrderQuery',
+    component: () => import('../views/OrderQuery.vue'),
+    meta: { tabBar: true }
+  },
+  {
     path: '/transfer',
     name: 'Transfer',
     component: () => import('../views/Transfer.vue')

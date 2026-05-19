@@ -629,3 +629,350 @@ class Review(db.Model):
             'comment': self.comment,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+
+
+# ==================== 门票业务模型 ====================
+
+class TicketAttraction(db.Model):
+    """景点主表"""
+    __tablename__ = 'ticket_attractions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name_zh = db.Column(db.String(200), nullable=False)
+    name_en = db.Column(db.String(200))
+    name_ru = db.Column(db.String(200))
+    name_es = db.Column(db.String(200))
+    subtitle_zh = db.Column(db.String(500))
+    subtitle_en = db.Column(db.String(500))
+    subtitle_ru = db.Column(db.String(500))
+    subtitle_es = db.Column(db.String(500))
+    desc_zh = db.Column(db.Text)
+    desc_en = db.Column(db.Text)
+    desc_ru = db.Column(db.Text)
+    desc_es = db.Column(db.Text)
+    address_zh = db.Column(db.String(500))
+    address_en = db.Column(db.String(500))
+    address_ru = db.Column(db.String(500))
+    address_es = db.Column(db.String(500))
+    open_hours_zh = db.Column(db.String(500))
+    open_hours_en = db.Column(db.String(500))
+    open_hours_ru = db.Column(db.String(500))
+    open_hours_es = db.Column(db.String(500))
+    visit_notice_zh = db.Column(db.Text)
+    visit_notice_en = db.Column(db.Text)
+    visit_notice_ru = db.Column(db.Text)
+    visit_notice_es = db.Column(db.Text)
+    refund_rule_zh = db.Column(db.Text)
+    refund_rule_en = db.Column(db.Text)
+    refund_rule_ru = db.Column(db.Text)
+    refund_rule_es = db.Column(db.Text)
+    cover_image = db.Column(db.String(255))
+    images = db.Column(db.JSON, default=[])
+    city = db.Column(db.String(50))
+    category = db.Column(db.String(50))
+    tags = db.Column(db.JSON, default=[])
+    featured = db.Column(db.Boolean, default=False)
+    real_name_required = db.Column(db.Boolean, default=False)
+    passport_required = db.Column(db.Boolean, default=False)
+    status = db.Column(db.SmallInteger, default=1)
+    sort_order = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=china_now)
+    updated_at = db.Column(db.DateTime, default=china_now, onupdate=china_now)
+
+    # ���联
+    packages = db.relationship('TicketPackage', backref='attraction', lazy='dynamic', cascade='all, delete-orphan')
+    orders = db.relationship('TicketOrder', backref='attraction', lazy='dynamic')
+
+    def to_dict(self, lang='zh'):
+        return {
+            'id': self.id,
+            'name': _localized(self, 'name', lang),
+            'name_zh': self.name_zh,
+            'name_en': self.name_en,
+            'name_ru': self.name_ru,
+            'name_es': self.name_es,
+            'subtitle': _localized(self, 'subtitle', lang),
+            'subtitle_zh': self.subtitle_zh,
+            'subtitle_en': self.subtitle_en,
+            'subtitle_ru': self.subtitle_ru,
+            'subtitle_es': self.subtitle_es,
+            'desc': _localized(self, 'desc', lang),
+            'desc_zh': self.desc_zh,
+            'desc_en': self.desc_en,
+            'desc_ru': self.desc_ru,
+            'desc_es': self.desc_es,
+            'address': _localized(self, 'address', lang),
+            'address_zh': self.address_zh,
+            'address_en': self.address_en,
+            'address_ru': self.address_ru,
+            'address_es': self.address_es,
+            'open_hours': _localized(self, 'open_hours', lang),
+            'open_hours_zh': self.open_hours_zh,
+            'open_hours_en': self.open_hours_en,
+            'open_hours_ru': self.open_hours_ru,
+            'open_hours_es': self.open_hours_es,
+            'visit_notice': _localized(self, 'visit_notice', lang),
+            'visit_notice_zh': self.visit_notice_zh,
+            'visit_notice_en': self.visit_notice_en,
+            'visit_notice_ru': self.visit_notice_ru,
+            'visit_notice_es': self.visit_notice_es,
+            'refund_rule': _localized(self, 'refund_rule', lang),
+            'refund_rule_zh': self.refund_rule_zh,
+            'refund_rule_en': self.refund_rule_en,
+            'refund_rule_ru': self.refund_rule_ru,
+            'refund_rule_es': self.refund_rule_es,
+            'cover_image': _normalize_image_urls([self.cover_image])[0] if self.cover_image else None,
+            'images': _normalize_image_urls(self.images or []),
+            'city': self.city,
+            'category': self.category,
+            'tags': self.tags or [],
+            'featured': self.featured,
+            'real_name_required': self.real_name_required,
+            'passport_required': self.passport_required,
+            'status': self.status,
+            'sort_order': self.sort_order,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class TicketPackage(db.Model):
+    """票种表"""
+    __tablename__ = 'ticket_packages'
+
+    id = db.Column(db.Integer, primary_key=True)
+    attraction_id = db.Column(db.Integer, db.ForeignKey('ticket_attractions.id', ondelete='CASCADE'), nullable=False)
+    package_name_zh = db.Column(db.String(200), nullable=False)
+    package_name_en = db.Column(db.String(200))
+    package_name_ru = db.Column(db.String(200))
+    package_name_es = db.Column(db.String(200))
+    ticket_type = db.Column(db.String(20), nullable=False)  # adult, child, senior, family, combo
+    sale_price = db.Column(db.Numeric(10, 2), nullable=False)
+    original_price = db.Column(db.Numeric(10, 2))
+    age_rule_zh = db.Column(db.String(500))
+    age_rule_en = db.Column(db.String(500))
+    age_rule_ru = db.Column(db.String(500))
+    age_rule_es = db.Column(db.String(500))
+    booking_notice_zh = db.Column(db.Text)
+    booking_notice_en = db.Column(db.Text)
+    booking_notice_ru = db.Column(db.Text)
+    booking_notice_es = db.Column(db.Text)
+    refund_rule_zh = db.Column(db.Text)
+    refund_rule_en = db.Column(db.Text)
+    refund_rule_ru = db.Column(db.Text)
+    refund_rule_es = db.Column(db.Text)
+    inventory_mode = db.Column(db.String(20), default='unlimited')  # unlimited, manual_quota
+    quota_total = db.Column(db.Integer)
+    quota_used = db.Column(db.Integer, default=0)
+    available_days = db.Column(db.JSON)  # 兼容旧版简单日期配置
+    date_rules = db.Column(db.JSON)  # 新版日期规则：按日价格/可售/节假日标签
+    status = db.Column(db.SmallInteger, default=1)
+    sort_order = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=china_now)
+    updated_at = db.Column(db.DateTime, default=china_now, onupdate=china_now)
+
+    def to_dict(self, lang='zh'):
+        return {
+            'id': self.id,
+            'attraction_id': self.attraction_id,
+            'package_name': _localized(self, 'package_name', lang),
+            'package_name_zh': self.package_name_zh,
+            'package_name_en': self.package_name_en,
+            'package_name_ru': self.package_name_ru,
+            'package_name_es': self.package_name_es,
+            'ticket_type': self.ticket_type,
+            'sale_price': float(self.sale_price) if self.sale_price else 0,
+            'original_price': float(self.original_price) if self.original_price else None,
+            'age_rule': _localized(self, 'age_rule', lang),
+            'age_rule_zh': self.age_rule_zh,
+            'age_rule_en': self.age_rule_en,
+            'age_rule_ru': self.age_rule_ru,
+            'age_rule_es': self.age_rule_es,
+            'booking_notice': _localized(self, 'booking_notice', lang),
+            'booking_notice_zh': self.booking_notice_zh,
+            'booking_notice_en': self.booking_notice_en,
+            'booking_notice_ru': self.booking_notice_ru,
+            'booking_notice_es': self.booking_notice_es,
+            'refund_rule': _localized(self, 'refund_rule', lang),
+            'refund_rule_zh': self.refund_rule_zh,
+            'refund_rule_en': self.refund_rule_en,
+            'refund_rule_ru': self.refund_rule_ru,
+            'refund_rule_es': self.refund_rule_es,
+            'inventory_mode': self.inventory_mode,
+            'quota_total': self.quota_total,
+            'quota_used': self.quota_used or 0,
+            'available_days': self.available_days,
+            'date_rules': self.date_rules,
+            'status': self.status,
+            'sort_order': self.sort_order
+        }
+
+
+class TicketOrder(db.Model):
+    """门票订单表"""
+    __tablename__ = 'ticket_orders'
+
+    id = db.Column(db.Integer, primary_key=True)
+    order_no = db.Column(db.String(32), unique=True, nullable=False)
+    attraction_id = db.Column(db.Integer, db.ForeignKey('ticket_attractions.id'), nullable=False)
+    visit_date = db.Column(db.Date, nullable=False)
+    contact_name = db.Column(db.String(100), nullable=False)
+    contact_phone = db.Column(db.String(30))
+    contact_email = db.Column(db.String(100))
+    booking_no = db.Column(db.String(100))
+    lang = db.Column(db.String(10), default='zh')
+    total_price = db.Column(db.Numeric(10, 2), nullable=False)
+    discount_amount = db.Column(db.Numeric(10, 2), default=0)
+    coupon_id = db.Column(db.Integer, db.ForeignKey('coupons.id'))
+    status = db.Column(db.SmallInteger, default=0)  # 0待处理 1已确认 2已完成 3已取消
+    payment_method = db.Column(db.String(20))
+    payment_status = db.Column(db.SmallInteger, default=0)  # 0待支付 1已支付
+    payment_time = db.Column(db.DateTime)
+    transaction_id = db.Column(db.String(64))
+    payment_screenshot = db.Column(db.String(255))
+    remark = db.Column(db.Text)
+    admin_note = db.Column(db.Text)
+    need_transfer = db.Column(db.Boolean, default=False)
+    transfer_vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicles.id'))
+    transfer_service_type = db.Column(db.String(20))  # pickup_only, dropoff_only, round_trip, charter
+    transfer_price_snapshot = db.Column(db.Numeric(10, 2))
+    package_snapshot = db.Column(db.JSON)  # 保存订单时的票种信息快照
+    voucher_delivery_status = db.Column(db.SmallInteger, default=0)  # 0未发送 1已发送
+    cancelled_at = db.Column(db.DateTime)
+    refund_status = db.Column(db.SmallInteger, default=0)  # 0无需退款 1待退款 2已退款
+    refund_amount = db.Column(db.Numeric(10, 2))
+    refund_time = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=china_now)
+    updated_at = db.Column(db.DateTime, default=china_now, onupdate=china_now)
+
+    # 关联
+    coupon = db.relationship('Coupon', backref='ticket_orders')
+    transfer_vehicle = db.relationship('Vehicle', backref='ticket_orders')
+    travelers = db.relationship('TicketTraveler', backref='order', lazy='dynamic', cascade='all, delete-orphan')
+    vouchers = db.relationship('TicketVoucher', backref='order', lazy='dynamic', cascade='all, delete-orphan')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'order_no': self.order_no,
+            'attraction': self.attraction.to_dict(self.lang) if self.attraction else None,
+            'visit_date': self.visit_date.isoformat() if self.visit_date else None,
+            'contact_name': self.contact_name,
+            'contact_phone': self.contact_phone,
+            'contact_email': self.contact_email,
+            'booking_no': self.booking_no,
+            'lang': self.lang,
+            'total_price': float(self.total_price),
+            'discount_amount': float(self.discount_amount) if self.discount_amount else 0,
+            'status': self.status,
+            'payment_method': self.payment_method,
+            'payment_status': self.payment_status,
+            'payment_time': self.payment_time.isoformat() if self.payment_time else None,
+            'transaction_id': self.transaction_id,
+            'payment_screenshot': self.payment_screenshot,
+            'remark': self.remark,
+            'admin_note': self.admin_note,
+            'need_transfer': self.need_transfer,
+            'transfer_vehicle': self.transfer_vehicle.to_dict(self.lang) if self.transfer_vehicle else None,
+            'transfer_service_type': self.transfer_service_type,
+            'transfer_price_snapshot': float(self.transfer_price_snapshot) if self.transfer_price_snapshot else None,
+            'package_snapshot': self.package_snapshot,
+            'voucher_delivery_status': self.voucher_delivery_status,
+            'cancelled_at': self.cancelled_at.isoformat() if self.cancelled_at else None,
+            'refund_status': self.refund_status or 0,
+            'refund_amount': float(self.refund_amount) if self.refund_amount is not None else None,
+            'refund_time': self.refund_time.isoformat() if self.refund_time else None,
+            'travelers': [t.to_dict() for t in self.travelers],
+            'vouchers': [v.to_dict() for v in self.vouchers],
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class TicketTraveler(db.Model):
+    """出行人表"""
+    __tablename__ = 'ticket_travelers'
+
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('ticket_orders.id', ondelete='CASCADE'), nullable=False)
+    traveler_type = db.Column(db.String(20), nullable=False)  # adult, child, senior
+    full_name = db.Column(db.String(100), nullable=False)
+    nationality = db.Column(db.String(50))
+    document_type = db.Column(db.String(20))  # passport, id_card, etc.
+    document_no = db.Column(db.String(50))
+    date_of_birth = db.Column(db.Date)
+    gender = db.Column(db.String(10))
+    created_at = db.Column(db.DateTime, default=china_now)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'order_id': self.order_id,
+            'traveler_type': self.traveler_type,
+            'full_name': self.full_name,
+            'nationality': self.nationality,
+            'document_type': self.document_type,
+            'document_no': self.document_no,
+            'date_of_birth': self.date_of_birth.isoformat() if self.date_of_birth else None,
+            'gender': self.gender
+        }
+
+
+class TicketVoucher(db.Model):
+    """票据文件表"""
+    __tablename__ = 'ticket_vouchers'
+
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('ticket_orders.id', ondelete='CASCADE'), nullable=False)
+    file_url = db.Column(db.String(500), nullable=False)
+    file_name = db.Column(db.String(255))
+    file_type = db.Column(db.String(20))  # pdf, jpg, png, etc.
+    uploaded_by = db.Column(db.Integer, db.ForeignKey('admins.id'))
+    sent_to_customer = db.Column(db.Boolean, default=False)
+    sent_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=china_now)
+
+    # 关联
+    uploader = db.relationship('Admin', backref='uploaded_vouchers')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'order_id': self.order_id,
+            'file_url': self.file_url,
+            'file_name': self.file_name,
+            'file_type': self.file_type,
+            'uploaded_by': self.uploaded_by,
+            'sent_to_customer': self.sent_to_customer,
+            'sent_at': self.sent_at.isoformat() if self.sent_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class TicketTransportPrice(db.Model):
+    """门票加购用车价格表"""
+    __tablename__ = 'ticket_transport_prices'
+
+    id = db.Column(db.Integer, primary_key=True)
+    attraction_id = db.Column(db.Integer, db.ForeignKey('ticket_attractions.id', ondelete='CASCADE'), nullable=False)
+    vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicles.id'), nullable=False)
+    service_type = db.Column(db.String(20), nullable=False)  # pickup_only, dropoff_only, round_trip, charter
+    price = db.Column(db.Numeric(10, 2), nullable=False)
+    status = db.Column(db.SmallInteger, default=1)
+    sort_order = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=china_now)
+    updated_at = db.Column(db.DateTime, default=china_now, onupdate=china_now)
+
+    # 关联
+    attraction = db.relationship('TicketAttraction', backref='transport_prices')
+    vehicle = db.relationship('Vehicle', backref='ticket_transport_prices')
+
+    def to_dict(self, lang='zh'):
+        return {
+            'id': self.id,
+            'attraction_id': self.attraction_id,
+            'vehicle_id': self.vehicle_id,
+            'vehicle': self.vehicle.to_dict(lang) if self.vehicle else None,
+            'service_type': self.service_type,
+            'price': float(self.price) if self.price else 0,
+            'status': self.status,
+            'sort_order': self.sort_order
+        }

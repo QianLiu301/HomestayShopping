@@ -13,3 +13,4 @@ from app.api import coupons
 from app.api import admin
 from app.api import settings
 from app.api import reviews
+from app.api import tickets
