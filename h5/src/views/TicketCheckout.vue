@@ -96,14 +96,38 @@
 
       <div v-if="selectedTransport" class="card">
         <div class="card-title">{{ t('tickets.transferInfo') }}</div>
+        <div class="transfer-soft-tip">{{ t('tickets.transferBookingTip') }}</div>
         <div class="price-row">
           <span>{{ selectedTransport.vehicle?.name || selectedTransport.vehicle?.name_zh || '-' }}</span>
           <span>{{ transferServiceLabel(selectedTransport.service_type) }}</span>
         </div>
-        <div class="price-row total-row">
+        <div class="price-row">
           <span>{{ t('tickets.transferPrice') }}</span>
           <span>¥{{ selectedTransport.price }}</span>
         </div>
+        <van-field
+          v-model="form.transfer_pickup_time"
+          :label="primaryTransferTimeLabel"
+          :placeholder="t('tickets.transferTimePlaceholder')"
+          type="datetime-local"
+          required
+        />
+        <van-field
+          v-if="showTransferReturnTime"
+          v-model="form.transfer_return_time"
+          :label="t('tickets.transferReturnTime')"
+          :placeholder="t('tickets.transferTimePlaceholder')"
+          type="datetime-local"
+          required
+        />
+        <van-field
+          v-model="form.transfer_user_note"
+          :label="t('tickets.transferUserNote')"
+          :placeholder="t('tickets.transferUserNotePlaceholder')"
+          type="textarea"
+          rows="2"
+          autosize
+        />
       </div>
 
       <div class="card">
@@ -177,7 +201,10 @@ const form = reactive({
   contact_phone: '',
   contact_email: '',
   booking_no: '',
-  remark: ''
+  remark: '',
+  transfer_pickup_time: '',
+  transfer_return_time: '',
+  transfer_user_note: ''
 })
 
 const travelers = ref([])
@@ -240,6 +267,10 @@ const totalPrice = computed(() => {
   const transportPrice = Number(selectedTransport.value?.price || 0)
   return (Number(ticketSubtotal.value) + transportPrice).toFixed(2)
 })
+const showTransferReturnTime = computed(() => selectedTransport.value?.service_type === 'round_trip')
+const primaryTransferTimeLabel = computed(() => selectedTransport.value?.service_type === 'dropoff_only'
+  ? t('tickets.transferReturnTime')
+  : t('tickets.transferPickupTime'))
 
 watch(totalSelectedQuantity, value => {
   const count = Number(value || 0)
@@ -462,12 +493,30 @@ function transferServiceLabel(type) {
   return map[type] || type || '-'
 }
 
+function isValidTransferTimeInput(value) {
+  if (!value) return false
+  return /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}$/.test(String(value).trim())
+}
+
+function formatTransferTimeForSubmit(value) {
+  if (!value) return ''
+  return String(value).trim().replace('T', ' ')
+}
+
 function validate() {
   if (!selectedPackages.value.length || totalSelectedQuantity.value < 1) return t('tickets.selectPackageFirst')
   if (!form.visit_date) return t('tickets.visitDateRequired')
   if (!form.contact_name.trim()) return t('tickets.contactNameRequired')
   if (!form.contact_phone.trim() && !form.contact_email.trim()) return t('tickets.phoneOrEmailRequired')
-  if (!form.booking_no.trim()) return '请填写民宿预订单号'
+  if (!form.booking_no.trim()) return t('tickets.bookingNoRequired')
+  if (selectedTransport.value) {
+    if (!form.transfer_pickup_time) return t('tickets.transferPickupTimeRequired')
+    if (!isValidTransferTimeInput(form.transfer_pickup_time)) return t('tickets.transferTimeFormatError')
+    if (showTransferReturnTime.value) {
+      if (!form.transfer_return_time) return t('tickets.transferReturnTimeRequired')
+      if (!isValidTransferTimeInput(form.transfer_return_time)) return t('tickets.transferTimeFormatError')
+    }
+  }
   if (!agreeTerms.value) return t('transfer.agreeRequired')
 
   if (needRealName.value) {
@@ -553,6 +602,9 @@ async function onSubmit() {
       remark: form.remark,
       need_transfer: !!selectedTransport.value,
       transport_price_id: selectedTransport.value?.id,
+      transfer_pickup_time: selectedTransport.value ? formatTransferTimeForSubmit(form.transfer_pickup_time) : '',
+      transfer_return_time: selectedTransport.value && showTransferReturnTime.value ? formatTransferTimeForSubmit(form.transfer_return_time) : '',
+      transfer_user_note: form.transfer_user_note,
       packages: selectedPackages.value
         .filter(item => Number(item.quantity || 0) > 0)
         .map(item => ({
@@ -919,11 +971,18 @@ onMounted(loadData)
   color: var(--text);
 }
 
-.contact-soft-tip {
-  margin-bottom: 10px;
-  font-size: 12px;
-  color: #8d7b67;
-}
+  .contact-soft-tip {
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: #8d7b67;
+  }
+
+  .transfer-soft-tip {
+    margin-bottom: 10px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #8d7b67;
+  }
 
 .agree-card {
   padding: 12px 16px;

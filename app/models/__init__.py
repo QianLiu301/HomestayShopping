@@ -811,6 +811,66 @@ class TicketOrder(db.Model):
     """门票订单表"""
     __tablename__ = 'ticket_orders'
 
+    @staticmethod
+    def _normalize_package_snapshot(snapshot):
+        if isinstance(snapshot, list):
+            return [item for item in snapshot if isinstance(item, dict)]
+        if isinstance(snapshot, dict):
+            return [snapshot]
+        return []
+
+    @classmethod
+    def _build_package_summary(cls, snapshot):
+        items = cls._normalize_package_snapshot(snapshot)
+        if not items:
+            return {
+                'ticket_items': [],
+                'package_names': [],
+                'package_names_text': '-',
+                'ticket_types': [],
+                'ticket_types_text': '-',
+                'total_quantity': 0,
+                'ticket_subtotal': 0
+            }
+
+        package_names = []
+        ticket_types = []
+        total_quantity = 0
+        ticket_subtotal = 0.0
+
+        for item in items:
+            package_name = item.get('package_name_zh') or item.get('package_name_en') or item.get('package_name')
+            if package_name:
+                package_names.append(package_name)
+
+            ticket_type = item.get('ticket_type')
+            if ticket_type and ticket_type not in ticket_types:
+                ticket_types.append(ticket_type)
+
+            quantity = int(item.get('quantity') or 0)
+            total_quantity += quantity
+
+            subtotal = item.get('subtotal')
+            if subtotal is None:
+                subtotal = float(item.get('sale_price') or 0) * quantity
+            ticket_subtotal += float(subtotal or 0)
+
+        package_names_text = ' / '.join(
+            f"{(item.get('package_name_zh') or item.get('package_name_en') or item.get('package_name') or '-')} x{int(item.get('quantity') or 0)}"
+            for item in items
+        )
+        ticket_types_text = ' / '.join(ticket_types) if ticket_types else '-'
+
+        return {
+            'ticket_items': items,
+            'package_names': package_names,
+            'package_names_text': package_names_text or '-',
+            'ticket_types': ticket_types,
+            'ticket_types_text': ticket_types_text,
+            'total_quantity': total_quantity,
+            'ticket_subtotal': round(ticket_subtotal, 2)
+        }
+
     id = db.Column(db.Integer, primary_key=True)
     order_no = db.Column(db.String(32), unique=True, nullable=False)
     attraction_id = db.Column(db.Integer, db.ForeignKey('ticket_attractions.id'), nullable=False)
@@ -835,6 +895,16 @@ class TicketOrder(db.Model):
     transfer_vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicles.id'))
     transfer_service_type = db.Column(db.String(20))  # pickup_only, dropoff_only, round_trip, charter
     transfer_price_snapshot = db.Column(db.Numeric(10, 2))
+    transfer_pickup_time = db.Column(db.DateTime)
+    transfer_return_time = db.Column(db.DateTime)
+    transfer_user_note = db.Column(db.Text)
+    transfer_pickup_location = db.Column(db.String(255))
+    transfer_return_location = db.Column(db.String(255))
+    transfer_status = db.Column(db.String(20), default='pending')
+    transfer_admin_note = db.Column(db.Text)
+    transfer_confirmed_at = db.Column(db.DateTime)
+    transfer_vehicle_snapshot = db.Column(db.JSON)
+    transfer_snapshot = db.Column(db.JSON)
     package_snapshot = db.Column(db.JSON)  # 保存订单时的票种信息快照
     voucher_delivery_status = db.Column(db.SmallInteger, default=0)  # 0未发送 1已发送
     cancelled_at = db.Column(db.DateTime)
@@ -851,6 +921,7 @@ class TicketOrder(db.Model):
     vouchers = db.relationship('TicketVoucher', backref='order', lazy='dynamic', cascade='all, delete-orphan')
 
     def to_dict(self):
+        package_summary = self._build_package_summary(self.package_snapshot)
         return {
             'id': self.id,
             'order_no': self.order_no,
@@ -875,7 +946,24 @@ class TicketOrder(db.Model):
             'transfer_vehicle': self.transfer_vehicle.to_dict(self.lang) if self.transfer_vehicle else None,
             'transfer_service_type': self.transfer_service_type,
             'transfer_price_snapshot': float(self.transfer_price_snapshot) if self.transfer_price_snapshot else None,
-            'package_snapshot': self.package_snapshot,
+            'transfer_pickup_time': self.transfer_pickup_time.isoformat() if self.transfer_pickup_time else None,
+            'transfer_return_time': self.transfer_return_time.isoformat() if self.transfer_return_time else None,
+            'transfer_user_note': self.transfer_user_note,
+            'transfer_pickup_location': self.transfer_pickup_location,
+            'transfer_return_location': self.transfer_return_location,
+            'transfer_status': self.transfer_status,
+            'transfer_admin_note': self.transfer_admin_note,
+            'transfer_confirmed_at': self.transfer_confirmed_at.isoformat() if self.transfer_confirmed_at else None,
+            'transfer_vehicle_snapshot': self.transfer_vehicle_snapshot,
+            'transfer_snapshot': self.transfer_snapshot,
+            'package_snapshot': package_summary['ticket_items'],
+            'ticket_items': package_summary['ticket_items'],
+            'package_names': package_summary['package_names'],
+            'package_names_text': package_summary['package_names_text'],
+            'ticket_types': package_summary['ticket_types'],
+            'ticket_types_text': package_summary['ticket_types_text'],
+            'total_quantity': package_summary['total_quantity'],
+            'ticket_subtotal': package_summary['ticket_subtotal'],
             'voucher_delivery_status': self.voucher_delivery_status,
             'cancelled_at': self.cancelled_at.isoformat() if self.cancelled_at else None,
             'refund_status': self.refund_status or 0,

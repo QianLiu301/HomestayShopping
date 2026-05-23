@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container page-with-tabbar">
+  <div class="page-container page-with-tabbar cart-page">
     <van-nav-bar :title="t('cart.title')">
       <template #right>
         <span v-if="hasAnyCartItems" class="manage-btn" @click="manageMode = !manageMode">
@@ -66,14 +66,29 @@
               <div class="cart-spec">{{ item.visit_date }}</div>
               <div class="ticket-cart-packages">
                 <div v-for="pkg in item.packages" :key="`${item.key}_${pkg.package_id}`" class="ticket-cart-package-row">
-                  <span>{{ pkg.package_name }} × {{ pkg.quantity }}</span>
-                  <span>¥{{ pkg.price }}</span>
+                  <div class="ticket-cart-package-copy">
+                    <span class="ticket-cart-package-name">{{ pkg.package_name }}</span>
+                    <span class="ticket-cart-package-unit">¥{{ pkg.price }}</span>
+                  </div>
+                  <div class="ticket-cart-package-edit" @click.stop>
+                    <van-stepper
+                      :model-value="pkg.quantity"
+                      min="1"
+                      max="99"
+                      theme="round"
+                      button-size="24"
+                      @change="(v) => cart.updateTicketPackageQuantity(item.key, pkg.package_id, v)"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
           <div class="ticket-cart-side" @click.stop>
-            <div class="ticket-cart-side__price">¥{{ item.total_price }}</div>
+            <div class="ticket-cart-side__price-wrap">
+              <div class="ticket-cart-side__price">¥{{ item.total_price }}</div>
+              <div class="ticket-cart-side__subprice">{{ t('tickets.referenceUsdPrice', { price: formatUsdReference(item.total_price) }) }}</div>
+            </div>
             <div class="ticket-cart-actions">
               <van-button size="small" plain @click="goToTicketCheckout(item)">
                 {{ t('cart.checkout') }}
@@ -188,6 +203,20 @@ const manageMode = ref(route.query.tab === 'ticket')
 const isTicketMode = computed(() => route.query.tab === 'ticket' || (!cart.items.length && cart.ticketItems.length > 0))
 const hasAnyCartItems = computed(() => cart.items.length > 0 || cart.ticketItems.length > 0)
 
+const USD_CNY_RATE = 7.2
+const usdCurrencyFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+})
+
+function formatUsdReference(cnyPrice) {
+  const price = Number(cnyPrice)
+  if (!Number.isFinite(price) || price <= 0) return ''
+  return usdCurrencyFormatter.format(price / USD_CNY_RATE)
+}
+
 function goToTicketDetail(item) {
   router.push(`/tickets/${item.attraction_id}`)
 }
@@ -230,8 +259,24 @@ function onCheckout() {
 </script>
 
 <style scoped>
+.cart-page.page-with-tabbar {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+  background: linear-gradient(180deg, #f7f2ea 0%, #f3ece0 100%);
+}
+
+.cart-page {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+.cart-page > :deep(.van-nav-bar),
+.cart-page :deep(.van-nav-bar) {
+  margin-top: 0 !important;
+}
+
 .empty-cart {
-  padding-top: 80px;
+  padding-top: 24px;
 }
 
 .empty-actions {
@@ -251,6 +296,7 @@ function onCheckout() {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
+  margin-top: 0;
   background: var(--white);
   border-bottom: 1px solid var(--border);
 }
@@ -303,18 +349,33 @@ function onCheckout() {
 }
 
 .ticket-cart-side {
-  min-width: 116px;
+  min-width: 180px;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: center;
+  gap: 14px;
+}
+
+.ticket-cart-side__price-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  width: 100%;
 }
 
 .ticket-cart-side__price {
-  font-size: 16px;
+  font-size: 28px;
+  line-height: 1;
   font-weight: 700;
   color: var(--accent);
+}
+
+.ticket-cart-side__subprice {
+  font-size: 12px;
+  color: var(--text-light);
+  text-align: right;
 }
 
 .cart-item {
@@ -389,18 +450,40 @@ function onCheckout() {
 }
 
 .ticket-cart-packages {
-  margin-top: 8px;
+  margin-top: 10px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
 }
 
 .ticket-cart-package-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 12px;
+  padding: 10px 0;
+  border-top: 1px dashed rgba(200, 169, 126, 0.24);
   font-size: 12px;
   color: var(--text-secondary);
+}
+
+.ticket-cart-package-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.ticket-cart-package-name {
+  color: var(--text-secondary);
+}
+
+.ticket-cart-package-unit {
+  color: var(--text-light);
+}
+
+.ticket-cart-package-edit {
+  flex-shrink: 0;
 }
 
 .cart-price {
@@ -418,7 +501,10 @@ function onCheckout() {
 .ticket-cart-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 8px;
+  width: 100%;
 }
 
 .cart-footer-space {
@@ -431,6 +517,18 @@ function onCheckout() {
 
 :deep(.van-submit-bar) {
   bottom: 50px;
+}
+
+:deep(.van-stepper) {
+  --van-stepper-input-width: 36px;
+}
+
+:deep(.van-stepper__input) {
+  background: #fffaf3;
+}
+
+:deep(.van-button--small) {
+  min-width: 74px;
 }
 
 @media (max-width: 768px) {
@@ -447,7 +545,20 @@ function onCheckout() {
     margin-left: auto;
     min-width: 0;
     width: calc(100% - 30px);
-    align-items: flex-end;
+    align-items: stretch;
+  }
+
+  .ticket-cart-side__price-wrap {
+    align-items: flex-start;
+  }
+
+  .ticket-cart-actions {
+    justify-content: flex-start;
+  }
+
+  .ticket-cart-package-row {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 </style>

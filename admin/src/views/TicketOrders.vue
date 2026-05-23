@@ -71,10 +71,20 @@
           </template>
         </el-table-column>
 
-        <el-table-column :label="tOrders.package" min-width="180" show-overflow-tooltip>
+        <el-table-column :label="tOrders.package" min-width="220" show-overflow-tooltip>
           <template #default="{ row }">
-            {{ getPackageName(row.package_snapshot) }}
+            {{ getPackageSummaryText(row) }}
           </template>
+        </el-table-column>
+
+        <el-table-column :label="tOrders.ticketType" min-width="160" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ getTicketTypesText(row) }}
+          </template>
+        </el-table-column>
+
+        <el-table-column :label="tOrders.quantity" width="90">
+          <template #default="{ row }">{{ row.total_quantity || 0 }}</template>
         </el-table-column>
 
         <el-table-column prop="contact_name" :label="tOrders.customer" width="120" />
@@ -158,7 +168,7 @@
               <el-tag :type="statusTypeMap[current.status]" size="small">{{ getStatusLabel(current.status) }}</el-tag>
             </el-descriptions-item>
             <el-descriptions-item :label="tOrders.attraction">{{ current.attraction?.name || current.attraction?.name_zh || '-' }}</el-descriptions-item>
-            <el-descriptions-item :label="tOrders.package">{{ getPackageName(current.package_snapshot) }}</el-descriptions-item>
+            <el-descriptions-item :label="tOrders.package">{{ getPackageSummaryText(current) }}</el-descriptions-item>
             <el-descriptions-item :label="tOrders.visitDate">{{ current.visit_date || '-' }}</el-descriptions-item>
             <el-descriptions-item :label="tOrders.lang">{{ (current.lang || '').toUpperCase() || '-' }}</el-descriptions-item>
             <el-descriptions-item :label="tOrders.customer">{{ current.contact_name || '-' }}</el-descriptions-item>
@@ -179,6 +189,14 @@
             <el-descriptions-item :label="tOrders.transferServiceType">{{ transferServiceTypeLabel(current.transfer_service_type) }}</el-descriptions-item>
             <el-descriptions-item :label="tOrders.transferVehicle">{{ current.transfer_vehicle?.name || current.transfer_vehicle?.name_zh || '-' }}</el-descriptions-item>
             <el-descriptions-item :label="tOrders.transferPrice">{{ current.transfer_price_snapshot ? `¥${current.transfer_price_snapshot}` : '-' }}</el-descriptions-item>
+            <el-descriptions-item v-if="current.need_transfer" :label="tOrders.transferPickupTime">{{ formatDateTime(current.transfer_pickup_time) }}</el-descriptions-item>
+            <el-descriptions-item v-if="current.need_transfer" :label="tOrders.transferReturnTime">{{ formatDateTime(current.transfer_return_time) }}</el-descriptions-item>
+            <el-descriptions-item v-if="current.need_transfer" :label="tOrders.transferStatus">{{ transferStatusLabel(current.transfer_status) }}</el-descriptions-item>
+            <el-descriptions-item v-if="current.need_transfer" :label="tOrders.transferConfirmedAt">{{ formatDateTime(current.transfer_confirmed_at) }}</el-descriptions-item>
+            <el-descriptions-item v-if="current.need_transfer" :label="tOrders.transferUserNote">{{ current.transfer_user_note || '-' }}</el-descriptions-item>
+            <el-descriptions-item v-if="current.need_transfer" :label="tOrders.transferPickupLocation">{{ current.transfer_pickup_location || '-' }}</el-descriptions-item>
+            <el-descriptions-item v-if="current.need_transfer" :label="tOrders.transferReturnLocation">{{ current.transfer_return_location || '-' }}</el-descriptions-item>
+            <el-descriptions-item v-if="current.need_transfer" :label="tOrders.transferAdminNote">{{ current.transfer_admin_note || '-' }}</el-descriptions-item>
             <el-descriptions-item :label="tOrders.voucherStatus">
               <el-tag :type="current.voucher_delivery_status === 1 ? 'success' : 'info'" size="small">
                 {{ current.voucher_delivery_status === 1 ? tOrders.voucherSent : tOrders.voucherPending }}
@@ -198,11 +216,30 @@
           <div class="section-block">
             <div class="section-title">{{ tOrders.packageSnapshot }}</div>
             <el-descriptions :column="2" border>
-              <el-descriptions-item :label="tOrders.package">{{ getPackageName(current.package_snapshot) }}</el-descriptions-item>
-              <el-descriptions-item :label="tOrders.ticketType">{{ ticketTypeLabel(current.package_snapshot?.ticket_type) }}</el-descriptions-item>
-              <el-descriptions-item :label="tOrders.salePrice">{{ current.package_snapshot?.sale_price ? `¥${current.package_snapshot.sale_price}` : '-' }}</el-descriptions-item>
-              <el-descriptions-item :label="tOrders.originalPrice">{{ current.package_snapshot?.original_price ? `¥${current.package_snapshot.original_price}` : '-' }}</el-descriptions-item>
+              <el-descriptions-item :label="tOrders.ticketType">{{ getTicketTypesText(current) }}</el-descriptions-item>
+              <el-descriptions-item :label="tOrders.quantity">{{ current.total_quantity || 0 }}</el-descriptions-item>
+              <el-descriptions-item :label="tOrders.ticketSubtotal">{{ current.ticket_subtotal ? `¥${current.ticket_subtotal}` : '-' }}</el-descriptions-item>
             </el-descriptions>
+
+            <el-table :data="getTicketItems(current)" size="small" border style="margin-top: 12px">
+              <el-table-column :label="tOrders.package" min-width="180">
+                <template #default="{ row }">
+                  {{ row.package_name_zh || row.package_name_en || row.package_name || '-' }}
+                </template>
+              </el-table-column>
+              <el-table-column :label="tOrders.ticketType" min-width="120">
+                <template #default="{ row }">{{ ticketTypeLabel(row.ticket_type) }}</template>
+              </el-table-column>
+              <el-table-column :label="tOrders.salePrice" width="110">
+                <template #default="{ row }">{{ row.sale_price ? `¥${row.sale_price}` : '-' }}</template>
+              </el-table-column>
+              <el-table-column :label="tOrders.quantity" width="90">
+                <template #default="{ row }">{{ row.quantity || 0 }}</template>
+              </el-table-column>
+              <el-table-column :label="tOrders.subtotal" width="110">
+                <template #default="{ row }">{{ row.subtotal ? `¥${row.subtotal}` : '-' }}</template>
+              </el-table-column>
+            </el-table>
           </div>
 
           <div class="section-block">
@@ -258,6 +295,33 @@
                   <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
                 </el-select>
               </el-form-item>
+              <template v-if="current.need_transfer">
+                <el-form-item :label="tOrders.transferStatus">
+                  <el-select v-model="updateForm.transfer_status" style="width: 100%">
+                    <el-option value="pending" :label="tOrders.transferPending" />
+                    <el-option value="contacting" :label="tOrders.transferContacting" />
+                    <el-option value="confirmed" :label="tOrders.transferConfirmed" />
+                    <el-option value="scheduled" :label="tOrders.transferScheduled" />
+                    <el-option value="completed" :label="tOrders.transferCompleted" />
+                    <el-option value="cancelled" :label="tOrders.transferCancelled" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item :label="tOrders.transferPickupTime">
+                  <el-input v-model="updateForm.transfer_pickup_time" :placeholder="'YYYY-MM-DD HH:mm'" />
+                </el-form-item>
+                <el-form-item :label="tOrders.transferReturnTime">
+                  <el-input v-model="updateForm.transfer_return_time" :placeholder="'YYYY-MM-DD HH:mm'" />
+                </el-form-item>
+                <el-form-item :label="tOrders.transferPickupLocation">
+                  <el-input v-model="updateForm.transfer_pickup_location" :placeholder="tOrders.transferPickupLocationPlaceholder" />
+                </el-form-item>
+                <el-form-item :label="tOrders.transferReturnLocation">
+                  <el-input v-model="updateForm.transfer_return_location" :placeholder="tOrders.transferReturnLocationPlaceholder" />
+                </el-form-item>
+                <el-form-item :label="tOrders.transferAdminNote">
+                  <el-input v-model="updateForm.transfer_admin_note" type="textarea" :rows="4" :placeholder="tOrders.transferAdminNotePlaceholder" />
+                </el-form-item>
+              </template>
               <el-form-item :label="tOrders.adminNote">
                 <el-input v-model="updateForm.admin_note" type="textarea" :rows="4" :placeholder="tOrders.adminNotePlaceholder" />
               </el-form-item>
@@ -360,7 +424,13 @@ const dateRange = ref(null)
 
 const updateForm = reactive({
   status: 0,
-  admin_note: ''
+  admin_note: '',
+  transfer_pickup_time: '',
+  transfer_return_time: '',
+  transfer_pickup_location: '',
+  transfer_return_location: '',
+  transfer_status: 'pending',
+  transfer_admin_note: ''
 })
 
 const paymentForm = reactive({
@@ -421,6 +491,26 @@ function transferServiceTypeLabel(type) {
   return map[type] || type
 }
 
+function transferStatusLabel(status) {
+  const map = {
+    pending: tOrders.value.transferPending,
+    contacting: tOrders.value.transferContacting,
+    confirmed: tOrders.value.transferConfirmed,
+    scheduled: tOrders.value.transferScheduled,
+    completed: tOrders.value.transferCompleted,
+    cancelled: tOrders.value.transferCancelled
+  }
+  return map[status] || status || '-'
+}
+
+function toDatetimeLocal(val) {
+  if (!val) return ''
+  const d = new Date(val)
+  if (Number.isNaN(d.getTime())) return ''
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 function travelerTypeLabel(type) {
   const map = {
     adult: tOrders.value.adult,
@@ -457,9 +547,35 @@ function ticketTypeLabel(type) {
   return map[type] || type || '-'
 }
 
-function getPackageName(snapshot) {
-  if (!snapshot) return '-'
-  return snapshot.package_name_zh || snapshot.package_name_en || snapshot.package_name || '-'
+function normalizeTicketItems(snapshotOrOrder) {
+  if (Array.isArray(snapshotOrOrder)) return snapshotOrOrder
+  if (Array.isArray(snapshotOrOrder?.ticket_items)) return snapshotOrOrder.ticket_items
+  if (Array.isArray(snapshotOrOrder?.package_snapshot)) return snapshotOrOrder.package_snapshot
+  if (snapshotOrOrder && typeof snapshotOrOrder === 'object' && (snapshotOrOrder.package_name || snapshotOrOrder.package_name_zh || snapshotOrOrder.package_name_en)) {
+    return [snapshotOrOrder]
+  }
+  return []
+}
+
+function getTicketItems(order) {
+  return normalizeTicketItems(order)
+}
+
+function getPackageSummaryText(order) {
+  if (order?.package_names_text) return order.package_names_text
+  const items = normalizeTicketItems(order)
+  if (!items.length) return '-'
+  return items.map(item => `${item.package_name_zh || item.package_name_en || item.package_name || '-'} x${item.quantity || 0}`).join(' / ')
+}
+
+function getTicketTypesText(order) {
+  if (order?.ticket_types?.length) {
+    return order.ticket_types.map(type => ticketTypeLabel(type)).join(' / ')
+  }
+  const items = normalizeTicketItems(order)
+  if (!items.length) return '-'
+  const types = [...new Set(items.map(item => item.ticket_type).filter(Boolean))]
+  return types.map(type => ticketTypeLabel(type)).join(' / ') || '-'
 }
 
 function formatDateTime(val) {
@@ -508,6 +624,12 @@ async function openDetail(row) {
     current.value = res.data
     updateForm.status = res.data.status ?? 0
     updateForm.admin_note = res.data.admin_note || ''
+    updateForm.transfer_pickup_time = toDatetimeLocal(res.data.transfer_pickup_time)
+    updateForm.transfer_return_time = toDatetimeLocal(res.data.transfer_return_time)
+    updateForm.transfer_pickup_location = res.data.transfer_pickup_location || ''
+    updateForm.transfer_return_location = res.data.transfer_return_location || ''
+    updateForm.transfer_status = res.data.transfer_status || 'pending'
+    updateForm.transfer_admin_note = res.data.transfer_admin_note || ''
     paymentForm.payment_method = res.data.payment_method || ''
     paymentForm.transaction_id = res.data.transaction_id || ''
   } catch {
@@ -519,10 +641,19 @@ async function onUpdateStatus() {
   if (!current.value) return
   saving.value = true
   try {
-    const res = await updateTicketOrderStatus(current.value.id, {
+    const payload = {
       status: updateForm.status,
       admin_note: updateForm.admin_note
-    })
+    }
+    if (current.value.need_transfer) {
+      payload.transfer_pickup_time = updateForm.transfer_pickup_time || ''
+      payload.transfer_return_time = updateForm.transfer_return_time || ''
+      payload.transfer_pickup_location = updateForm.transfer_pickup_location || ''
+      payload.transfer_return_location = updateForm.transfer_return_location || ''
+      payload.transfer_status = updateForm.transfer_status || 'pending'
+      payload.transfer_admin_note = updateForm.transfer_admin_note || ''
+    }
+    const res = await updateTicketOrderStatus(current.value.id, payload)
     ElMessage.success(res.message || t('common.updated'))
     current.value = res.data
     await loadData()

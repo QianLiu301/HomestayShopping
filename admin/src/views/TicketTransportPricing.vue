@@ -16,7 +16,7 @@
         <el-select
           v-model="serviceTypeFilter"
           clearable
-          style="width: 160px"
+          style="width: 180px"
           :placeholder="tPricing.serviceType"
           @change="loadData"
         >
@@ -51,20 +51,26 @@
           </template>
         </el-table-column>
 
-        <el-table-column :label="tPricing.vehicle" min-width="200" show-overflow-tooltip>
+        <el-table-column :label="tPricing.vehicle" min-width="180" show-overflow-tooltip>
           <template #default="{ row }">
             {{ getVehicleName(row.vehicle) }}
           </template>
         </el-table-column>
 
-        <el-table-column :label="tPricing.serviceType" width="140">
-          <template #default="{ row }">
-            <el-tag size="small">{{ getServiceTypeLabel(row.service_type) }}</el-tag>
-          </template>
+        <el-table-column :label="tPricing.pickupPrice" width="140">
+          <template #default="{ row }">{{ formatPrice(row.pickup_price) }}</template>
         </el-table-column>
 
-        <el-table-column :label="tPricing.price" width="120">
-          <template #default="{ row }">¥{{ row.price }}</template>
+        <el-table-column :label="tPricing.dropoffPrice" width="140">
+          <template #default="{ row }">{{ formatPrice(row.dropoff_price) }}</template>
+        </el-table-column>
+
+        <el-table-column :label="tPricing.roundTripPrice" width="140">
+          <template #default="{ row }">{{ formatPrice(row.round_trip_price) }}</template>
+        </el-table-column>
+
+        <el-table-column :label="tPricing.charterPrice" width="140">
+          <template #default="{ row }">{{ formatPrice(row.charter_price) }}</template>
         </el-table-column>
 
         <el-table-column prop="sort_order" :label="$t('common.sort')" width="90" />
@@ -93,7 +99,7 @@
     <el-dialog
       v-model="dialogVisible"
       :title="isEdit ? tPricing.editPrice : tPricing.addPrice"
-      width="760px"
+      width="820px"
       destroy-on-close
     >
       <el-form :model="form" label-position="top">
@@ -115,17 +121,30 @@
           </el-col>
         </el-row>
 
+        <div class="section-title">{{ tPricing.servicePriceGroup }}</div>
+        <div class="price-grid-tip">{{ tPricing.servicePriceGroupTip }}</div>
         <el-row :gutter="16">
           <el-col :span="12">
-            <el-form-item :label="tPricing.serviceType" required>
-              <el-select v-model="form.service_type" style="width: 100%">
-                <el-option v-for="item in serviceTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
-              </el-select>
+            <el-form-item :label="tPricing.pickupPrice">
+              <el-input-number v-model="form.pickup_price" :min="0" :precision="2" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="tPricing.price" required>
-              <el-input-number v-model="form.price" :min="0" :precision="2" style="width: 100%" />
+            <el-form-item :label="tPricing.dropoffPrice">
+              <el-input-number v-model="form.dropoff_price" :min="0" :precision="2" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item :label="tPricing.roundTripPrice">
+              <el-input-number v-model="form.round_trip_price" :min="0" :precision="2" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item :label="tPricing.charterPrice">
+              <el-input-number v-model="form.charter_price" :min="0" :precision="2" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -185,17 +204,26 @@ const serviceTypeFilter = ref('')
 const statusFilter = ref(undefined)
 
 const serviceTypeOptions = computed(() => [
-  { value: 'pickup_only', label: tPricing.value.pickupOnly || '仅接机' },
-  { value: 'dropoff_only', label: tPricing.value.dropoffOnly || '仅送机' },
+  { value: 'pickup_only', label: tPricing.value.pickupOnly || '单程去景点' },
+  { value: 'dropoff_only', label: tPricing.value.dropoffOnly || '单程返回' },
   { value: 'round_trip', label: tPricing.value.roundTrip || '往返' },
   { value: 'charter', label: tPricing.value.charter || '包车' }
 ])
 
+const serviceTypeFieldMap = {
+  pickup_only: 'pickup_price',
+  dropoff_only: 'dropoff_price',
+  round_trip: 'round_trip_price',
+  charter: 'charter_price'
+}
+
 const defaultForm = () => ({
   attraction_id: null,
   vehicle_id: null,
-  service_type: 'pickup_only',
-  price: 0,
+  pickup_price: null,
+  dropoff_price: null,
+  round_trip_price: null,
+  charter_price: null,
   sort_order: 0,
   status: 1
 })
@@ -204,11 +232,22 @@ const form = reactive(defaultForm())
 
 const filteredList = computed(() => {
   return list.value.filter(item => {
-    if (serviceTypeFilter.value && item.service_type !== serviceTypeFilter.value) return false
+    if (serviceTypeFilter.value) {
+      const field = serviceTypeFieldMap[serviceTypeFilter.value]
+      if (!field || item[field] === null || item[field] === undefined) return false
+    }
     if (statusFilter.value !== undefined && statusFilter.value !== null && statusFilter.value !== '' && item.status !== statusFilter.value) return false
     return true
   })
 })
+
+function normalizePrice(value) {
+  return value === null || value === undefined || value === '' ? null : Number(value)
+}
+
+function formatPrice(value) {
+  return value === null || value === undefined ? '-' : `¥${value}`
+}
 
 async function loadAttractions() {
   try {
@@ -243,10 +282,6 @@ function getVehicleName(vehicle) {
   return vehicle.name_zh || vehicle.name_en || '-'
 }
 
-function getServiceTypeLabel(value) {
-  return serviceTypeOptions.value.find(item => item.value === value)?.label || value || '-'
-}
-
 function openDialog(row) {
   Object.assign(form, defaultForm())
 
@@ -273,18 +308,25 @@ async function onSave() {
     ElMessage.error(tPricing.value.vehicleRequired || '请选择车型')
     return
   }
-  if (!form.service_type) {
-    ElMessage.error(tPricing.value.serviceTypeRequired || '请选择服务类型')
-    return
+
+  const payload = {
+    attraction_id: form.attraction_id,
+    vehicle_id: form.vehicle_id,
+    pickup_price: normalizePrice(form.pickup_price),
+    dropoff_price: normalizePrice(form.dropoff_price),
+    round_trip_price: normalizePrice(form.round_trip_price),
+    charter_price: normalizePrice(form.charter_price),
+    sort_order: form.sort_order || 0,
+    status: form.status
   }
-  if (form.price === null || form.price === undefined) {
-    ElMessage.error(tPricing.value.priceRequired || '请填写价格')
+
+  if ([payload.pickup_price, payload.dropoff_price, payload.round_trip_price, payload.charter_price].every(v => v === null)) {
+    ElMessage.error(tPricing.value.atLeastOnePrice || '请至少填写一个服务价格')
     return
   }
 
   saving.value = true
   try {
-    const payload = { ...form }
     if (isEdit.value) {
       await updateTicketTransportPrice(editId.value, payload)
       ElMessage.success(t('common.updated'))
@@ -333,5 +375,12 @@ onMounted(async () => {
   font-weight: 600;
   color: #4a3728;
   margin: 8px 0 12px;
+}
+
+.price-grid-tip {
+  margin-bottom: 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #8d7b67;
 }
 </style>

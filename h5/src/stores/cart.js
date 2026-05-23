@@ -135,6 +135,29 @@ export const useCartStore = defineStore('cart', () => {
     saveTicket()
   }
 
+  function updateTicketPackageQuantity(key, packageId, quantity) {
+    const item = ticketItems.value.find(i => i.key === key)
+    if (!item) return
+
+    const nextQty = Math.max(0, Number(quantity || 0))
+    const nextPackages = (item.packages || [])
+      .map(pkg => {
+        if (Number(pkg.package_id) !== Number(packageId)) return pkg
+        return { ...pkg, quantity: nextQty }
+      })
+      .filter(pkg => Number(pkg.quantity) > 0)
+
+    if (!nextPackages.length) {
+      removeTicketItem(key)
+      return
+    }
+
+    item.packages = nextPackages
+    item.total_quantity = nextPackages.reduce((sum, pkg) => sum + Number(pkg.quantity || 0), 0)
+    item.total_price = Number(nextPackages.reduce((sum, pkg) => sum + (Number(pkg.price || 0) * Number(pkg.quantity || 0)), 0).toFixed(2))
+    saveTicket()
+  }
+
   function updateQuantity(key, quantity) {
     const item = items.value.find(i => i.key === key)
     if (item) {
@@ -279,6 +302,7 @@ export const useCartStore = defineStore('cart', () => {
     ticketSelectedPrice,
     isAllTicketsSelected,
     addTicketItem,
+    updateTicketPackageQuantity,
     toggleTicketSelect,
     selectAllTickets,
     clearTicketSelection,

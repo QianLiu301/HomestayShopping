@@ -211,11 +211,7 @@ function onImageClick() {
 
 function onAddToCart() {
   cart.addItem(product.value, selectedSpec.value)
-  showToast({
-    message: t('shop.added'),
-    position: 'bottom',
-    duration: 1800,
-  })
+  showToast(t('shop.added'))
 }
 
 function onBuyNow() {

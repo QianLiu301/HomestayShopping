@@ -1615,6 +1615,53 @@ def admin_delete_ticket_package(package_id):
 
 # ==================== 门票加购用车价格管理 ====================
 
+TICKET_TRANSPORT_PRICE_FIELDS = {
+    'pickup_only': 'pickup_price',
+    'dropoff_only': 'dropoff_price',
+    'round_trip': 'round_trip_price',
+    'charter': 'charter_price'
+}
+
+
+def _serialize_ticket_transport_price_groups(options):
+    grouped = {}
+    for option in options:
+        key = (option.attraction_id, option.vehicle_id)
+        if key not in grouped:
+            grouped[key] = {
+                'id': option.id,
+                'attraction_id': option.attraction_id,
+                'vehicle_id': option.vehicle_id,
+                'vehicle': option.vehicle.to_dict() if option.vehicle else None,
+                'sort_order': option.sort_order or 0,
+                'status': option.status,
+                'pickup_price': None,
+                'dropoff_price': None,
+                'round_trip_price': None,
+                'charter_price': None,
+                'price_ids': {}
+            }
+        grouped[key][TICKET_TRANSPORT_PRICE_FIELDS[option.service_type]] = float(option.price) if option.price is not None else None
+        grouped[key]['price_ids'][option.service_type] = option.id
+    return sorted(grouped.values(), key=lambda item: (item.get('sort_order', 0), item.get('id', 0)), reverse=True)
+
+
+def _normalize_transport_group_payload(data):
+    prices = {
+        'pickup_only': data.get('pickup_price'),
+        'dropoff_only': data.get('dropoff_price'),
+        'round_trip': data.get('round_trip_price'),
+        'charter': data.get('charter_price')
+    }
+    normalized = {}
+    for service_type, raw_value in prices.items():
+        if raw_value in (None, ''):
+            normalized[service_type] = None
+        else:
+            normalized[service_type] = float(raw_value)
+    return normalized
+
+
 @api_bp.route('/admin/ticket-transport-pricing', methods=['GET'])
 @admin_required
 def admin_get_ticket_transport_pricing():
@@ -1624,8 +1671,8 @@ def admin_get_ticket_transport_pricing():
     if attraction_id:
         query = query.filter_by(attraction_id=attraction_id)
 
-    options = query.order_by(TicketTransportPrice.sort_order.desc()).all()
-    return success_response([o.to_dict() for o in options])
+    options = query.order_by(TicketTransportPrice.sort_order.desc(), TicketTransportPrice.id.desc()).all()
+    return success_response(_serialize_ticket_transport_price_groups(options))
 
 
 @api_bp.route('/admin/ticket-transport-pricing', methods=['POST'])
@@ -1636,40 +1683,89 @@ def admin_create_ticket_transport_price():
 
     if not data.get('attraction_id') or not data.get('vehicle_id'):
         return error_response('景点和车型不能为空')
-    if not data.get('service_type'):
-        return error_response('服务类型不能为空')
-    if not data.get('price'):
-        return error_response('价格不能为空')
 
-    option = TicketTransportPrice(
+    price_map = _normalize_transport_group_payload(data)
+    if all(value is None for value in price_map.values()):
+        return error_response('请至少填写一个服务价格')
+
+    # 同一景点 + 车型 的四种价格统一覆盖保存
+    existing = TicketTransportPrice.query.filter_by(
         attraction_id=data['attraction_id'],
-        vehicle_id=data['vehicle_id'],
-        service_type=data['service_type'],
-        price=data['price'],
-        sort_order=data.get('sort_order', 0),
-        status=data.get('status', 1)
-    )
-    db.session.add(option)
-    db.session.commit()
+        vehicle_id=data['vehicle_id']
+    ).all()
+    for item in existing:
+        db.session.delete(item)
+    db.session.flush()
 
-    return success_response(option.to_dict(), '创建成功')
+    for service_type, price in price_map.items():
+        if price is None:
+            continue
+        db.session.add(TicketTransportPrice(
+            attraction_id=data['attraction_id'],
+            vehicle_id=data['vehicle_id'],
+            service_type=service_type,
+            price=price,
+            sort_order=data.get('sort_order', 0),
+            status=data.get('status', 1)
+        ))
+
+    db.session.commit()
+    saved = TicketTransportPrice.query.filter_by(
+        attraction_id=data['attraction_id'],
+        vehicle_id=data['vehicle_id']
+    ).order_by(TicketTransportPrice.id.asc()).all()
+    return success_response(_serialize_ticket_transport_price_groups(saved)[0], '创建成功')
 
 
 @api_bp.route('/admin/ticket-transport-pricing/<int:price_id>', methods=['PUT'])
 @admin_required
 def admin_update_ticket_transport_price(price_id):
     """更新门票加购用车价格"""
-    option = TicketTransportPrice.query.get(price_id)
-    if not option:
+    anchor = TicketTransportPrice.query.get(price_id)
+    if not anchor:
         return error_response('记录不存在', 404)
 
     data = request.get_json()
-    for field in ['attraction_id', 'vehicle_id', 'service_type', 'price', 'sort_order', 'status']:
-        if field in data:
-            setattr(option, field, data[field])
+    if not data.get('attraction_id') or not data.get('vehicle_id'):
+        return error_response('景点和车型不能为空')
+
+    price_map = _normalize_transport_group_payload(data)
+    if all(value is None for value in price_map.values()):
+        return error_response('请至少填写一个服务价格')
+
+    old_rows = TicketTransportPrice.query.filter_by(
+        attraction_id=anchor.attraction_id,
+        vehicle_id=anchor.vehicle_id
+    ).all()
+    for item in old_rows:
+        db.session.delete(item)
+
+    target_rows = TicketTransportPrice.query.filter_by(
+        attraction_id=data['attraction_id'],
+        vehicle_id=data['vehicle_id']
+    ).all()
+    for item in target_rows:
+        db.session.delete(item)
+    db.session.flush()
+
+    for service_type, price in price_map.items():
+        if price is None:
+            continue
+        db.session.add(TicketTransportPrice(
+            attraction_id=data['attraction_id'],
+            vehicle_id=data['vehicle_id'],
+            service_type=service_type,
+            price=price,
+            sort_order=data.get('sort_order', 0),
+            status=data.get('status', 1)
+        ))
 
     db.session.commit()
-    return success_response(option.to_dict(), '更新成功')
+    saved = TicketTransportPrice.query.filter_by(
+        attraction_id=data['attraction_id'],
+        vehicle_id=data['vehicle_id']
+    ).order_by(TicketTransportPrice.id.asc()).all()
+    return success_response(_serialize_ticket_transport_price_groups(saved)[0], '更新成功')
 
 
 @api_bp.route('/admin/ticket-transport-pricing/<int:price_id>', methods=['DELETE'])
@@ -1680,7 +1776,12 @@ def admin_delete_ticket_transport_price(price_id):
     if not option:
         return error_response('记录不存在', 404)
 
-    db.session.delete(option)
+    rows = TicketTransportPrice.query.filter_by(
+        attraction_id=option.attraction_id,
+        vehicle_id=option.vehicle_id
+    ).all()
+    for item in rows:
+        db.session.delete(item)
     db.session.commit()
     return success_response(None, '删除成功')
 
@@ -1752,6 +1853,18 @@ def admin_get_ticket_order(order_id):
 @admin_required
 def admin_update_ticket_order_status(order_id):
     """更新门票订单状态"""
+    from app.models import china_now
+
+    def parse_admin_datetime(value, field_name):
+        from datetime import datetime
+
+        if value in (None, ''):
+            return None
+        try:
+            return datetime.strptime(str(value).strip(), '%Y-%m-%d %H:%M')
+        except ValueError:
+            raise ValueError(f'{field_name}格式错误，请使用 YYYY-MM-DD HH:mm')
+
     order = TicketOrder.query.get(order_id)
     if not order:
         return error_response('订单不存在', 404)
@@ -1764,15 +1877,48 @@ def admin_update_ticket_order_status(order_id):
     if new_status not in [0, 1, 2, 3]:
         return error_response('无效的状态值')
 
-    old_status = order.status
     order.status = new_status
 
     if new_status == 3:  # 已取消
         order.cancelled_at = china_now()
+        if order.need_transfer and not data.get('transfer_status'):
+            order.transfer_status = 'cancelled'
 
     # 管理员备注
     if 'admin_note' in data:
         order.admin_note = data['admin_note']
+
+    if order.need_transfer:
+        try:
+            if 'transfer_pickup_time' in data:
+                order.transfer_pickup_time = parse_admin_datetime(data.get('transfer_pickup_time'), '接送时间')
+            if 'transfer_return_time' in data:
+                order.transfer_return_time = parse_admin_datetime(data.get('transfer_return_time'), '返程时间')
+        except ValueError as exc:
+            return error_response(str(exc))
+
+        if 'transfer_pickup_location' in data:
+            order.transfer_pickup_location = data.get('transfer_pickup_location') or None
+        if 'transfer_return_location' in data:
+            order.transfer_return_location = data.get('transfer_return_location') or None
+        if 'transfer_admin_note' in data:
+            order.transfer_admin_note = data.get('transfer_admin_note') or None
+        if 'transfer_status' in data and data.get('transfer_status'):
+            order.transfer_status = data.get('transfer_status')
+            if data.get('transfer_status') in ['confirmed', 'scheduled', 'completed'] and not order.transfer_confirmed_at:
+                order.transfer_confirmed_at = china_now()
+
+        if isinstance(order.transfer_snapshot, dict):
+            snapshot = dict(order.transfer_snapshot)
+            snapshot.update({
+                'pickup_time': order.transfer_pickup_time.isoformat() if order.transfer_pickup_time else None,
+                'return_time': order.transfer_return_time.isoformat() if order.transfer_return_time else None,
+                'pickup_location': order.transfer_pickup_location,
+                'return_location': order.transfer_return_location,
+                'status': order.transfer_status,
+                'transfer_admin_note': order.transfer_admin_note
+            })
+            order.transfer_snapshot = snapshot
 
     db.session.commit()
     return success_response(order.to_dict(), '状态更新成功')
@@ -1782,6 +1928,8 @@ def admin_update_ticket_order_status(order_id):
 @admin_required
 def admin_update_ticket_order_payment(order_id):
     """标记门票订单为已支付（后台确认）"""
+    from app.models import china_now
+
     order = TicketOrder.query.get(order_id)
     if not order:
         return error_response('订单不存在', 404)
@@ -1857,6 +2005,8 @@ def admin_delete_ticket_voucher(order_id):
 @admin_required
 def admin_send_ticket_voucher(order_id):
     """标记票据已发送给客户"""
+    from app.models import china_now
+
     order = TicketOrder.query.get(order_id)
     if not order:
         return error_response('订单不存在', 404)

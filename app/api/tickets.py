@@ -29,6 +29,15 @@ def _localized(obj, field, lang):
     )
 
 
+def _parse_datetime(value, field_name, fmt='%Y-%m-%d %H:%M'):
+    if value in (None, ''):
+        return None
+    try:
+        return datetime.strptime(str(value).strip(), fmt)
+    except ValueError:
+        raise ValueError(f'{field_name}格式错误，请使用 YYYY-MM-DD HH:mm')
+
+
 # ==================== 公开接口 ====================
 
 @api_bp.route('/tickets/attractions', methods=['GET'])
@@ -201,6 +210,10 @@ def create_ticket_order():
         package_snapshot.append({
             'package_id': pkg.id,
             'package_name': _localized(pkg, 'package_name', lang) or pkg.package_name_zh,
+            'package_name_zh': pkg.package_name_zh,
+            'package_name_en': pkg.package_name_en,
+            'package_name_ru': pkg.package_name_ru,
+            'package_name_es': pkg.package_name_es,
             'ticket_type': pkg.ticket_type,
             'sale_price': sale_price,
             'base_sale_price': float(pkg.sale_price) if pkg.sale_price else 0,
@@ -224,11 +237,16 @@ def create_ticket_order():
                 return error_response('该景点需要提供证件信息')
 
     # 联系方式
-    contact_name = data.get('contact_name')
+    contact_name = (data.get('contact_name') or '').strip()
     if not contact_name:
         return error_response('联系人姓名不能为空')
 
-    booking_no = data.get('booking_no')
+    contact_phone = (data.get('contact_phone') or '').strip()
+    contact_email = (data.get('contact_email') or '').strip()
+    if not contact_phone and not contact_email:
+        return error_response('请至少填写手机号或邮箱')
+
+    booking_no = (data.get('booking_no') or '').strip()
     if not booking_no:
         return error_response('请填写民宿预订单号')
 
@@ -238,18 +256,54 @@ def create_ticket_order():
     transfer_vehicle_id = None
     transfer_service_type = None
     transfer_vehicle_snapshot = None
+    transfer_pickup_time = None
+    transfer_return_time = None
+    transfer_user_note = (data.get('transfer_user_note') or '').strip() or None
+    transfer_snapshot = None
 
     if need_transfer:
         tp_id = data.get('transport_price_id')
-        if tp_id:
-            tp = TicketTransportPrice.query.get(tp_id)
-            if tp and tp.attraction_id == attraction_id and tp.status == 1:
-                transfer_price = float(tp.price) if tp.price else 0
-                transfer_vehicle_id = tp.vehicle_id
-                transfer_service_type = tp.service_type
-                transfer_vehicle_snapshot = tp.vehicle.to_dict(lang) if tp.vehicle else None
-            else:
-                return error_response('选定的接送服务不存在或已下架')
+        if not tp_id:
+            return error_response('请选择接送车型')
+
+        tp = TicketTransportPrice.query.get(tp_id)
+        if tp and tp.attraction_id == attraction_id and tp.status == 1:
+            transfer_price = float(tp.price) if tp.price else 0
+            transfer_vehicle_id = tp.vehicle_id
+            transfer_service_type = tp.service_type
+            transfer_vehicle_snapshot = tp.vehicle.to_dict(lang) if tp.vehicle else None
+        else:
+            return error_response('选定的接送服务不存在或已下架')
+
+        try:
+            transfer_pickup_time = _parse_datetime(data.get('transfer_pickup_time'), '接送时间')
+            transfer_return_time = _parse_datetime(data.get('transfer_return_time'), '返程时间')
+        except ValueError as exc:
+            return error_response(str(exc))
+
+        if not transfer_pickup_time:
+            return error_response('请选择希望接送时间')
+        if transfer_service_type == 'round_trip' and not transfer_return_time:
+            return error_response('请选择希望返程时间')
+
+        transfer_snapshot = {
+            'need_transfer': True,
+            'transport_price_id': tp.id,
+            'service_type': transfer_service_type,
+            'vehicle_id': transfer_vehicle_id,
+            'vehicle': transfer_vehicle_snapshot,
+            'price': round(transfer_price, 2),
+            'pickup_time': transfer_pickup_time.isoformat() if transfer_pickup_time else None,
+            'return_time': transfer_return_time.isoformat() if transfer_return_time else None,
+            'booking_no': booking_no,
+            'contact_name': contact_name,
+            'contact_phone': contact_phone,
+            'contact_email': contact_email,
+            'user_note': transfer_user_note,
+            'pickup_location': None,
+            'return_location': None,
+            'status': 'pending'
+        }
 
     total_price = round(total_ticket_price + transfer_price, 2)
 
@@ -279,8 +333,8 @@ def create_ticket_order():
         attraction_id=attraction_id,
         visit_date=visit_date,
         contact_name=contact_name,
-        contact_phone=data.get('contact_phone'),
-        contact_email=data.get('contact_email'),
+        contact_phone=contact_phone,
+        contact_email=contact_email,
         booking_no=booking_no,
         lang=lang,
         total_price=final_price,
@@ -294,6 +348,12 @@ def create_ticket_order():
         transfer_vehicle_id=transfer_vehicle_id,
         transfer_service_type=transfer_service_type,
         transfer_price_snapshot=transfer_price if transfer_price else None,
+        transfer_pickup_time=transfer_pickup_time,
+        transfer_return_time=transfer_return_time,
+        transfer_user_note=transfer_user_note,
+        transfer_status='pending' if need_transfer else None,
+        transfer_vehicle_snapshot=transfer_vehicle_snapshot,
+        transfer_snapshot=transfer_snapshot,
         package_snapshot=package_snapshot,
         voucher_delivery_status=0
     )

@@ -15,7 +15,7 @@
         <div class="ticket-detail-desktop__hero">
           <div class="ticket-detail-desktop__gallery card">
             <div class="main-image-wrap" :class="{ empty: !currentImage }">
-              <img v-if="currentImage" :src="resolveUrl(currentImage)" class="main-image" @click="previewImages" />
+              <img v-if="currentImage" :src="resolveUrl(currentImage)" class="main-image" @click="previewDetailImages" />
               <div v-else class="image-placeholder">{{ detail.name?.charAt(0) || 'T' }}</div>
             </div>
 
@@ -85,7 +85,7 @@
 
       <div v-else class="gallery-section">
         <div class="main-image-wrap" :class="{ empty: !currentImage }">
-          <img v-if="currentImage" :src="resolveUrl(currentImage)" class="main-image" @click="previewImages" />
+          <img v-if="currentImage" :src="resolveUrl(currentImage)" class="main-image" @click="previewDetailImages" />
           <div v-else class="image-placeholder">{{ detail.name?.charAt(0) || 'T' }}</div>
         </div>
 
@@ -186,33 +186,102 @@
 
           <div id="ticket-transport-section" ref="transportSectionRef" class="card traffic-guide-card">
             <div class="card-title card-title--desktop">{{ t('tickets.transportGuide') }}</div>
-            <div class="traffic-guide-card__layout">
-              <div class="traffic-guide-card__map">
-                <div class="traffic-guide-card__map-title">{{ t('tickets.address') }}</div>
-                <div class="traffic-guide-card__map-address">{{ detail.address || t('common.noData') }}</div>
-                <div class="traffic-guide-card__map-hours">
-                  <strong>{{ t('tickets.openHours') }}：</strong>{{ detail.open_hours || t('common.noData') }}
-                </div>
-                <div v-if="desktopAmapLink || desktopGoogleMapLink" class="traffic-guide-card__map-actions">
-                  <a v-if="desktopAmapLink" :href="desktopAmapLink" target="_blank" rel="noreferrer" class="traffic-guide-card__map-link">{{ t('tickets.openAmap') }}</a>
-                  <a v-if="desktopGoogleMapLink" :href="desktopGoogleMapLink" target="_blank" rel="noreferrer" class="traffic-guide-card__map-link traffic-guide-card__map-link--secondary">{{ t('tickets.openGoogleMaps') }}</a>
+            <div class="traffic-guide-card__map traffic-guide-card__map--full">
+              <div class="traffic-guide-card__map-title">{{ t('tickets.address') }}</div>
+              <div class="traffic-guide-card__map-address">{{ detail.address || t('common.noData') }}</div>
+              <div class="traffic-guide-card__map-hours">
+                <strong>{{ t('tickets.openHours') }}：</strong>{{ detail.open_hours || t('common.noData') }}
+              </div>
+              <div v-if="desktopAmapLink || desktopGoogleMapLink" class="traffic-guide-card__map-actions">
+                <a v-if="desktopAmapLink" :href="desktopAmapLink" target="_blank" rel="noreferrer" class="traffic-guide-card__map-link">{{ t('tickets.openAmap') }}</a>
+                <a v-if="desktopGoogleMapLink" :href="desktopGoogleMapLink" target="_blank" rel="noreferrer" class="traffic-guide-card__map-link traffic-guide-card__map-link--secondary">{{ t('tickets.openGoogleMaps') }}</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="card transport-panel-card">
+            <div class="transport-panel-card__head">
+              <div>
+                <div class="card-title card-title--desktop transport-panel-card__title">{{ t('tickets.optionalTransfer') }}</div>
+                <div class="transport-panel-card__subtitle">{{ t('tickets.transferBookingTip') }}</div>
+              </div>
+              <div v-if="transportVehicleCards.length" class="transport-panel-card__badge">{{ t('tickets.roundTrip') }}</div>
+            </div>
+
+            <div class="transport-list transport-list--inline">
+              <div class="transport-item" :class="{ active: selectedTransportId === '' }" @click="selectedTransportId = ''">
+                <div>
+                  <div class="transport-name">{{ t('tickets.noTransfer') }}</div>
+                  <div class="transport-desc">{{ t('tickets.transferOptionalTip') }}</div>
                 </div>
               </div>
-              <div class="traffic-guide-card__side">
-                <div class="traffic-guide-card__side-title">{{ t('tickets.optionalTransfer') }}</div>
-                <div class="traffic-guide-card__side-copy">{{ t('tickets.desktopPackageHint') }}</div>
-                <div v-if="transportOptions.length" class="traffic-guide-card__transport-list">
-                  <div
-                    v-for="item in transportOptions.slice(0, 4)"
-                    :key="item.id"
-                    class="traffic-guide-card__transport-item"
-                  >
-                    <span>{{ item.vehicle?.name || item.vehicle?.name_zh || '-' }} · {{ transferServiceLabel(item.service_type) }}</span>
-                    <strong>¥{{ item.price }}</strong>
+            </div>
+
+            <div v-if="transportVehicleCards.length" class="transport-hero-panel transport-hero-panel--embedded">
+              <div class="transport-hero-panel__eyebrow">{{ t('tickets.transferType') }}</div>
+              <div class="transport-hero-panel__title">{{ t('tickets.roundTrip') }}</div>
+              <div class="transport-hero-panel__desc">{{ t('tickets.transferTypeHint') }}</div>
+            </div>
+            <div v-if="transportVehicleCards.length" class="vehicle-list ticket-transfer-vehicle-list ticket-transfer-vehicle-list--main">
+              <div
+                v-for="card in transportVehicleCards"
+                :key="card.key"
+                class="vehicle-card vehicle-card--transport"
+                :class="{ active: isVehicleTransportSelected(card) }"
+                role="button"
+                tabindex="0"
+                @click="selectVehicleTransport(card)"
+                @keydown.enter.prevent="selectVehicleTransport(card)"
+                @keydown.space.prevent="selectVehicleTransport(card)"
+              >
+                <div class="vehicle-card__top">
+                  <div class="vehicle-icon vehicle-icon--large">
+                    <img
+                      v-if="vehiclePrimaryImage(card.vehicle)"
+                      :src="resolveUrl(vehiclePrimaryImage(card.vehicle))"
+                      :alt="vehicleDisplayName(card.vehicle)"
+                      class="vehicle-img"
+                      @click.stop="previewVehicle(card.vehicle)"
+                    />
+                    <div v-if="(card.vehicle?.images?.length || 0) > 1" class="vehicle-image-badge">{{ card.vehicle.images.length }}</div>
+                  </div>
+                  <div class="vehicle-info">
+                    <div class="vehicle-name-row">
+                      <div class="vehicle-name">{{ vehicleDisplayName(card.vehicle) }}</div>
+                      <span class="vehicle-state-tag">{{ isVehicleTransportSelected(card) ? t('transfer.selectedVehicle') : transferServiceLabel(getVehicleTransportOption(card)?.service_type) }}</span>
+                    </div>
+                    <div v-if="card.vehicle?.model" class="vehicle-model">车型：{{ card.vehicle.model }}</div>
+                    <div class="vehicle-highlights">
+                      <span class="vehicle-highlight-chip">{{ t('transfer.seats', { n: card.vehicle?.seats || 0 }) }}</span>
+                      <span v-if="vehicleCapacityText(card.vehicle)" class="vehicle-highlight-chip">{{ vehicleCapacityText(card.vehicle) }}</span>
+                    </div>
+                    <div v-if="vehicleImageList(card.vehicle).length > 1" class="vehicle-thumb-row" @click.stop>
+                      <span
+                        v-for="(img, index) in vehicleImageList(card.vehicle).slice(0, 4)"
+                        :key="`${card.key}-${img}-${index}`"
+                        class="vehicle-thumb"
+                        @click="previewVehicle(card.vehicle, index)"
+                      >
+                        <img :src="img" :alt="`${vehicleDisplayName(card.vehicle)}-${index + 1}`" />
+                      </span>
+                    </div>
+                    <div class="vehicle-desc">{{ t('transfer.vehicleGalleryHint') }}</div>
+                  </div>
+                  <div class="vehicle-side vehicle-side--boxed">
+                    <div class="vehicle-side-select-label">{{ t('tickets.transferType') }}</div>
+                    <select class="vehicle-service-select" :value="getVehicleSelectedServiceType(card)" @click.stop @change.stop="onVehicleServiceTypeChange(card, $event.target.value)">
+                      <option v-for="serviceType in card.serviceTypes" :key="`${card.key}-${serviceType}`" :value="serviceType">{{ transferServiceLabel(serviceType) }}</option>
+                    </select>
+                    <div class="vehicle-price-label">{{ t('transfer.approxPrice') }}</div>
+                    <div class="vehicle-price">¥{{ getVehicleTransportOption(card)?.price ?? 0 }}</div>
+                    <div class="vehicle-side-tip">{{ t('transfer.tapToPreview') }}</div>
                   </div>
                 </div>
-                <div v-else class="traffic-guide-card__side-copy">{{ t('tickets.transferOptionalTip') }}</div>
               </div>
+            </div>
+            <div v-else class="transport-empty-state">
+              <div class="transport-empty-state__title">{{ t('tickets.transferUnavailableTitle') }}</div>
+              <div class="transport-empty-state__desc">{{ t('tickets.transferUnavailableDesc') }}</div>
             </div>
           </div>
         </div>
@@ -259,30 +328,6 @@
             </div>
           </div>
 
-          <div v-if="transportOptions.length" class="card transport-card booking-card">
-            <div class="card-title">{{ t('tickets.optionalTransfer') }}</div>
-            <div class="transport-list">
-              <div class="transport-item" :class="{ active: selectedTransportId === '' }" @click="selectedTransportId = ''">
-                <div>
-                  <div class="transport-name">{{ t('tickets.noTransfer') }}</div>
-                  <div class="transport-desc">{{ t('tickets.transferOptionalTip') }}</div>
-                </div>
-              </div>
-              <div
-                v-for="item in transportOptions"
-                :key="item.id"
-                class="transport-item"
-                :class="{ active: selectedTransportId === item.id }"
-                @click="selectedTransportId = item.id"
-              >
-                <div>
-                  <div class="transport-name">{{ item.vehicle?.name || item.vehicle?.name_zh || '-' }}</div>
-                  <div class="transport-desc">{{ transferServiceLabel(item.service_type) }}</div>
-                </div>
-                <div class="transport-price">¥{{ item.price }}</div>
-              </div>
-            </div>
-          </div>
 
           <div class="card booking-summary-card booking-card">
             <div class="booking-summary__meta">{{ t('tickets.selectedPackage') }}</div>
@@ -298,7 +343,10 @@
             <div v-else class="booking-summary__title">{{ t('tickets.selectPackageFirst') }}</div>
             <div class="booking-summary__date">{{ selectedVisitDateText }}</div>
             <div class="booking-summary__qty">{{ t('tickets.quantity') }}：{{ totalSelectedQuantity }}</div>
-            <div class="booking-summary__price">¥{{ totalSelectedPrice }}</div>
+            <div v-if="selectedTransportOption" class="booking-summary__transfer">
+              {{ transferServiceLabel(selectedTransportOption.service_type) }} · {{ selectedTransportOption.vehicle?.name || selectedTransportOption.vehicle?.name_zh || '-' }} +¥{{ selectedTransportOption.price }}
+            </div>
+            <div class="booking-summary__price">¥{{ totalWithTransportPrice }}</div>
             <div class="booking-summary__actions">
               <van-button plain block round size="large" :disabled="!selectedVisitDate || !selectedPackages.length" @click="addTicketCart">
                 {{ t('shop.addToCart') }}
@@ -316,20 +364,86 @@
           <div class="bottom-action__label">{{ t('tickets.selectedPackage') }}</div>
           <div class="bottom-action__value">{{ selectedPackages.length ? `${selectedPackages.length} ${t('tickets.availablePackages')}` : t('tickets.selectPackageFirst') }}</div>
           <div class="bottom-action__date">{{ selectedVisitDateText }} · {{ t('tickets.quantity') }} {{ totalSelectedQuantity }}</div>
+          <div v-if="selectedTransportOption" class="bottom-action__date">{{ transferServiceLabel(selectedTransportOption.service_type) }} +¥{{ selectedTransportOption.price }}</div>
         </div>
         <van-button type="primary" round :disabled="!selectedPackages.length || !selectedVisitDate" @click="goCheckout">
-          {{ t('tickets.bookNow') }} ¥{{ totalSelectedPrice }}
+          {{ t('tickets.bookNow') }} ¥{{ totalWithTransportPrice }}
         </van-button>
       </div>
     </template>
+
+    <transition name="ticket-inline-notice-fade">
+      <div
+        v-if="ticketNoticeVisible"
+        class="ticket-inline-notice"
+        :class="`ticket-inline-notice--${ticketNoticeType}`"
+      >
+        {{ ticketNoticeText }}
+      </div>
+    </transition>
+
+    <van-popup v-model:show="showImagePreview" class="image-preview-popup" closeable>
+      <div
+        class="image-preview-wrapper"
+        @click="showImagePreview = false"
+        @touchstart.stop="onPreviewTouchStart"
+        @touchend.stop="onPreviewTouchEnd"
+      >
+        <button
+          v-if="previewImages.length > 1"
+          type="button"
+          class="image-nav image-nav-prev"
+          @click.stop="showPrevPreview"
+          aria-label="Previous image"
+        >
+          ‹
+        </button>
+        <img
+          v-if="previewImage"
+          :src="previewImage"
+          :alt="previewTitle"
+          class="image-preview-img"
+          @click.stop
+        />
+        <button
+          v-if="previewImages.length > 1"
+          type="button"
+          class="image-nav image-nav-next"
+          @click.stop="showNextPreview"
+          aria-label="Next image"
+        >
+          ›
+        </button>
+        <div v-if="previewTitle" class="image-preview-title">
+          <div class="image-preview-title__text">{{ previewTitle }}</div>
+          <div v-if="previewVehicleInfo" class="image-preview-meta">
+            <span v-if="previewVehicleInfo.seats" class="image-preview-meta__chip">{{ t('transfer.seats', { n: previewVehicleInfo.seats }) }}</span>
+            <span v-if="vehicleCapacityText(previewVehicleInfo)" class="image-preview-meta__chip">{{ vehicleCapacityText(previewVehicleInfo) }}</span>
+          </div>
+          <span v-if="previewImages.length > 1" class="image-preview-count">{{ previewIndex + 1 }} / {{ previewImages.length }}</span>
+        </div>
+        <div v-if="previewImages.length > 1" class="image-preview-thumbs" @click.stop>
+          <button
+            v-for="(img, index) in previewImages"
+            :key="`${img}-${index}`"
+            type="button"
+            class="image-preview-thumb"
+            :class="{ active: index === previewIndex }"
+            @click="setPreviewIndex(index)"
+          >
+            <img :src="img" :alt="`${previewTitle}-${index + 1}`" />
+          </button>
+        </div>
+      </div>
+    </van-popup>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, computed, reactive, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { ImagePreview, showToast } from 'vant'
+import { ImagePreview } from 'vant'
 import { getTicketAttraction, getTicketTransportOptions } from '../api/tickets'
 import { resolveUrl } from '../api'
 import LangSwitch from '../components/LangSwitch.vue'
@@ -345,9 +459,18 @@ const detail = ref(null)
 const packages = ref([])
 const transportOptions = ref([])
 const activeImage = ref(0)
+const showImagePreview = ref(false)
+const previewImage = ref('')
+const previewTitle = ref('')
+const previewImages = ref([])
+const previewIndex = ref(0)
+const previewVehicleInfo = ref(null)
+const previewTouchStartX = ref(0)
+const previewTouchStartY = ref(0)
 const activePackageId = ref(null)
 const expandedPackageIds = ref([])
 const packageQuantities = reactive({})
+const vehicleServiceSelections = reactive({})
 const selectedTransportId = ref('')
 const selectedVisitDate = ref('')
 const isDesktop = ref(window.innerWidth >= 1024)
@@ -355,6 +478,10 @@ const activeAnchor = ref('booking')
 const bookingSectionRef = ref(null)
 const introSectionRef = ref(null)
 const transportSectionRef = ref(null)
+const ticketNoticeVisible = ref(false)
+const ticketNoticeText = ref('')
+const ticketNoticeType = ref('info')
+let ticketNoticeTimer = null
 const today = new Date()
 today.setHours(0, 0, 0, 0)
 const bookingEndDate = new Date(today)
@@ -385,6 +512,48 @@ const selectedPackages = computed(() => packages.value
   .map(item => ({ ...item, quantity: getPackageQuantity(item.id) })))
 const totalSelectedQuantity = computed(() => selectedPackages.value.reduce((sum, item) => sum + item.quantity, 0))
 const totalSelectedPrice = computed(() => selectedPackages.value.reduce((sum, item) => sum + Number(getPackageSubtotal(item)), 0).toFixed(2))
+const transportServiceOrder = ['round_trip', 'pickup_only', 'dropoff_only', 'charter']
+const transportVehicleCards = computed(() => {
+  const groups = new Map()
+
+  for (const item of transportOptions.value || []) {
+    const key = getTransportVehicleKey(item)
+    if (!key) continue
+
+    if (!groups.has(key)) {
+      groups.set(key, {
+        key,
+        vehicle: item.vehicle || null,
+        optionMap: {}
+      })
+    }
+
+    const current = groups.get(key)
+    if (!current.vehicle && item.vehicle) current.vehicle = item.vehicle
+    current.optionMap[item.service_type] = item
+  }
+
+  return Array.from(groups.values())
+    .map(group => {
+      const serviceTypes = transportServiceOrder.filter(type => group.optionMap[type])
+      Object.keys(group.optionMap).forEach(type => {
+        if (!serviceTypes.includes(type)) serviceTypes.push(type)
+      })
+
+      return {
+        ...group,
+        serviceTypes,
+        defaultServiceType: serviceTypes.includes('round_trip') ? 'round_trip' : (serviceTypes[0] || '')
+      }
+    })
+    .sort((a, b) => {
+      const sortDiff = Number(a.vehicle?.sort_order || 0) - Number(b.vehicle?.sort_order || 0)
+      if (sortDiff !== 0) return sortDiff
+      return Number(a.vehicle?.id || 0) - Number(b.vehicle?.id || 0)
+    })
+})
+const selectedTransportOption = computed(() => transportOptions.value.find(item => String(item.id) === String(selectedTransportId.value)) || null)
+const totalWithTransportPrice = computed(() => (Number(totalSelectedPrice.value) + Number(selectedTransportOption.value?.price || 0)).toFixed(2))
 const minPrice = computed(() => {
   const values = packages.value.map(pkg => getPackageMinPrice(pkg)).filter(Boolean)
   return values.length ? Math.min(...values) : null
@@ -662,7 +831,136 @@ function transferServiceLabel(type) {
   return map[type] || type || '-'
 }
 
-function previewImages() {
+function getTransportVehicleKey(item) {
+  return String(item?.vehicle?.id || item?.vehicle_id || '')
+}
+
+function getVehicleSelectedServiceType(card) {
+  if (!card) return ''
+  return vehicleServiceSelections[card.key] || card.defaultServiceType || ''
+}
+
+function getVehicleTransportOption(card) {
+  if (!card) return null
+  const selectedType = getVehicleSelectedServiceType(card)
+  return card.optionMap[selectedType] || card.optionMap[card.defaultServiceType] || null
+}
+
+function isVehicleTransportSelected(card) {
+  const option = getVehicleTransportOption(card)
+  return !!option && String(selectedTransportId.value) === String(option.id)
+}
+
+function selectVehicleTransport(card) {
+  const option = getVehicleTransportOption(card)
+  selectedTransportId.value = option ? String(option.id) : ''
+}
+
+function onVehicleServiceTypeChange(card, value) {
+  if (!card) return
+  vehicleServiceSelections[card.key] = value
+  const option = card.optionMap[value] || null
+  if (option) {
+    selectedTransportId.value = String(option.id)
+  }
+}
+
+function vehicleDisplayName(vehicle) {
+  if (!vehicle) return ''
+  return vehicle.name || vehicle.model || vehicle.name_zh || ''
+}
+
+function vehicleCapacityText(vehicle) {
+  if (!vehicle) return ''
+  if (vehicle.capacity_desc) return vehicle.capacity_desc
+  const parts = []
+  if (vehicle.luggage_28) parts.push(t('transfer.luggageSize28', { n: vehicle.luggage_28 }))
+  if (vehicle.luggage_24) parts.push(t('transfer.luggageSize24', { n: vehicle.luggage_24 }))
+  if (parts.length) return parts.join(' + ')
+  if (vehicle.luggage_capacity) return t('transfer.luggage', { n: vehicle.luggage_capacity })
+  return ''
+}
+
+function vehiclePrimaryImage(vehicle) {
+  if (!vehicle) return ''
+  if (Array.isArray(vehicle.images) && vehicle.images.length) return vehicle.images[0]
+  return vehicle.image || ''
+}
+
+function vehicleImageList(vehicle) {
+  if (!vehicle) return []
+  const images = Array.isArray(vehicle.images) && vehicle.images.length ? vehicle.images : (vehicle.image ? [vehicle.image] : [])
+  return images.map(img => resolveUrl(img)).filter(Boolean)
+}
+
+function setPreviewIndex(index) {
+  previewIndex.value = index
+  previewImage.value = previewImages.value[index] || ''
+}
+
+function onPreviewTouchStart(e) {
+  const touch = e.touches?.[0]
+  if (!touch) return
+  previewTouchStartX.value = touch.clientX
+  previewTouchStartY.value = touch.clientY
+}
+
+function onPreviewTouchEnd(e) {
+  const touch = e.changedTouches?.[0]
+  if (!touch) return
+  const deltaX = touch.clientX - previewTouchStartX.value
+  const deltaY = touch.clientY - previewTouchStartY.value
+  if (Math.abs(deltaX) < 40 || Math.abs(deltaX) < Math.abs(deltaY)) return
+  if (deltaX > 0) showPrevPreview()
+  else showNextPreview()
+}
+
+function showPrevPreview() {
+  if (!previewImages.value.length) return
+  const nextIndex = previewIndex.value <= 0 ? previewImages.value.length - 1 : previewIndex.value - 1
+  setPreviewIndex(nextIndex)
+}
+
+function showNextPreview() {
+  if (!previewImages.value.length) return
+  const nextIndex = previewIndex.value >= previewImages.value.length - 1 ? 0 : previewIndex.value + 1
+  setPreviewIndex(nextIndex)
+}
+
+function previewVehicle(vehicle, startIndex = 0) {
+  const images = vehicleImageList(vehicle)
+  if (!images.length) return
+  previewImages.value = images
+  previewVehicleInfo.value = vehicle || null
+  previewTitle.value = vehicleDisplayName(vehicle)
+  setPreviewIndex(startIndex)
+  showImagePreview.value = true
+}
+
+watch(
+  [transportVehicleCards, selectedTransportId],
+  ([cards, currentSelectedId]) => {
+    const validKeys = new Set(cards.map(card => card.key))
+
+    Object.keys(vehicleServiceSelections).forEach(key => {
+      if (!validKeys.has(key)) delete vehicleServiceSelections[key]
+    })
+
+    cards.forEach(card => {
+      const matchedOption = card.serviceTypes
+        .map(type => card.optionMap[type])
+        .find(option => String(option?.id) === String(currentSelectedId))
+      const nextType = matchedOption?.service_type || vehicleServiceSelections[card.key] || card.defaultServiceType
+
+      vehicleServiceSelections[card.key] = card.serviceTypes.includes(nextType)
+        ? nextType
+        : card.defaultServiceType
+    })
+  },
+  { immediate: true }
+)
+
+function previewDetailImages() {
   if (!imageList.value.length) return
   ImagePreview({
     images: imageList.value.map(item => resolveUrl(item)),
@@ -671,13 +969,25 @@ function previewImages() {
   })
 }
 
+function showInlineNotice(message, type = 'info') {
+  if (!message) return
+  ticketNoticeText.value = message
+  ticketNoticeType.value = type
+  ticketNoticeVisible.value = true
+  if (ticketNoticeTimer) clearTimeout(ticketNoticeTimer)
+  ticketNoticeTimer = window.setTimeout(() => {
+    ticketNoticeVisible.value = false
+    ticketNoticeTimer = null
+  }, 1800)
+}
+
 function addTicketCart() {
   if (!selectedPackages.value.length) {
-    showToast(t('tickets.selectPackageFirst'))
+    showInlineNotice(t('tickets.selectPackageFirst'), 'error')
     return
   }
   if (!selectedVisitDate.value) {
-    showToast(t('tickets.visitDateRequired'))
+    showInlineNotice(t('tickets.visitDateRequired'), 'error')
     return
   }
 
@@ -696,12 +1006,7 @@ function addTicketCart() {
     }))
   })
 
-  showToast({
-    message: t('shop.added'),
-    icon: 'success',
-    position: 'top',
-    duration: 1800
-  })
+  showInlineNotice(t('tickets.added'), 'success')
 }
 
 function goTicketCart() {
@@ -710,11 +1015,11 @@ function goTicketCart() {
 
 function goCheckout() {
   if (!selectedPackages.value.length) {
-    showToast(t('tickets.selectPackageFirst'))
+    showInlineNotice(t('tickets.selectPackageFirst'), 'error')
     return
   }
   if (!selectedVisitDate.value) {
-    showToast(t('tickets.visitDateRequired'))
+    showInlineNotice(t('tickets.visitDateRequired'), 'error')
     return
   }
   router.push({
@@ -757,6 +1062,7 @@ async function loadData() {
     detail.value = detailRes.data
     packages.value = detailRes.data?.packages || []
     transportOptions.value = transportRes.data || []
+    selectedTransportId.value = ''
     activePackageId.value = packages.value[0]?.id || null
     packages.value.forEach((item, index) => {
       packageQuantities[item.id] = index === 0 ? 1 : 0
@@ -765,7 +1071,7 @@ async function loadData() {
     currentMonth.value = getMonthStart(today)
     ensureSelectedDateIsValid()
   } catch (error) {
-    showToast(error.message || t('common.noData'))
+    showInlineNotice(error.message || t('common.noData'), 'error')
   } finally {
     loading.value = false
   }
@@ -778,6 +1084,10 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', updateDesktopMode)
+  if (ticketNoticeTimer) {
+    clearTimeout(ticketNoticeTimer)
+    ticketNoticeTimer = null
+  }
 })
 </script>
 
@@ -1004,6 +1314,43 @@ onUnmounted(() => {
   display: block;
 }
 
+.transport-panel-card {
+  overflow: hidden;
+}
+
+.transport-panel-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.transport-panel-card__title {
+  margin-bottom: 0;
+}
+
+.transport-panel-card__subtitle {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #7b6b5d;
+}
+
+.transport-panel-card__badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(200, 169, 126, 0.14);
+  color: #8f6b3d;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .detail-main,
 .detail-sidebar {
   min-width: 0;
@@ -1146,6 +1493,10 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.transport-list--inline {
+  margin-bottom: 10px;
 }
 
 .package-list--horizontal {
@@ -1354,6 +1705,11 @@ onUnmounted(() => {
   color: #8d7b67;
 }
 
+.booking-window-tip--transfer {
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
+
 .weekday-row {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -1424,6 +1780,433 @@ onUnmounted(() => {
   font-size: 18px;
   font-weight: 700;
   color: #b98745;
+}
+
+.transport-hero-panel {
+  margin: 12px 0 14px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(255, 248, 238, 0.98) 0%, rgba(248, 239, 225, 0.98) 100%);
+  border: 1px solid rgba(200, 169, 126, 0.28);
+  box-shadow: 0 10px 24px rgba(110, 90, 66, 0.08);
+}
+
+.transport-hero-panel__eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a07a48;
+}
+
+.transport-hero-panel__title {
+  margin-top: 6px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #3b2b1f;
+}
+
+.transport-hero-panel__desc {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #7b6b5d;
+}
+
+.transport-empty-state {
+  padding: 14px;
+  border: 1px dashed #e3d7c6;
+  border-radius: 14px;
+  background: rgba(255, 252, 247, 0.88);
+}
+
+.transport-empty-state__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #4a3728;
+}
+
+.transport-empty-state__desc {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #8d7b67;
+}
+
+.transport-service-type-field {
+  margin-bottom: 12px;
+}
+
+.transport-service-type-label {
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #8d7b67;
+}
+
+.transport-service-type-select {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid #e7d9c5;
+  border-radius: 12px;
+  background: #fff;
+  color: #3b2b1f;
+  font-size: 14px;
+}
+
+.ticket-transfer-vehicle-list {
+  margin-top: 4px;
+}
+
+.ticket-transfer-vehicle-list--main {
+  display: grid;
+  gap: 14px;
+}
+
+.vehicle-card--transport {
+  padding: 0;
+  overflow: hidden;
+}
+
+.vehicle-card__top {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  width: 100%;
+  padding: 14px;
+}
+
+.vehicle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vehicle-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ece6dd;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fff;
+  text-align: left;
+}
+
+.vehicle-card.active {
+  border-color: #c69a62;
+  background: #fff7ee;
+}
+
+.vehicle-icon {
+  width: 88px;
+  height: 88px;
+  border-radius: 12px;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.vehicle-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: zoom-in;
+}
+
+.vehicle-icon--large {
+  width: 196px;
+  height: 132px;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px rgba(200, 169, 126, 0.18);
+}
+
+.vehicle-image-badge {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+}
+
+.vehicle-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.vehicle-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vehicle-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #3b2b1f;
+}
+
+.vehicle-state-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f6f1e7;
+  color: #8b6f47;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.vehicle-model {
+  font-size: 12px;
+  color: #8d7b67;
+  margin-top: 4px;
+}
+
+.vehicle-highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.vehicle-highlight-chip {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f7f8fa;
+  font-size: 11px;
+  color: #4f5b6b;
+}
+
+.vehicle-desc {
+  font-size: 12px;
+  color: #8d7b67;
+  margin-top: 8px;
+}
+
+.vehicle-thumb-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.vehicle-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(200, 169, 126, 0.28);
+  background: #fff;
+  flex: 0 0 auto;
+  box-shadow: 0 4px 10px rgba(74, 55, 40, 0.08);
+}
+
+.vehicle-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.vehicle-side {
+  min-width: 122px;
+  text-align: right;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.vehicle-side--boxed {
+  min-width: 168px;
+  padding: 14px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fffdf9 0%, #f8f1e6 100%);
+  border: 1px solid rgba(200, 169, 126, 0.2);
+}
+
+.vehicle-side-select-label {
+  font-size: 11px;
+  color: #8d7b67;
+}
+
+.vehicle-service-select {
+  width: 100%;
+  min-width: 118px;
+  margin-top: 6px;
+  padding: 9px 12px;
+  border: 1px solid #e3d7c6;
+  border-radius: 12px;
+  background: #fffdf9;
+  color: #3b2b1f;
+  font-size: 13px;
+  font-weight: 600;
+  outline: none;
+}
+
+.vehicle-price-label {
+  font-size: 11px;
+  color: #8d7b67;
+}
+
+.vehicle-price {
+  margin-top: 4px;
+  font-size: 18px;
+  color: #b98745;
+  font-weight: 700;
+}
+
+.vehicle-side-tip {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #8d7b67;
+  line-height: 1.4;
+}
+
+.image-preview-popup {
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.88);
+}
+
+.image-preview-wrapper {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px 24px;
+  box-sizing: border-box;
+}
+
+.image-preview-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.image-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #333;
+  font-size: 36px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+.image-nav-prev {
+  left: 24px;
+}
+
+.image-nav-next {
+  right: 24px;
+}
+
+.image-preview-title {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 92px;
+  text-align: center;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+.image-preview-title__text {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.image-preview-meta {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.image-preview-meta__chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  font-size: 12px;
+  color: #fff;
+}
+
+.image-preview-count {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.image-preview-thumbs {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 20px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px;
+}
+
+.image-preview-thumb {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.15);
+  flex: 0 0 auto;
+}
+
+.image-preview-thumb.active {
+  border-color: #fff;
+}
+
+.image-preview-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .booking-summary-card {
@@ -1499,9 +2282,53 @@ onUnmounted(() => {
   color: var(--accent-dark);
 }
 
+.booking-summary__transfer {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #6e5a42;
+}
+
 .booking-summary__actions {
   display: grid;
   gap: 10px;
+}
+
+.ticket-inline-notice-fade-enter-active,
+.ticket-inline-notice-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.ticket-inline-notice-fade-enter-from,
+.ticket-inline-notice-fade-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 10px);
+}
+
+.ticket-inline-notice {
+  position: fixed;
+  left: 50%;
+  bottom: 96px;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: calc(100vw - 32px);
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(33, 33, 33, 0.92);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.3;
+  text-align: center;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+.ticket-inline-notice--success,
+.ticket-inline-notice--error,
+.ticket-inline-notice--info {
+  background: rgba(33, 33, 33, 0.92);
 }
 
 .bottom-action {
@@ -1594,9 +2421,7 @@ onUnmounted(() => {
   }
 
   .traffic-guide-card__layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.3fr) 240px;
-    gap: 14px;
+    display: block;
   }
 
   .traffic-guide-card__map {
@@ -1651,50 +2476,58 @@ onUnmounted(() => {
     box-shadow: 0 8px 18px rgba(74,55,40,0.14);
   }
 
-  .traffic-guide-card__side {
-    padding: 16px;
-    border-radius: 14px;
-    background: rgba(255, 252, 247, 0.9);
-    border: 1px solid rgba(200, 169, 126, 0.18);
-  }
-
-  .traffic-guide-card__side-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: #302417;
-  }
-
-  .traffic-guide-card__side-copy {
-    margin-top: 8px;
-    font-size: 12px;
-    line-height: 1.65;
-    color: #7a6958;
-  }
-
-  .traffic-guide-card__transport-list {
-    display: grid;
-    gap: 10px;
-    margin-top: 18px;
-  }
-
-  .traffic-guide-card__transport-item {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 10px 12px;
-    border-radius: 10px;
-    background: #fff;
-    border: 1px solid rgba(200, 169, 126, 0.16);
-    font-size: 12px;
-    color: #4a3728;
+  .traffic-guide-card__map--full {
+    min-height: 0;
   }
 
   .mobile-bottom-action {
     display: none;
   }
+
+  .ticket-inline-notice {
+    bottom: 36px;
+  }
 }
 
 @media (max-width: 1023px) {
+  .transport-panel-card__head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .transport-panel-card__badge {
+    align-self: flex-start;
+  }
+
+  .transport-hero-panel {
+    padding: 14px;
+  }
+
+  .transport-hero-panel__title {
+    font-size: 18px;
+  }
+
+  .vehicle-card__top {
+    flex-direction: column;
+  }
+
+  .vehicle-icon,
+  .vehicle-icon--large {
+    width: 100%;
+    height: 180px;
+  }
+
+  .vehicle-side {
+    width: 100%;
+    min-width: 0;
+    align-items: stretch;
+    text-align: left;
+  }
+
+  .vehicle-service-select {
+    width: 100%;
+  }
+
   .desktop-package-card {
     margin-top: 12px;
   }
