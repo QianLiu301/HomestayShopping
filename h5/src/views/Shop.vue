@@ -16,6 +16,19 @@
       />
     </van-tabs>
 
+    <div class="shop-sort-bar">
+      <button
+        v-for="item in sortOptions"
+        :key="item.value"
+        type="button"
+        class="shop-sort-chip"
+        :class="{ 'shop-sort-chip--active': currentSort === item.value }"
+        @click="onSortChange(item.value)"
+      >
+        {{ item.label }}
+      </button>
+    </div>
+
     <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
       <van-list
         v-model:loading="loadingMore"
@@ -52,13 +65,21 @@
                 </div>
 
                 <div class="product-name shop-card__name">{{ product.name }}</div>
-                <div class="shop-card__meta">{{ t('shop.meta') }}</div>
+                <div class="shop-card__meta">
+                  <span>{{ t('shop.meta') }}</span>
+                  <span v-if="product.sales_count > 0" class="shop-card__sales">{{ t('shop.soldCount', { count: product.sales_count }) }}</span>
+                </div>
 
                 <div class="shop-card__price-row">
-                  <div class="product-price shop-card__price">
-                    ¥{{ product.price }}
+                  <div class="shop-card__price-stack">
+                    <div class="shop-card__price-main">
+                      <div class="product-price shop-card__price">
+                        ¥{{ product.price }}
+                      </div>
+                      <span v-if="product.original_price" class="original shop-card__original">¥{{ product.original_price }}</span>
+                    </div>
+                    <div v-if="product.price" class="shop-card__price-ref">≈ {{ formatUsdReference(product.price) }}</div>
                   </div>
-                  <span v-if="product.original_price" class="original shop-card__original">¥{{ product.original_price }}</span>
                 </div>
 
                 <div class="shop-card__desc">
@@ -87,23 +108,34 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { getProducts, getCategories } from '../api'
 import LangSwitch from '../components/LangSwitch.vue'
+import { formatUsdReference } from '../utils/currency'
 
 const { t } = useI18n()
 const route = useRoute()
+const router = useRouter()
 
 const categories = ref([])
 const products = ref([])
 const activeCategory = ref(Number(route.query.category) || 0)
+const currentSort = ref(String(route.query.sort || 'default'))
 const page = ref(1)
 const loadingMore = ref(false)
 const finished = ref(false)
 const refreshing = ref(false)
 const isFetching = ref(false)
+
+const sortOptions = computed(() => [
+  { value: 'default', label: t('shop.sortDefault') },
+  { value: 'sales_desc', label: t('shop.sortSales') },
+  { value: 'price_asc', label: t('shop.sortPriceAsc') },
+  { value: 'price_desc', label: t('shop.sortPriceDesc') },
+  { value: 'newest', label: t('shop.sortNewest') }
+])
 
 onMounted(async () => {
   try {
@@ -122,7 +154,7 @@ async function loadMore() {
   const currentPage = page.value
 
   try {
-    const params = { page: currentPage, per_page: 10 }
+    const params = { page: currentPage, per_page: 10, sort: currentSort.value }
     if (activeCategory.value) {
       params.category_id = activeCategory.value
     }
@@ -154,12 +186,34 @@ async function loadMore() {
   }
 }
 
-function onCategoryChange() {
+function updateRouteQuery() {
+  const query = { ...route.query }
+  if (activeCategory.value) query.category = String(activeCategory.value)
+  else delete query.category
+
+  if (currentSort.value && currentSort.value !== 'default') query.sort = currentSort.value
+  else delete query.sort
+
+  router.replace({ path: route.path, query })
+}
+
+function resetAndLoad() {
   page.value = 1
   finished.value = false
   products.value = []
   isFetching.value = false
+  updateRouteQuery()
   loadMore()
+}
+
+function onCategoryChange() {
+  resetAndLoad()
+}
+
+function onSortChange(sortValue) {
+  if (currentSort.value === sortValue) return
+  currentSort.value = sortValue
+  resetAndLoad()
 }
 
 function onRefresh() {
@@ -179,6 +233,42 @@ function onRefresh() {
 
 .shop-tabs {
   margin-top: 0;
+}
+
+.shop-sort-bar {
+  position: sticky;
+  top: 44px;
+  z-index: 8;
+  display: flex;
+  gap: 10px;
+  padding: 10px 16px 12px;
+  overflow-x: auto;
+  background: rgba(248, 244, 238, 0.96);
+  border-bottom: 1px solid rgba(201, 169, 126, 0.16);
+  -webkit-overflow-scrolling: touch;
+}
+
+.shop-sort-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.shop-sort-chip {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border: 1px solid rgba(201, 169, 126, 0.28);
+  border-radius: 999px;
+  background: #fffdf9;
+  color: #6f614f;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.shop-sort-chip--active {
+  color: #fff;
+  border-color: #b98745;
+  background: linear-gradient(135deg, #c69a62, #ae7b43);
+  box-shadow: 0 8px 16px rgba(174, 123, 67, 0.16);
 }
 
 .shop-grid-wrap {
@@ -284,17 +374,33 @@ function onRefresh() {
 
 .shop-card__meta {
   margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   font-size: 12px;
   line-height: 1.5;
   color: #7b6b5d;
 }
 
+.shop-card__sales {
+  color: #9b9388;
+}
+
 .shop-card__price-row {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 8px;
   margin-top: 12px;
+}
+
+.shop-card__price-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shop-card__price-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .shop-card__price {
@@ -305,6 +411,12 @@ function onRefresh() {
   margin-top: 0;
   font-size: 18px;
   color: #b98745;
+}
+
+.shop-card__price-ref {
+  font-size: 12px;
+  line-height: 1.25;
+  color: #9b9388;
 }
 
 .shop-card__price-suffix {
@@ -385,6 +497,17 @@ function onRefresh() {
     align-items: flex-start;
   }
 
+  .shop-sort-bar {
+    top: 46px;
+    padding: 8px 12px 10px;
+    gap: 8px;
+  }
+
+  .shop-sort-chip {
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+
   .shop-grid-wrap {
     padding: 4px 12px 12px;
   }
@@ -404,6 +527,10 @@ function onRefresh() {
 
   .shop-card__price {
     font-size: 16px;
+  }
+
+  .shop-card__price-ref {
+    font-size: 11px;
   }
 
   .shop-card__cta {

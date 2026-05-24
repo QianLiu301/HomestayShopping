@@ -28,7 +28,7 @@
             @click="nextImage"
           >›</button>
         </div>
-        
+
         <div v-if="imageList.length > 1" class="thumbnail-list">
           <div
             v-for="(img, i) in imageList"
@@ -45,18 +45,21 @@
       <!-- Price & Basic Info -->
       <div class="card info-card">
         <h2 class="detail-name">{{ product.name }}</h2>
-        
+
         <div class="price-section">
           <div class="price-main">
             <span class="detail-price">¥{{ selectedPrice }}</span>
             <span v-if="product.original_price" class="detail-original">¥{{ product.original_price }}</span>
           </div>
-          <div v-if="priceInUSD" class="price-usd">≈ ${{ priceInUSD }} USD</div>
+          <div v-if="usdReferencePrice" class="price-usd">≈ {{ usdReferencePrice }}</div>
         </div>
-        
-        <div v-if="productRating.review_count > 0" class="rating-row">
-          <van-rate v-model="productRating.avg_rating" readonly allow-half size="14" />
-          <span class="rating-text">{{ productRating.avg_rating }} ({{ productRating.review_count }} {{ t('shop.reviews') || '评价' }})</span>
+
+        <div v-if="productRating.review_count > 0 || product?.sales_count > 0" class="rating-row">
+          <template v-if="productRating.review_count > 0">
+            <van-rate v-model="productRating.avg_rating" readonly allow-half size="14" />
+            <span class="rating-text">{{ productRating.avg_rating }} ({{ productRating.review_count }} {{ t('shop.reviews') || '评价' }})</span>
+          </template>
+          <span v-if="product?.sales_count > 0" class="rating-text">{{ t('shop.soldCount', { count: product.sales_count }) }}</span>
         </div>
       </div>
 
@@ -117,6 +120,7 @@ import { useI18n } from 'vue-i18n'
 import { ImagePreview, showToast } from 'vant'
 import { getProduct, getProductRating } from '../api'
 import { useCartStore } from '../stores/cart'
+import { formatUsdReference } from '../utils/currency'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -128,33 +132,12 @@ const loading = ref(true)
 const selectedSpec = ref(null)
 const productRating = ref({ avg_rating: 0, review_count: 0 })
 const activeImage = ref(0)
-const exchangeRate = ref(7.2) // 默认汇率，会被实时汇率覆盖
 
 const cartCount = computed(() => cart.totalCount)
 const selectedPrice = computed(() => selectedSpec.value?.price ?? product.value?.price)
 const imageList = computed(() => (product.value?.images?.length ? product.value.images : []))
 const currentImage = computed(() => imageList.value[activeImage.value] || '')
-
-// 美元价格计算（使用实时汇率）
-const priceInUSD = computed(() => {
-  const cnyPrice = selectedPrice.value
-  if (!cnyPrice || !exchangeRate.value) return null
-  return (cnyPrice / exchangeRate.value).toFixed(2)
-})
-
-// 获取实时汇率
-async function fetchExchangeRate() {
-  try {
-    const response = await fetch('https://api.exchangerate-api.com/v4/latest/CNY')
-    const data = await response.json()
-    if (data && data.rates && data.rates.USD) {
-      exchangeRate.value = 1 / data.rates.USD // CNY to USD
-    }
-  } catch (error) {
-    console.warn('获取汇率失败，使用默认汇率 7.2:', error)
-    // 保持默认值 7.2
-  }
-}
+const usdReferencePrice = computed(() => formatUsdReference(selectedPrice.value))
 
 const productDescription = computed(() => {
   const data = product.value
@@ -169,13 +152,10 @@ const productDescription = computed(() => {
 })
 
 onMounted(async () => {
-  // 并行获取商品数据和汇率
-  fetchExchangeRate()
-  
   try {
     const res = await getProduct(route.params.id)
     product.value = res.data
-    
+
     activeImage.value = 0
     if (product.value?.specs?.length) {
       selectedSpec.value = product.value.specs[0]
@@ -367,8 +347,8 @@ function onBuyNow() {
 
 .price-usd {
   font-size: 13px;
-  color: var(--text-secondary);
-  font-weight: 500;
+  line-height: 1.35;
+  color: #9b9388;
 }
 
 .rating-row {
@@ -441,7 +421,6 @@ function onBuyNow() {
   word-break: break-word;
   overflow-wrap: anywhere;
 }
-
 
 :deep(.van-action-bar) {
   padding-bottom: env(safe-area-inset-bottom);

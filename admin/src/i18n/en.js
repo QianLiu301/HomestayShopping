@@ -116,6 +116,7 @@ export default {
     price: 'Price',
     originalPrice: 'Original Price',
     sortOrder: 'Sort Order',
+    salesCount: 'Sales',
     featured: 'Featured',
     productImages: 'Product Images',
     dragToReorder: 'Drag to reorder images',

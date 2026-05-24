@@ -30,6 +30,8 @@
         <el-table-column prop="price" :label="$t('products.price')" width="100">
           <template #default="{ row }">¥{{ row.price }}</template>
         </el-table-column>
+        <el-table-column prop="sort_order" :label="$t('products.sortOrder')" width="90" align="center" />
+        <el-table-column prop="sales_count" :label="$t('products.salesCount')" width="100" align="center" />
         <el-table-column :label="$t('products.featured')" width="90" align="center">
           <template #default="{ row }">
             <el-tag v-if="row.is_featured" type="warning" size="small">{{ $t('common.yes') }}</el-tag>

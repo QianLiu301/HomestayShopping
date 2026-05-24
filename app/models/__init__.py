@@ -220,6 +220,7 @@ class Product(db.Model):
             'specs': self.specs,
             'is_featured': self.is_featured,
             'sort_order': self.sort_order,
+            'sales_count': int(getattr(self, 'sales_count', 0) or 0),
             'status': self.status
         }
 

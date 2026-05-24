@@ -3,7 +3,7 @@ from flask import request, current_app, Response
 from app.api import api_bp
 from app.models import (
     Admin, Product, Category, Vehicle, Location, Setting, Coupon,
-    TransferOrder, ShopOrder,
+    TransferOrder, ShopOrder, OrderItem,
     TicketAttraction, TicketPackage, TicketOrder, TicketTraveler,
     TicketVoucher, TicketTransportPrice
 )
@@ -13,6 +13,22 @@ from app.utils import (
 )
 from app.utils.storage import upload_file, get_r2_file
 from app.translations import auto_fill_translations
+
+
+def _get_product_sales_map(product_ids):
+    if not product_ids:
+        return {}
+
+    rows = db.session.query(
+        OrderItem.product_id,
+        db.func.coalesce(db.func.sum(OrderItem.quantity), 0).label('sales')
+    ).join(ShopOrder, OrderItem.order_id == ShopOrder.id).filter(
+        OrderItem.product_id.in_(product_ids),
+        ShopOrder.status != 4,
+        ShopOrder.payment_status == 1
+    ).group_by(OrderItem.product_id).all()
+
+    return {product_id: int(sales or 0) for product_id, sales in rows}
 
 
 # ==================== 文件上传 ====================
@@ -111,7 +127,12 @@ def admin_get_products():
     
     query = query.order_by(Product.sort_order.desc(), Product.id.desc())
     result = paginate_query(query, page, per_page)
-    
+    product_ids = [p.id for p in result['items']]
+    sales_map = _get_product_sales_map(product_ids)
+
+    for product in result['items']:
+        product.sales_count = sales_map.get(product.id, 0)
+
     return success_response({
         'list': [p.to_dict() for p in result['items']],
         'total': result['total'],

@@ -71,6 +71,19 @@
         <h2 class="section-title-lg">{{ t('home.shopTitle') }}</h2>
         <p class="section-subtitle">{{ t('home.shopSubtitle') }}</p>
 
+        <div class="shop-toolbar" aria-label="homepage-shop-sort">
+          <button
+            v-for="item in homeShopSortOptions"
+            :key="item.value"
+            type="button"
+            class="shop-sort-chip"
+            :class="{ 'shop-sort-chip--active': homeShopSort === item.value }"
+            @click="onHomeShopSortChange(item.value)"
+          >
+            {{ item.label }}
+          </button>
+        </div>
+
         <div class="shop-grid">
           <div v-for="product in products" :key="product.id" class="shop-item" @click="$router.push(`/product/${product.id}`)">
             <div class="si-image">
@@ -80,7 +93,10 @@
             </div>
             <div class="si-info">
               <h3>{{ product.name }}</h3>
-              <p class="si-price">¥{{ product.price }}</p>
+              <div class="si-price-wrap">
+                <p class="si-price">¥{{ product.price }}</p>
+                <p v-if="product.price" class="si-price-ref">≈ {{ formatUsdReference(product.price) }}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -200,6 +216,7 @@ import { useI18n } from 'vue-i18n'
 import { showToast } from 'vant'
 import { getProducts, getVehicles, queryOrder } from '../api'
 import { useCartStore } from '../stores/cart'
+import { formatUsdReference } from '../utils/currency'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -228,6 +245,7 @@ const heroStyle = computed(() => {
 
 const products = ref([])
 const vehicles = ref([])
+const homeShopSort = ref('default')
 const loading = ref(true)
 const loadingProducts = ref(false)
 const HOMEPAGE_PRODUCTS_PER_PAGE_DESKTOP = 300
@@ -244,6 +262,14 @@ const serviceTypes = computed(() => ([
   { type: 'pickup', icon: '✈️', label: 'transfer.pickup' },
   { type: 'dropoff', icon: '🛫', label: 'transfer.dropoff' },
   { type: 'combo', icon: '🔄', label: 'transfer.combo' }
+]))
+
+const homeShopSortOptions = computed(() => ([
+  { value: 'default', label: t('shop.sortDefault') },
+  { value: 'sales_desc', label: t('shop.sortSales') },
+  { value: 'price_asc', label: t('shop.sortPriceAsc') },
+  { value: 'price_desc', label: t('shop.sortPriceDesc') },
+  { value: 'newest', label: t('shop.sortNewest') }
 ]))
 
 function vehicleServicePrice(vehicle, serviceType = activeService.value) {
@@ -310,7 +336,7 @@ async function fetchProducts(page = 1) {
   loadingProducts.value = true
   try {
     const perPage = isMobile.value ? HOMEPAGE_PRODUCTS_PER_PAGE_MOBILE : HOMEPAGE_PRODUCTS_PER_PAGE_DESKTOP
-    const res = await getProducts({ page, per_page: perPage })
+    const res = await getProducts({ page, per_page: perPage, sort: homeShopSort.value })
     const list = res.data?.list || []
 
     if (page === 1) {
@@ -333,6 +359,20 @@ async function fetchProducts(page = 1) {
 async function loadMoreProducts() {
   if (!hasMoreProducts.value || loadingProducts.value) return
   await fetchProducts(currentPage.value + 1)
+}
+
+async function reloadHomepageProducts() {
+  currentPage.value = 1
+  totalPages.value = 1
+  products.value = []
+  teardownObserver()
+  await fetchProducts(1)
+}
+
+async function onHomeShopSortChange(sortValue) {
+  if (loadingProducts.value || homeShopSort.value === sortValue) return
+  homeShopSort.value = sortValue
+  await reloadHomepageProducts()
 }
 
 let observer = null
@@ -451,7 +491,36 @@ onUnmounted(() => {
 
 /* ===== SHOP ===== */
 .shop-section { background: var(--bg); padding-bottom: 40px; }
-.shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; margin-top: 40px; }
+.shop-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+.shop-sort-chip {
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(200, 169, 126, 0.42);
+  background: rgba(255, 252, 247, 0.92);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.shop-sort-chip:hover {
+  border-color: rgba(200, 169, 126, 0.72);
+  background: #fff;
+  transform: translateY(-1px);
+}
+.shop-sort-chip--active {
+  color: #fff;
+  border-color: var(--accent);
+  background: linear-gradient(135deg, #c69a62, #ae7b43);
+  box-shadow: 0 10px 24px rgba(174, 123, 67, 0.16);
+}
+.shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; margin-top: 28px; }
 .shop-item { background: var(--white); border-radius: 16px; overflow: hidden; cursor: pointer; transition: all 0.3s; }
 .shop-item:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(74,55,40,0.1); }
 .si-image { position: relative; aspect-ratio: 1; overflow: hidden; background: var(--warm-bg); }
@@ -463,7 +532,9 @@ onUnmounted(() => {
 .si-view { color: #fff; font-size: 14px; font-weight: 600; letter-spacing: 1px; padding: 10px 24px; border: 1.5px solid #fff; border-radius: 50px; }
 .si-info { padding: 16px 20px; }
 .si-info h3 { font-size: 15px; font-weight: 500; line-height: 1.4; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.si-price { font-size: 18px; font-weight: 700; color: var(--accent); }
+.si-price-wrap { display: flex; flex-direction: column; gap: 4px; }
+.si-price { margin: 0; font-size: 18px; font-weight: 700; color: var(--accent); }
+.si-price-ref { margin: 0; font-size: 12px; line-height: 1.25; color: #9b9388; }
 .shop-cta-row {
   display: flex;
   justify-content: center;
@@ -663,6 +734,20 @@ onUnmounted(() => {
   .vc-image { height: 180px; padding: 10px; }
 
   /* Shop mobile */
+  .shop-toolbar {
+    gap: 8px;
+    margin-top: 20px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .shop-toolbar::-webkit-scrollbar { display: none; }
+  .shop-sort-chip {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
   .shop-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
@@ -671,6 +756,7 @@ onUnmounted(() => {
   .si-info { padding: 12px; }
   .si-info h3 { font-size: 13px; }
   .si-price { font-size: 15px; }
+  .si-price-ref { font-size: 11px; }
   .products-status {
     gap: 10px;
     margin-top: 20px;

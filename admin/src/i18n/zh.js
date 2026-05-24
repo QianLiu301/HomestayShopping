@@ -116,6 +116,7 @@ export default {
     price: '价格',
     originalPrice: '原价',
     sortOrder: '排序',
+    salesCount: '销量',
     featured: '推荐',
     productImages: '商品图片',
     dragToReorder: '拖拽图片可调整顺序',
