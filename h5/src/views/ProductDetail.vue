@@ -16,6 +16,10 @@
             class="main-image"
             @click="onImageClick"
           />
+          <div v-if="currentImage" class="image-preview-tip" @click="onImageClick">
+            <span class="image-preview-tip__icon">🔍</span>
+            <span>{{ t('shop.imagePreviewHint') || '点击查看大图，双指可放大' }}</span>
+          </div>
           <div v-else class="image-placeholder">{{ product.name?.charAt(0) }}</div>
           <button
             v-if="product.images?.length > 1"
@@ -225,7 +229,32 @@ function onBuyNow() {
   height: 100%;
   display: block;
   object-fit: contain;
-  cursor: pointer;
+  cursor: zoom-in;
+}
+
+.image-preview-tip {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: rgba(59, 43, 31, 0.66);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.4;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+}
+
+.image-preview-tip__icon {
+  font-size: 13px;
+  line-height: 1;
 }
 
 .image-placeholder {
@@ -432,5 +461,15 @@ function onBuyNow() {
 
 :deep(.van-action-bar-button--danger) {
   background: linear-gradient(90deg, #ff6b3d 0%, #ff4d1f 100%);
+}
+
+@media (max-width: 768px) {
+  .image-preview-tip {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    font-size: 11px;
+    padding: 8px 10px;
+  }
 }
 </style>

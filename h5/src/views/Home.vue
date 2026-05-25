@@ -71,16 +71,23 @@
         <h2 class="section-title-lg">{{ t('home.shopTitle') }}</h2>
         <p class="section-subtitle">{{ t('home.shopSubtitle') }}</p>
 
-        <div class="shop-toolbar" aria-label="homepage-shop-sort">
-          <button
-            v-for="item in homeShopSortOptions"
-            :key="item.value"
-            type="button"
-            class="shop-sort-chip"
-            :class="{ 'shop-sort-chip--active': homeShopSort === item.value }"
-            @click="onHomeShopSortChange(item.value)"
-          >
-            {{ item.label }}
+        <div class="shop-toolbar-row">
+          <div class="shop-toolbar" aria-label="homepage-shop-sort">
+            <button
+              v-for="item in homeShopSortOptions"
+              :key="item.value"
+              type="button"
+              class="shop-sort-chip"
+              :class="{ 'shop-sort-chip--active': homeShopSort === item.value }"
+              @click="onHomeShopSortChange(item.value)"
+            >
+              {{ item.label }}
+            </button>
+          </div>
+
+          <button class="shop-toolbar-entry" type="button" @click="goToShop">
+            <span class="shop-toolbar-entry__title">{{ t('home.enterShopNow') }}</span>
+            <span class="shop-toolbar-entry__hint">{{ t('home.viewAllProducts') }}</span>
           </button>
         </div>
 
@@ -102,7 +109,7 @@
         </div>
 
         <div v-if="products.length" class="shop-cta-row">
-          <button class="shop-more-btn" type="button" @click="$router.push('/shop')">
+          <button class="shop-more-btn" type="button" @click="goToShop">
             {{ t('home.viewAllProducts') }}
           </button>
         </div>
@@ -301,6 +308,10 @@ function goToTickets() {
   router.push('/tickets')
 }
 
+function goToShop() {
+  router.push('/shop')
+}
+
 function goToStep(action) {
   if (action === 'shop') {
     router.push('/shop')
@@ -491,11 +502,20 @@ onUnmounted(() => {
 
 /* ===== SHOP ===== */
 .shop-section { background: var(--bg); padding-bottom: 40px; }
+.shop-toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 26px;
+}
 .shop-toolbar {
   display: flex;
+  flex: 1;
+  min-width: 0;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 26px;
+  margin-top: 0;
 }
 .shop-sort-chip {
   padding: 10px 16px;
@@ -519,6 +539,36 @@ onUnmounted(() => {
   border-color: var(--accent);
   background: linear-gradient(135deg, #c69a62, #ae7b43);
   box-shadow: 0 10px 24px rgba(174, 123, 67, 0.16);
+}
+.shop-toolbar-entry {
+  flex: 0 0 auto;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-width: 180px;
+  padding: 12px 18px;
+  border: 1px solid rgba(200, 169, 126, 0.45);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(255, 252, 247, 0.98), rgba(248, 241, 231, 0.98));
+  color: var(--text);
+  box-shadow: 0 10px 24px rgba(74, 55, 40, 0.06);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.shop-toolbar-entry:hover {
+  transform: translateY(-2px);
+  border-color: rgba(200, 169, 126, 0.72);
+  box-shadow: 0 14px 30px rgba(74, 55, 40, 0.1);
+}
+.shop-toolbar-entry__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+.shop-toolbar-entry__hint {
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; margin-top: 28px; }
 .shop-item { background: var(--white); border-radius: 16px; overflow: hidden; cursor: pointer; transition: all 0.3s; }
@@ -734,9 +784,15 @@ onUnmounted(() => {
   .vc-image { height: 180px; padding: 10px; }
 
   /* Shop mobile */
+  .shop-toolbar-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-top: 20px;
+  }
   .shop-toolbar {
     gap: 8px;
-    margin-top: 20px;
+    margin-top: 0;
     flex-wrap: nowrap;
     overflow-x: auto;
     padding-bottom: 4px;
@@ -747,6 +803,18 @@ onUnmounted(() => {
     flex: 0 0 auto;
     padding: 8px 12px;
     font-size: 12px;
+  }
+  .shop-toolbar-entry {
+    width: 100%;
+    min-width: 0;
+    padding: 12px 14px;
+    border-radius: 16px;
+  }
+  .shop-toolbar-entry__title {
+    font-size: 13px;
+  }
+  .shop-toolbar-entry__hint {
+    font-size: 11px;
   }
   .shop-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -17,16 +17,20 @@
     </van-tabs>
 
     <div class="shop-sort-bar">
-      <button
-        v-for="item in sortOptions"
-        :key="item.value"
-        type="button"
-        class="shop-sort-chip"
-        :class="{ 'shop-sort-chip--active': currentSort === item.value }"
-        @click="onSortChange(item.value)"
-      >
-        {{ item.label }}
-      </button>
+      <div class="shop-sort-bar__inner">
+        <div class="shop-sort-bar__chips">
+          <button
+            v-for="item in sortOptions"
+            :key="item.value"
+            type="button"
+            class="shop-sort-chip"
+            :class="{ 'shop-sort-chip--active': currentSort === item.value }"
+            @click="onSortChange(item.value)"
+          >
+            {{ item.label }}
+          </button>
+        </div>
+      </div>
     </div>
 
     <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
@@ -238,17 +242,30 @@ function onRefresh() {
 .shop-sort-bar {
   position: sticky;
   top: 44px;
-  z-index: 8;
+  z-index: 12;
+  padding: 10px 16px 12px;
+  background: transparent;
+}
+
+.shop-sort-bar__inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 12px 14px;
+  border: 1px solid rgba(201, 169, 126, 0.2);
+  border-radius: 20px;
+  background: rgba(248, 244, 238, 0.94);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 12px 28px rgba(74, 55, 40, 0.08);
+}
+
+.shop-sort-bar__chips {
   display: flex;
   gap: 10px;
-  padding: 10px 16px 12px;
   overflow-x: auto;
-  background: rgba(248, 244, 238, 0.96);
-  border-bottom: 1px solid rgba(201, 169, 126, 0.16);
   -webkit-overflow-scrolling: touch;
 }
 
-.shop-sort-bar::-webkit-scrollbar {
+.shop-sort-bar__chips::-webkit-scrollbar {
   display: none;
 }
 
@@ -500,6 +517,14 @@ function onRefresh() {
   .shop-sort-bar {
     top: 46px;
     padding: 8px 12px 10px;
+  }
+
+  .shop-sort-bar__inner {
+    padding: 10px;
+    border-radius: 16px;
+  }
+
+  .shop-sort-bar__chips {
     gap: 8px;
   }
 
