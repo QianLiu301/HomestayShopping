@@ -22,7 +22,32 @@ export default {
     settings: '系统设置',
     payment: '支付设置',
     delivery: '配送管理',
+    wishes: '许愿池',
     logout: '退出登录'
+  },
+
+  wishes: {
+    title: '许愿池',
+    searchPlaceholder: '搜索姓名/电话/邮箱/内容',
+    statusAll: '全部状态',
+    status: { pending: '待处理', contacted: '已联系', completed: '已完成', closed: '已关闭' },
+    name: '客户',
+    contact: '联系方式',
+    content: '需求描述',
+    expectedDate: '期望时间',
+    budget: '预算',
+    lang: '语言',
+    statusCol: '状态',
+    adminNote: '客服备注',
+    createdAt: '提交时间',
+    detailTitle: '许愿详情',
+    updateStatus: '更新状态',
+    noteLabel: '客服备注',
+    notePlaceholder: '记录与客户沟通的内容、方案等',
+    save: '保存',
+    deleteConfirm: '确定删除这个许愿吗？',
+    deleted: '已删除',
+    updated: '已更新',
   },
 
   // Common

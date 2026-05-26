@@ -22,7 +22,32 @@ export default {
     settings: 'Settings',
     payment: 'Payment',
     delivery: 'Delivery',
+    wishes: 'Wish Pool',
     logout: 'Logout'
+  },
+
+  wishes: {
+    title: 'Wish Pool',
+    searchPlaceholder: 'Search name/phone/email/content',
+    statusAll: 'All Status',
+    status: { pending: 'Pending', contacted: 'Contacted', completed: 'Completed', closed: 'Closed' },
+    name: 'Customer',
+    contact: 'Contact',
+    content: 'Request',
+    expectedDate: 'Expected Time',
+    budget: 'Budget',
+    lang: 'Lang',
+    statusCol: 'Status',
+    adminNote: 'Admin Note',
+    createdAt: 'Submitted',
+    detailTitle: 'Wish Detail',
+    updateStatus: 'Update Status',
+    noteLabel: 'Admin Note',
+    notePlaceholder: 'Record communication, proposal etc.',
+    save: 'Save',
+    deleteConfirm: 'Delete this wish?',
+    deleted: 'Deleted',
+    updated: 'Updated',
   },
 
   // Common

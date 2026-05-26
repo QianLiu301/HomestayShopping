@@ -528,3 +528,132 @@ def send_cancel_notify_to_customer(app, email, order_no, contact_name, lang='en'
 </div>
 """
     _send_email(app, email, t['subject'], html)
+
+
+# ==================== 许愿池邮件 ====================
+
+def send_new_wish_to_admin(app, wish):
+    """新许愿通知 → 发给管理员"""
+    _, _, notify_to = _get_resend_config()
+    if not notify_to:
+        return
+
+    budget_str = ''
+    if wish.budget is not None:
+        symbol = '$' if wish.budget_currency == 'USD' else '¥'
+        budget_str = f'{symbol}{wish.budget}'
+
+    contact_parts = []
+    if wish.contact_phone:
+        contact_parts.append(wish.contact_phone)
+    if wish.contact_email:
+        contact_parts.append(wish.contact_email)
+
+    rows = _row('许愿编号', f'#{wish.id}')
+    rows += _row('客户', wish.contact_name)
+    rows += _row('联系方式', ' / '.join(contact_parts))
+    rows += _row('期望服务时间', _format_dt(wish.expected_date))
+    if budget_str:
+        rows += _row('预算', budget_str)
+    rows += _row('语言', wish.lang)
+    # 内容单独成段，避免长文本撑表格
+    content_html = (wish.content or '').replace('\n', '<br/>')
+
+    subject = f'【新许愿】{wish.contact_name} - {budget_str or "未填预算"}'
+
+    html = f"""
+<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:20px;">
+  <h2 style="color:#4a3728;border-bottom:2px solid #e8d5c4;padding-bottom:10px;">
+    许愿池新需求
+  </h2>
+  {_table(rows)}
+  <div style="margin:16px 0;padding:14px;background:#fffaf2;border-left:3px solid #c69a62;border-radius:6px;">
+    <div style="color:#888;font-size:13px;margin-bottom:8px;">需求描述</div>
+    <div style="line-height:1.7;color:#3b2b1f;">{content_html}</div>
+  </div>
+  <p style="color:#888;font-size:13px;">请登录管理后台查看详情并尽快联系客户。</p>
+</div>
+"""
+    _send_email(app, notify_to, subject, html)
+
+
+def send_wish_received_to_customer(app, wish):
+    """许愿已收到回执 → 发给客户（多语言）"""
+    if not wish.contact_email:
+        return
+
+    lang = wish.lang if wish.lang in ('zh', 'en', 'ru', 'es') else 'en'
+    texts = {
+        'zh': {
+            'subject': '我们已收到您的许愿',
+            'title': '许愿已收到',
+            'greeting': f'您好，{wish.contact_name}！',
+            'body': '我们已收到您的需求，客服会在 24 小时内主动与您联系，为您安排专属方案。',
+            'detail_label': '您的需求',
+            'expected_label': '期望服务时间',
+            'budget_label': '预算',
+            'footer': '如有任何变更，请回复此邮件或联系客服。',
+            'team': 'Shanghai Tour Guide 团队',
+        },
+        'en': {
+            'subject': 'We received your request',
+            'title': 'Your Request Has Been Received',
+            'greeting': f'Hello, {wish.contact_name}!',
+            'body': 'We have received your custom request. Our team will contact you within 24 hours to prepare a tailored plan.',
+            'detail_label': 'Your Request',
+            'expected_label': 'Expected Time',
+            'budget_label': 'Budget',
+            'footer': 'If anything changes, please reply to this email or contact our team.',
+            'team': 'Shanghai Tour Guide Team',
+        },
+        'ru': {
+            'subject': 'Мы получили ваш запрос',
+            'title': 'Ваш запрос получен',
+            'greeting': f'Здравствуйте, {wish.contact_name}!',
+            'body': 'Мы получили ваш индивидуальный запрос. Наша команда свяжется с вами в течение 24 часов, чтобы подготовить персональный план.',
+            'detail_label': 'Ваш запрос',
+            'expected_label': 'Желаемое время',
+            'budget_label': 'Бюджет',
+            'footer': 'Если что-то изменится, ответьте на это письмо или свяжитесь с нами.',
+            'team': 'Команда Shanghai Tour Guide',
+        },
+        'es': {
+            'subject': 'Hemos recibido su solicitud',
+            'title': 'Su solicitud ha sido recibida',
+            'greeting': f'¡Hola, {wish.contact_name}!',
+            'body': 'Hemos recibido su solicitud personalizada. Nuestro equipo se pondrá en contacto con usted dentro de 24 horas para preparar un plan a medida.',
+            'detail_label': 'Su solicitud',
+            'expected_label': 'Hora deseada',
+            'budget_label': 'Presupuesto',
+            'footer': 'Si algo cambia, responda a este correo o contacte a nuestro equipo.',
+            'team': 'Equipo Shanghai Tour Guide',
+        },
+    }
+    t = texts.get(lang, texts['en'])
+
+    budget_str = ''
+    if wish.budget is not None:
+        symbol = '$' if wish.budget_currency == 'USD' else '¥'
+        budget_str = f'{symbol}{wish.budget}'
+
+    rows = _row(t['expected_label'], _format_dt(wish.expected_date))
+    if budget_str:
+        rows += _row(t['budget_label'], budget_str)
+
+    content_html = (wish.content or '').replace('\n', '<br/>')
+
+    html = f"""
+<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:20px;">
+  <h2 style="color:#4a3728;border-bottom:2px solid #e8d5c4;padding-bottom:10px;">{t['title']}</h2>
+  <p style="color:#333;margin:16px 0;">{t['greeting']}</p>
+  <p style="color:#555;line-height:1.7;">{t['body']}</p>
+  {_table(rows)}
+  <div style="margin:16px 0;padding:14px;background:#fffaf2;border-left:3px solid #c69a62;border-radius:6px;">
+    <div style="color:#888;font-size:13px;margin-bottom:8px;">{t['detail_label']}</div>
+    <div style="line-height:1.7;color:#3b2b1f;">{content_html}</div>
+  </div>
+  <p style="color:#888;font-size:13px;margin-top:24px;">{t['footer']}</p>
+  <p style="color:#aaa;font-size:12px;">— {t['team']}</p>
+</div>
+"""
+    _send_email(app, wish.contact_email, t['subject'], html)

@@ -632,6 +632,43 @@ class Review(db.Model):
         }
 
 
+class Wish(db.Model):
+    """许愿池：用户提交的定制需求"""
+    __tablename__ = 'wishes'
+
+    id = db.Column(db.Integer, primary_key=True)
+    contact_name = db.Column(db.String(50), nullable=False)
+    contact_phone = db.Column(db.String(30))
+    contact_email = db.Column(db.String(100))
+    content = db.Column(db.Text, nullable=False)
+    expected_date = db.Column(db.DateTime, nullable=False)  # 期望服务时间（要求 ≥ 提交时间 + 24h）
+    budget = db.Column(db.Numeric(10, 2))
+    budget_currency = db.Column(db.String(10), default='CNY')
+    lang = db.Column(db.String(10), default='zh')
+    # 0=待处理 1=已联系 2=已完成 3=已关闭
+    status = db.Column(db.SmallInteger, default=0)
+    admin_note = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=china_now)
+    updated_at = db.Column(db.DateTime, default=china_now, onupdate=china_now)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'contact_name': self.contact_name,
+            'contact_phone': self.contact_phone,
+            'contact_email': self.contact_email,
+            'content': self.content,
+            'expected_date': self.expected_date.isoformat() if self.expected_date else None,
+            'budget': float(self.budget) if self.budget is not None else None,
+            'budget_currency': self.budget_currency,
+            'lang': self.lang,
+            'status': self.status,
+            'admin_note': self.admin_note,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
 # ==================== 门票业务模型 ====================
 
 class TicketAttraction(db.Model):

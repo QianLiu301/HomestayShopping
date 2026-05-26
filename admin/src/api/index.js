@@ -129,3 +129,8 @@ export const deleteCoupon = id => http.delete(`/admin/coupons/${id}`)
 // Settings
 export const getSettings = () => http.get('/admin/settings')
 export const updateSettings = data => http.put('/admin/settings', data)
+
+// Wishes (许愿池)
+export const getWishes = params => http.get('/admin/wishes', { params })
+export const updateWish = (id, data) => http.put(`/admin/wishes/${id}`, data)
+export const deleteWish = id => http.delete(`/admin/wishes/${id}`)

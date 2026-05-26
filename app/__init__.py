@@ -191,6 +191,20 @@ def _auto_migrate(app):
         ('ticket_transport_prices', 'sort_order', 'INTEGER DEFAULT 0'),
         ('ticket_transport_prices', 'created_at', 'TIMESTAMP'),
         ('ticket_transport_prices', 'updated_at', 'TIMESTAMP'),
+
+        # 许愿池
+        ('wishes', 'contact_name', 'VARCHAR(50)'),
+        ('wishes', 'contact_phone', 'VARCHAR(30)'),
+        ('wishes', 'contact_email', 'VARCHAR(100)'),
+        ('wishes', 'content', 'TEXT'),
+        ('wishes', 'expected_date', 'TIMESTAMP'),
+        ('wishes', 'budget', 'NUMERIC(10, 2)'),
+        ('wishes', 'budget_currency', "VARCHAR(10) DEFAULT 'CNY'"),
+        ('wishes', 'lang', "VARCHAR(10) DEFAULT 'zh'"),
+        ('wishes', 'status', 'SMALLINT DEFAULT 0'),
+        ('wishes', 'admin_note', 'TEXT'),
+        ('wishes', 'created_at', 'TIMESTAMP'),
+        ('wishes', 'updated_at', 'TIMESTAMP'),
     ]
     with app.app_context():
         # 先确保所有表都存在

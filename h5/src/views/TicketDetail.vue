@@ -17,6 +17,21 @@
             <div class="main-image-wrap" :class="{ empty: !currentImage }">
               <img v-if="currentImage" :src="resolveUrl(currentImage)" class="main-image" @click="previewDetailImages" />
               <div v-else class="image-placeholder">{{ detail.name?.charAt(0) || 'T' }}</div>
+              <button
+                v-if="imageList.length > 1"
+                type="button"
+                class="gallery-nav gallery-nav--prev"
+                :aria-label="t('common.previous') || 'Prev'"
+                @click.stop="prevImage"
+              >‹</button>
+              <button
+                v-if="imageList.length > 1"
+                type="button"
+                class="gallery-nav gallery-nav--next"
+                :aria-label="t('common.next') || 'Next'"
+                @click.stop="nextImage"
+              >›</button>
+              <span v-if="imageList.length > 1" class="gallery-counter">{{ activeImage + 1 }} / {{ imageList.length }}</span>
             </div>
 
             <div v-if="imageList.length > 1" class="thumbnail-list thumbnail-list--desktop">
@@ -25,7 +40,7 @@
                 :key="i"
                 class="thumbnail-item"
                 :class="{ active: activeImage === i }"
-                @click="activeImage = i"
+                @click="onThumbnailClick(i)"
               >
                 <img :src="resolveUrl(img)" class="thumbnail-img" />
               </div>
@@ -87,6 +102,21 @@
         <div class="main-image-wrap" :class="{ empty: !currentImage }">
           <img v-if="currentImage" :src="resolveUrl(currentImage)" class="main-image" @click="previewDetailImages" />
           <div v-else class="image-placeholder">{{ detail.name?.charAt(0) || 'T' }}</div>
+          <button
+            v-if="imageList.length > 1"
+            type="button"
+            class="gallery-nav gallery-nav--prev"
+            :aria-label="t('common.previous') || 'Prev'"
+            @click.stop="prevImage"
+          >‹</button>
+          <button
+            v-if="imageList.length > 1"
+            type="button"
+            class="gallery-nav gallery-nav--next"
+            :aria-label="t('common.next') || 'Next'"
+            @click.stop="nextImage"
+          >›</button>
+          <span v-if="imageList.length > 1" class="gallery-counter">{{ activeImage + 1 }} / {{ imageList.length }}</span>
         </div>
 
         <div v-if="imageList.length > 1" class="thumbnail-list">
@@ -95,7 +125,7 @@
             :key="i"
             class="thumbnail-item"
             :class="{ active: activeImage === i }"
-            @click="activeImage = i"
+            @click="onThumbnailClick(i)"
           >
             <img :src="resolveUrl(img)" class="thumbnail-img" />
           </div>
@@ -969,6 +999,27 @@ function previewDetailImages() {
   })
 }
 
+function prevImage() {
+  const total = imageList.value.length
+  if (total < 2) return
+  activeImage.value = (activeImage.value - 1 + total) % total
+}
+
+function nextImage() {
+  const total = imageList.value.length
+  if (total < 2) return
+  activeImage.value = (activeImage.value + 1) % total
+}
+
+function onThumbnailClick(index) {
+  // 第一次点缩略图先切到那张；再次点击当前缩略图则打开放大预览
+  if (activeImage.value === index) {
+    previewDetailImages()
+  } else {
+    activeImage.value = index
+  }
+}
+
 function showInlineNotice(message, type = 'info') {
   if (!message) return
   ticketNoticeText.value = message
@@ -1259,6 +1310,7 @@ onUnmounted(() => {
 }
 
 .main-image-wrap {
+  position: relative;
   overflow: hidden;
   border-radius: 14px;
   background: linear-gradient(180deg, #f7f8fa 0%, #eef2f6 100%);
@@ -1273,6 +1325,65 @@ onUnmounted(() => {
 
 .main-image {
   object-fit: cover;
+  cursor: zoom-in;
+}
+
+.gallery-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+  user-select: none;
+}
+
+.gallery-nav:hover {
+  background: rgba(0, 0, 0, 0.65);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.gallery-nav--prev {
+  left: 10px;
+}
+
+.gallery-nav--next {
+  right: 10px;
+}
+
+.gallery-counter {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  z-index: 2;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .gallery-nav {
+    width: 34px;
+    height: 34px;
+    font-size: 22px;
+  }
+  .gallery-nav--prev { left: 6px; }
+  .gallery-nav--next { right: 6px; }
 }
 
 .image-placeholder {

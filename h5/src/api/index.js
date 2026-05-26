@@ -87,4 +87,7 @@ export const getProductRating = (productId) => api.get(`/products/${productId}/r
 // ==================== Coupons ====================
 export const verifyCoupon = (data) => api.post('/coupons/verify', data)
 
+// ==================== Wishes (许愿池) ====================
+export const submitWish = (data) => api.post('/wishes', data)
+
 export default api

@@ -64,6 +64,137 @@
       </div>
     </section>
 
+    <!-- ===== SECTION 2.5: WISH POOL ===== -->
+    <section id="wish-pool" class="wish-section">
+      <div class="section-container">
+        <div class="wish-section__header">
+          <div class="section-label">{{ t('wish.sectionLabel') }}</div>
+          <h2 class="wish-section__title">{{ t('wish.title') }}</h2>
+          <p class="wish-section__subtitle">{{ t('wish.subtitle') }}</p>
+        </div>
+
+        <div class="wish-card">
+          <div v-if="!wishSubmitted" class="wish-form">
+            <div class="wish-notice">⏰ {{ t('wish.tipNotice') }} <span class="wish-hint-inline">💡 {{ t('wish.contactHint') }}</span></div>
+
+            <!-- 横向 4 列：姓名 | 电话 | 邮箱 | 期望时间 -->
+            <div class="wish-row wish-row--4col">
+              <div class="wish-field">
+                <label class="wish-label">{{ t('wish.contactName') }} <span class="wish-required">*</span></label>
+                <input
+                  v-model="wishForm.contact_name"
+                  type="text"
+                  class="wish-input"
+                  :placeholder="t('wish.contactNamePlaceholder')"
+                  maxlength="50"
+                />
+              </div>
+              <div class="wish-field">
+                <label class="wish-label">{{ t('wish.contactPhone') }}</label>
+                <input
+                  v-model="wishForm.contact_phone"
+                  type="tel"
+                  class="wish-input"
+                  :placeholder="t('wish.contactPhonePlaceholder')"
+                  maxlength="30"
+                />
+              </div>
+              <div class="wish-field">
+                <label class="wish-label">{{ t('wish.contactEmail') }}</label>
+                <input
+                  v-model="wishForm.contact_email"
+                  type="email"
+                  class="wish-input"
+                  :placeholder="t('wish.contactEmailPlaceholder')"
+                  maxlength="100"
+                />
+              </div>
+              <div class="wish-field">
+                <label class="wish-label">{{ t('wish.expectedDate') }} <span class="wish-required">*</span></label>
+                <input
+                  :value="wishExpectedDisplay"
+                  type="text"
+                  class="wish-input wish-input--picker"
+                  :placeholder="t('wish.expectedDatePlaceholder')"
+                  readonly
+                  @click="openWishPicker"
+                />
+              </div>
+            </div>
+
+            <!-- 日期 + 时间选择弹层（用 Vant 的多语言友好选择器） -->
+            <van-popup v-model:show="wishPickerVisible" position="bottom" round teleport="body">
+              <van-picker-group
+                :title="t('wish.expectedDate')"
+                :tabs="[t('wish.tabDate') || 'Date', t('wish.tabTime') || 'Time']"
+                @confirm="onWishPickerConfirm"
+                @cancel="wishPickerVisible = false"
+              >
+                <van-date-picker
+                  v-model="wishPickerDate"
+                  :min-date="wishMinJsDate"
+                />
+                <van-time-picker
+                  v-model="wishPickerTime"
+                  :columns-type="['hour', 'minute']"
+                />
+              </van-picker-group>
+            </van-popup>
+
+            <!-- 需求描述：全宽 -->
+            <div class="wish-field">
+              <label class="wish-label">{{ t('wish.content') }} <span class="wish-required">*</span></label>
+              <textarea
+                v-model="wishForm.content"
+                rows="2"
+                class="wish-textarea"
+                :placeholder="t('wish.contentPlaceholder')"
+                maxlength="2000"
+              />
+            </div>
+
+            <!-- 底部：预算 + 提交按钮，横向排列 -->
+            <div class="wish-footer">
+              <div class="wish-budget-field">
+                <label class="wish-label">{{ t('wish.budget') }}</label>
+                <div class="wish-budget-row">
+                  <input
+                    v-model.number="wishForm.budget"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    class="wish-input"
+                    :placeholder="t('wish.budgetPlaceholder')"
+                  />
+                  <span v-if="wishForm.budget" class="wish-budget-ref">{{ wishBudgetUsdRef }}</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                class="btn btn-primary wish-submit"
+                :disabled="wishSubmitting"
+                @click="onSubmitWish"
+              >
+                {{ wishSubmitting ? t('wish.submitting') : t('wish.submit') }}
+              </button>
+            </div>
+
+            <div v-if="wishError" class="wish-error">{{ wishError }}</div>
+          </div>
+
+          <div v-else class="wish-success">
+            <div class="wish-success-icon">✓</div>
+            <h3 class="wish-success-title">{{ t('wish.successTitle') }}</h3>
+            <p class="wish-success-desc">{{ t('wish.successDesc') }}</p>
+            <button type="button" class="btn btn-outline" @click="resetWishForm">
+              {{ t('wish.submitAnother') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ===== SECTION 3: SHOP ===== -->
     <section id="shop" class="section shop-section">
       <div class="section-container">
@@ -221,7 +352,7 @@ import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { showToast } from 'vant'
-import { getProducts, getVehicles, queryOrder } from '../api'
+import { getProducts, getVehicles, queryOrder, submitWish } from '../api'
 import { useCartStore } from '../stores/cart'
 import { formatUsdReference } from '../utils/currency'
 
@@ -432,6 +563,132 @@ onUnmounted(() => {
   window.removeEventListener('resize', onResize)
   teardownObserver()
 })
+
+// ============ 许愿池 ============
+const wishForm = ref({
+  contact_name: '',
+  contact_phone: '',
+  contact_email: '',
+  content: '',
+  expected_date: '',  // 格式: 'YYYY-MM-DDTHH:MM'，发给后端
+  budget: null,
+})
+const wishSubmitting = ref(false)
+const wishSubmitted = ref(false)
+const wishError = ref('')
+
+// Vant date/time picker 状态
+const wishPickerVisible = ref(false)
+const _pad = n => String(n).padStart(2, '0')
+
+// 最早可选时间：当前时间 + 24 小时
+function _wishDefaultPickerDate() {
+  const d = new Date(Date.now() + 24 * 60 * 60 * 1000)
+  return [
+    String(d.getFullYear()),
+    _pad(d.getMonth() + 1),
+    _pad(d.getDate()),
+  ]
+}
+function _wishDefaultPickerTime() {
+  const d = new Date(Date.now() + 24 * 60 * 60 * 1000)
+  return [_pad(d.getHours()), _pad(d.getMinutes())]
+}
+
+// 当前打开 picker 时显示的值（YYYY/MM/DD 字符串数组 + HH/MM 字符串数组）
+const wishPickerDate = ref(_wishDefaultPickerDate())
+const wishPickerTime = ref(_wishDefaultPickerTime())
+
+// 最小日期（Vant 用原生 Date）
+const wishMinJsDate = computed(() => new Date(Date.now() + 24 * 60 * 60 * 1000))
+
+// 输入框里显示的"已选时间"字符串（多语言友好，纯数字格式）
+const wishExpectedDisplay = computed(() => {
+  if (!wishForm.value.expected_date) return ''
+  // expected_date 形如 '2026-05-28T14:30'
+  return wishForm.value.expected_date.replace('T', ' ')
+})
+
+function openWishPicker() {
+  // 如果用户没选过，重置到默认值（now+24h）
+  if (!wishForm.value.expected_date) {
+    wishPickerDate.value = _wishDefaultPickerDate()
+    wishPickerTime.value = _wishDefaultPickerTime()
+  }
+  wishPickerVisible.value = true
+}
+
+function onWishPickerConfirm() {
+  const [y, m, d] = wishPickerDate.value
+  const [h, mi] = wishPickerTime.value
+  wishForm.value.expected_date = `${y}-${m}-${d}T${h}:${mi}`
+  wishPickerVisible.value = false
+}
+
+const wishBudgetUsdRef = computed(() => {
+  const v = Number(wishForm.value.budget)
+  if (!v || v <= 0) return ''
+  return t('wish.budgetRef', { usd: formatUsdReference(v) })
+})
+
+function resetWishForm() {
+  wishForm.value = {
+    contact_name: '',
+    contact_phone: '',
+    contact_email: '',
+    content: '',
+    expected_date: '',
+    budget: null,
+  }
+  wishSubmitted.value = false
+  wishError.value = ''
+}
+
+async function onSubmitWish() {
+  wishError.value = ''
+  const f = wishForm.value
+  if (!f.contact_name?.trim()) {
+    wishError.value = t('wish.errContactRequired')
+    return
+  }
+  if (!f.contact_phone?.trim() && !f.contact_email?.trim()) {
+    wishError.value = t('wish.errContactWay')
+    return
+  }
+  if (!f.content?.trim() || f.content.trim().length < 10) {
+    wishError.value = t('wish.errContentTooShort')
+    return
+  }
+  if (!f.expected_date) {
+    wishError.value = t('wish.errExpectedTooSoon')
+    return
+  }
+  const expectedMs = new Date(f.expected_date).getTime()
+  if (isNaN(expectedMs) || expectedMs < Date.now() + 24 * 60 * 60 * 1000 - 60_000) {
+    wishError.value = t('wish.errExpectedTooSoon')
+    return
+  }
+
+  wishSubmitting.value = true
+  try {
+    await submitWish({
+      contact_name: f.contact_name.trim(),
+      contact_phone: f.contact_phone?.trim() || '',
+      contact_email: f.contact_email?.trim() || '',
+      content: f.content.trim(),
+      expected_date: f.expected_date,
+      budget: f.budget || null,
+      budget_currency: 'CNY',
+      lang: localStorage.getItem('lang') || 'zh',
+    })
+    wishSubmitted.value = true
+  } catch (e) {
+    wishError.value = e?.message || 'Submit failed'
+    showToast(wishError.value)
+  } finally {
+    wishSubmitting.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -870,5 +1127,252 @@ onUnmounted(() => {
   /* Footer mobile */
   .footer-section { padding: 48px 0 24px; }
   .footer-grid { grid-template-columns: 1fr; gap: 28px; margin-bottom: 32px; }
+
+  /* Wish mobile */
+  .wish-section {
+    margin-top: -20px;
+    padding: 8px 0 24px;
+  }
+  .wish-card { padding: 14px; border-radius: 12px; }
+  .wish-row--4col { grid-template-columns: 1fr; gap: 10px; }
+  .wish-footer { grid-template-columns: 1fr; gap: 12px; }
+  .wish-submit { width: 100%; min-width: 0; }
+  .wish-section__title { font-size: 22px; }
+  .wish-section__subtitle { font-size: 13px; }
+  .wish-section__header :deep(.section-label) {
+    font-size: 15px;
+    letter-spacing: 3px;
+  }
+}
+
+/* ============ 许愿池（横幅版） ============ */
+.wish-section {
+  background: var(--white);
+  /* 上移：负 margin 抵消上一 section 的 100px 底部 padding */
+  margin-top: -70px;
+  padding: 12px 0 32px;
+  position: relative;
+}
+
+.wish-section__header {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+/* "许愿池" 三个字单独加大、加粗 */
+.wish-section__header :deep(.section-label) {
+  font-size: 18px;
+  letter-spacing: 4px;
+  gap: 14px;
+}
+
+.wish-section__header :deep(.section-label::after) {
+  width: 56px;
+  height: 2px;
+}
+
+.wish-section__title {
+  font-family: var(--font-display);
+  font-size: 30px;
+  line-height: 1.25;
+  margin: 12px 0 8px;
+  color: var(--text);
+}
+
+.wish-section__subtitle {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  margin: 0 auto;
+  max-width: 620px;
+}
+
+/* 横幅卡片：稍微大一点 */
+.wish-card {
+  max-width: 1020px;
+  margin: 16px auto 0;
+  padding: 22px 26px;
+  border-radius: 16px;
+  background: var(--bg);
+  border: 1px solid rgba(201, 169, 126, 0.18);
+  box-shadow: 0 8px 22px rgba(74, 55, 40, 0.05);
+}
+
+/* 可点击的"时间选择"输入框 */
+.wish-input--picker {
+  cursor: pointer;
+  background: #fff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238d7b67' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E") no-repeat right 10px center;
+  padding-right: 32px;
+}
+
+.wish-notice {
+  margin-bottom: 12px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #fff7e6;
+  color: #a06b1f;
+  /* 字稍大 */
+  font-size: 13px;
+  line-height: 1.5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+.wish-hint-inline {
+  color: #8d7b67;
+}
+
+.wish-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 4 列横向布局 */
+.wish-row--4col {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.wish-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.wish-label {
+  display: block;
+  margin-bottom: 5px;
+  /* 字稍大 */
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a3728;
+}
+
+.wish-required {
+  color: #d9534f;
+  margin-left: 2px;
+}
+
+.wish-input,
+.wish-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(201, 169, 126, 0.35);
+  border-radius: 8px;
+  background: #fff;
+  /* 输入文字加大 */
+  font-size: 14px;
+  color: #3b2b1f;
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.wish-input:focus,
+.wish-textarea:focus {
+  outline: none;
+  border-color: #c69a62;
+  box-shadow: 0 0 0 3px rgba(198, 154, 98, 0.12);
+}
+
+.wish-textarea {
+  resize: vertical;
+  line-height: 1.55;
+  min-height: 60px;
+}
+
+/* 底部：预算（左） + 提交按钮（右） */
+.wish-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: end;
+}
+
+.wish-budget-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.wish-budget-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wish-budget-row .wish-input {
+  flex: 1;
+}
+
+.wish-budget-ref {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: #8d7b67;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.wish-error {
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: #fef0f0;
+  color: #d9534f;
+  font-size: 13px;
+}
+
+.wish-submit {
+  min-width: 150px;
+  height: 42px;
+  padding: 0 24px;
+  /* 按钮字加大 */
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.wish-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.wish-success {
+  text-align: center;
+  padding: 16px 0;
+}
+
+.wish-success-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #c69a62, #ae7b43);
+  color: #fff;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.wish-success-title {
+  margin: 0 0 6px;
+  font-size: 17px;
+  color: #3b2b1f;
+}
+
+.wish-success-desc {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: #6e5f51;
+  line-height: 1.55;
+}
+
+/* 中等屏幕：4 列变 2 列 */
+@media (max-width: 900px) {
+  .wish-card { max-width: 720px; }
+  .wish-row--4col { grid-template-columns: 1fr 1fr; }
 }
 </style>
