@@ -242,19 +242,15 @@ function onRefresh() {
 .shop-sort-bar {
   position: relative;
   z-index: 1;
-  padding: 10px 16px 12px;
-  background: transparent;
+  padding: 12px 16px 8px;
+  background: #f8f4ee;
 }
 
 .shop-sort-bar__inner {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 12px 14px;
-  border: 1px solid rgba(201, 169, 126, 0.2);
-  border-radius: 20px;
-  background: rgba(248, 244, 238, 0.94);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 12px 28px rgba(74, 55, 40, 0.08);
+  padding: 0;
+  background: transparent;
 }
 
 .shop-sort-bar__chips {
@@ -514,12 +510,7 @@ function onRefresh() {
   }
 
   .shop-sort-bar {
-    padding: 8px 12px 10px;
-  }
-
-  .shop-sort-bar__inner {
-    padding: 10px;
-    border-radius: 16px;
+    padding: 10px 12px 6px;
   }
 
   .shop-sort-bar__chips {

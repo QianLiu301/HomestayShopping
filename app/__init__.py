@@ -100,10 +100,10 @@ def _auto_migrate(app):
         ('ticket_packages', 'ticket_type', 'VARCHAR(20)'),
         ('ticket_packages', 'sale_price', 'NUMERIC(10, 2)'),
         ('ticket_packages', 'original_price', 'NUMERIC(10, 2)'),
-        ('ticket_packages', 'age_rule_zh', 'VARCHAR(500)'),
-        ('ticket_packages', 'age_rule_en', 'VARCHAR(500)'),
-        ('ticket_packages', 'age_rule_ru', 'VARCHAR(500)'),
-        ('ticket_packages', 'age_rule_es', 'VARCHAR(500)'),
+        ('ticket_packages', 'age_rule_zh', 'TEXT'),
+        ('ticket_packages', 'age_rule_en', 'TEXT'),
+        ('ticket_packages', 'age_rule_ru', 'TEXT'),
+        ('ticket_packages', 'age_rule_es', 'TEXT'),
         ('ticket_packages', 'booking_notice_zh', 'TEXT'),
         ('ticket_packages', 'booking_notice_en', 'TEXT'),
         ('ticket_packages', 'booking_notice_ru', 'TEXT'),
@@ -245,6 +245,31 @@ def _auto_migrate(app):
                 app.logger.info(f'Auto-migrate: added {table}.{column}')
             except Exception:
                 db.session.rollback()
+
+        # 升级已存在列的类型（仅PG）：把过短的VARCHAR升为TEXT
+        # 历史上某些字段被定义成 VARCHAR(500)，多语言长文本会触发
+        # StringDataRightTruncation。这里统一升为 TEXT。
+        columns_to_widen = [
+            ('ticket_packages', 'age_rule_zh'),
+            ('ticket_packages', 'age_rule_en'),
+            ('ticket_packages', 'age_rule_ru'),
+            ('ticket_packages', 'age_rule_es'),
+        ]
+        if is_pg:
+            for table, column in columns_to_widen:
+                try:
+                    current_type = db.session.execute(db.text(
+                        "SELECT data_type FROM information_schema.columns "
+                        "WHERE table_name = :table AND column_name = :column"
+                    ), {'table': table, 'column': column}).scalar()
+                    if current_type and current_type.lower() != 'text':
+                        db.session.execute(db.text(
+                            f'ALTER TABLE {table} ALTER COLUMN {column} TYPE TEXT'
+                        ))
+                        db.session.commit()
+                        app.logger.info(f'Auto-migrate: widened {table}.{column} to TEXT')
+                except Exception:
+                    db.session.rollback()
 
 
 def create_app(config_name='default'):
