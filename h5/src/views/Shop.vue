@@ -240,9 +240,8 @@ function onRefresh() {
 }
 
 .shop-sort-bar {
-  position: sticky;
-  top: 44px;
-  z-index: 12;
+  position: relative;
+  z-index: 1;
   padding: 10px 16px 12px;
   background: transparent;
 }
@@ -515,7 +514,6 @@ function onRefresh() {
   }
 
   .shop-sort-bar {
-    top: 46px;
     padding: 8px 12px 10px;
   }
 
