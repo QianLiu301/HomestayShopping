@@ -377,6 +377,55 @@ def create_app(config_name='default'):
         }
     })
 
+    # ==================== 全局错误处理器 ====================
+    # 目的：所有错误返回统一 JSON 格式（不返回 HTML），
+    # 1) 让 Flask-CORS 能正常在错误响应上加 CORS 头（避免"假 CORS 错误"）
+    # 2) 不向前端暴露 Python 堆栈、代码路径等敏感信息
+    # 3) 真实错误堆栈写入服务器日志，便于排查
+    import traceback
+    import uuid
+    from werkzeug.exceptions import HTTPException
+    from flask import jsonify, request as flask_request
+
+    @app.errorhandler(HTTPException)
+    def handle_http_exception(e):
+        """处理 4xx 类已知错误（如 404、405、413 等）"""
+        return jsonify({
+            'code': e.code,
+            'message': e.description or e.name,
+            'data': None
+        }), e.code
+
+    @app.errorhandler(Exception)
+    def handle_uncaught_exception(e):
+        """兜底处理所有未捕获的异常（如 500、数据库错误、第三方接口错误等）"""
+        # 给这次错误一个唯一 ID，方便用户报错时让客服查日志
+        error_id = uuid.uuid4().hex[:8]
+
+        # 详细堆栈写日志（生产环境只 admin/运维能看到）
+        app.logger.error(
+            f'[error_id={error_id}] {flask_request.method} {flask_request.path} '
+            f'unhandled exception: {e}\n{traceback.format_exc()}'
+        )
+
+        # 给前端的响应保持简洁、不泄露内部细节
+        # 仅在 debug 模式下返回详细错误（方便本地调试）
+        if app.config.get('DEBUG'):
+            return jsonify({
+                'code': 500,
+                'message': f'{type(e).__name__}: {str(e)}',
+                'error_id': error_id,
+                'traceback': traceback.format_exc().splitlines()[-10:],
+                'data': None
+            }), 500
+
+        return jsonify({
+            'code': 500,
+            'message': '系统繁忙，请稍后再试',
+            'error_id': error_id,  # 用户可截图给客服，客服拿这个 ID 查日志
+            'data': None
+        }), 500
+
     # 注册蓝图（API路由）
     from app.api import api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
