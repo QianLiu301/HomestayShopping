@@ -16,21 +16,18 @@
             class="main-image"
             @click="onImageClick"
           />
-          <div v-if="currentImage" class="image-preview-tip" @click="onImageClick">
-            <span class="image-preview-tip__icon">🔍</span>
-            <span>{{ t('shop.imagePreviewHint') || '点击查看大图，双指可放大' }}</span>
-          </div>
           <div v-else class="image-placeholder">{{ product.name?.charAt(0) }}</div>
           <button
             v-if="product.images?.length > 1"
             class="nav-btn prev"
-            @click="prevImage"
+            @click.stop="prevImage"
           >‹</button>
           <button
             v-if="product.images?.length > 1"
             class="nav-btn next"
-            @click="nextImage"
+            @click.stop="nextImage"
           >›</button>
+          <span v-if="imageList.length > 1" class="image-counter">{{ activeImage + 1 }} / {{ imageList.length }}</span>
         </div>
 
         <div v-if="imageList.length > 1" class="thumbnail-list">
@@ -39,7 +36,7 @@
             :key="i"
             class="thumbnail-item"
             :class="{ active: activeImage === i }"
-            @click="activeImage = i"
+            @click="onThumbnailClick(i)"
           >
             <img :src="$resolveUrl(img)" class="thumbnail-img" />
           </div>
@@ -122,7 +119,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ImagePreview, showToast } from 'vant'
-import { getProduct, getProductRating } from '../api'
+import { getProduct, getProductRating, resolveUrl } from '../api'
 import { useCartStore } from '../stores/cart'
 import { formatUsdReference } from '../utils/currency'
 
@@ -186,11 +183,24 @@ function nextImage() {
 
 function onImageClick() {
   if (!imageList.value.length) return
+  // 用项目统一的 resolveUrl 把相对路径补成完整 URL（生产环境图片在不同子域名/R2 上）
   ImagePreview({
-    images: imageList.value.map(img => window.location.origin ? new URL(img, window.location.origin).href : img),
+    images: imageList.value.map(img => resolveUrl(img)),
     startPosition: activeImage.value,
     closeable: true,
+    showIndex: true,
+    maxZoom: 5,   // 显式声明最大放大倍数，确保双指捏合可放大
+    minZoom: 1 / 3
   })
+}
+
+function onThumbnailClick(index) {
+  // 点击未选中的缩略图：切换为主图；点击当前选中的缩略图：打开放大预览
+  if (activeImage.value === index) {
+    onImageClick()
+  } else {
+    activeImage.value = index
+  }
 }
 
 function onAddToCart() {
@@ -232,29 +242,18 @@ function onBuyNow() {
   cursor: zoom-in;
 }
 
-.image-preview-tip {
+.image-counter {
   position: absolute;
-  left: 12px;
   right: 12px;
-  bottom: 12px;
+  bottom: 10px;
   z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 9px 12px;
+  padding: 3px 10px;
   border-radius: 999px;
-  background: rgba(59, 43, 31, 0.66);
+  background: rgba(0, 0, 0, 0.5);
   color: #fff;
   font-size: 12px;
-  line-height: 1.4;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
-}
-
-.image-preview-tip__icon {
-  font-size: 13px;
-  line-height: 1;
+  font-weight: 600;
+  pointer-events: none;
 }
 
 .image-placeholder {
@@ -464,12 +463,15 @@ function onBuyNow() {
 }
 
 @media (max-width: 768px) {
-  .image-preview-tip {
-    left: 10px;
-    right: 10px;
-    bottom: 10px;
+  .nav-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 18px;
+    line-height: 30px;
+  }
+  .image-counter {
     font-size: 11px;
-    padding: 8px 10px;
+    padding: 2px 8px;
   }
 }
 </style>

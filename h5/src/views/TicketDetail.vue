@@ -995,7 +995,10 @@ function previewDetailImages() {
   ImagePreview({
     images: imageList.value.map(item => resolveUrl(item)),
     startPosition: activeImage.value,
-    closeable: true
+    closeable: true,
+    showIndex: true,
+    maxZoom: 5,   // 显式声明双指捏合最大放大倍数
+    minZoom: 1 / 3
   })
 }
 
