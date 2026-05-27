@@ -358,14 +358,22 @@ def create_app(config_name='default'):
     bcrypt.init_app(app)
 
     # 配置CORS
+    # 解析 CORS_ORIGINS：支持 '*' 或逗号分隔的多个域名
+    # 例: "https://a.com,https://b.com" → ["https://a.com", "https://b.com"]
+    _cors_raw = app.config.get('CORS_ORIGINS', '*')
+    if _cors_raw == '*' or not _cors_raw:
+        _cors_origins = '*'
+    else:
+        _cors_origins = [o.strip() for o in _cors_raw.split(',') if o.strip()]
+
     CORS(app, resources={
         r"/api/*": {
-            "origins": app.config.get('CORS_ORIGINS', '*'),
+            "origins": _cors_origins,
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"]
         },
         r"/uploads/*": {
-            "origins": app.config.get('CORS_ORIGINS', '*'),
+            "origins": _cors_origins,
         }
     })
 
