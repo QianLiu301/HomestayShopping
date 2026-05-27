@@ -286,9 +286,25 @@
             <h2 class="section-title-lg orders-mobile-title">{{ t('home.ordersTitle') }}</h2>
             <p class="orders-mobile-subtitle">{{ t('home.ordersSubtitle') }}</p>
           </div>
-          <button class="btn btn-primary orders-mobile-btn" @click="router.push('/order-query')">
-            {{ t('order.query') }} →
-          </button>
+          <div class="orders-mobile-form">
+            <input
+              v-model="queryContact"
+              type="text"
+              :placeholder="t('order.inputContact')"
+              class="orders-mobile-input"
+              autocomplete="off"
+            />
+            <input
+              v-model="queryOrderNo"
+              type="text"
+              :placeholder="t('order.orderNoOptional')"
+              class="orders-mobile-input"
+              autocomplete="off"
+            />
+            <button class="btn btn-primary orders-mobile-btn" @click="onQueryOrder">
+              {{ t('order.query') }} →
+            </button>
+          </div>
         </div>
 
         <div v-else class="orders-card">
@@ -779,23 +795,36 @@ async function onSubmitWish() {
   border-radius: 999px;
   border: 1px solid rgba(200, 169, 126, 0.42);
   background: rgba(255, 252, 247, 0.92);
-  color: var(--text);
+  color: #4a3728;  /* 显式声明深色文字，防止被继承覆盖 */
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.03em;
   cursor: pointer;
   transition: all 0.25s ease;
+  -webkit-tap-highlight-color: transparent;  /* 禁用 iOS 默认点击高亮闪烁 */
+  -webkit-appearance: none;
+  appearance: none;
 }
 .shop-sort-chip:hover {
   border-color: rgba(200, 169, 126, 0.72);
   background: #fff;
+  color: #4a3728;  /* hover 时保持深色 */
   transform: translateY(-1px);
 }
 .shop-sort-chip--active {
   color: #fff;
   border-color: var(--accent);
-  background: linear-gradient(135deg, #c69a62, #ae7b43);
+  /* 同时声明 background-color 作为渐变 fallback，防止白底白字 */
+  background-color: #b98745;
+  background-image: linear-gradient(135deg, #c69a62, #ae7b43);
   box-shadow: 0 10px 24px rgba(174, 123, 67, 0.16);
+}
+/* 移动端：active + hover 同时存在时（点击后焦点保持）确保对比度 */
+.shop-sort-chip--active:hover,
+.shop-sort-chip--active:focus {
+  color: #fff;
+  background-color: #b98745;
+  background-image: linear-gradient(135deg, #c69a62, #ae7b43);
 }
 .shop-toolbar-entry {
   flex: 0 0 auto;
@@ -945,7 +974,29 @@ async function onSubmitWish() {
 .orders-mobile-label { color: rgba(255,255,255,0.7); margin-bottom: 14px; }
 .orders-mobile-title { color: #fff; margin-bottom: 10px; font-size: 28px; }
 .orders-mobile-subtitle { color: rgba(255,255,255,0.72); margin-bottom: 18px; line-height: 1.7; font-size: 14px; }
-.orders-mobile-btn { width: 100%; }
+.orders-mobile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.orders-mobile-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 14px;
+  font-family: var(--font-body);
+  outline: none;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+}
+.orders-mobile-input::placeholder { color: rgba(255, 255, 255, 0.45); }
+.orders-mobile-input:focus { border-color: var(--accent); }
+.orders-mobile-btn { width: 100%; margin-top: 4px; }
 
 /* ===== FOOTER ===== */
 .footer-section { background: var(--dark-bg); color: #fff; padding: 80px 0 30px; }

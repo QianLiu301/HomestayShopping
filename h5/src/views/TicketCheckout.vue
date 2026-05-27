@@ -1016,4 +1016,83 @@ onMounted(loadData)
 .submit-wrap {
   padding: 16px;
 }
+
+/* ============ 移动端：横向 3 列 → 竖向堆叠 ============ */
+@media (max-width: 768px) {
+  .checkout-hero-card {
+    padding: 14px;
+  }
+
+  .checkout-hero__title {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  /* 头部布局改为两行：上面 [小图 + 日期/名称/描述]，下面 [合计 / 价格] */
+  .checkout-hero__content {
+    grid-template-columns: 92px minmax(0, 1fr);
+    grid-template-areas:
+      "media info"
+      "price price";
+    gap: 12px;
+    align-items: start;
+  }
+
+  .checkout-hero__media {
+    grid-area: media;
+    width: 92px;
+  }
+
+  .checkout-hero__image {
+    border-radius: 10px;
+  }
+
+  .checkout-hero__info {
+    grid-area: info;
+    min-width: 0;
+  }
+
+  .checkout-hero__date {
+    font-size: 16px;
+  }
+
+  .checkout-hero__name {
+    margin-top: 6px;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .checkout-hero__sub,
+  .checkout-hero__note {
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  /* 合计/价格行：横排在内容下方 */
+  .checkout-hero__price-wrap {
+    grid-area: price;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(201, 169, 126, 0.18);
+  }
+
+  .checkout-hero__unit {
+    font-size: 13px;
+    font-weight: 600;
+    color: #4a3728;
+  }
+
+  .checkout-hero__price {
+    font-size: 22px;
+  }
+
+  /* 票种数量调整区在移动端也更紧凑 */
+  .selected-package-list--compact {
+    margin-top: 10px;
+  }
+}
 </style>
