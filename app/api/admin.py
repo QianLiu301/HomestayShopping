@@ -585,8 +585,10 @@ def admin_analytics():
     else:
         start = datetime(now.year, now.month, 1)
 
-    shop_cancelled = 4   # 商城订单取消状态码
+    shop_cancelled = 4    # 商城订单取消状态码
     transfer_cancelled = 3  # 接送订单取消状态码
+    # 门票订单状态：0=待支付 1=已支付 2=已使用 3=已取消 4=已退款
+    ticket_cancelled_set = (3, 4)
 
     # Fetch raw rows (only need created_at + total_price)
     shop_rows = db.session.query(
@@ -603,10 +605,21 @@ def admin_analytics():
         TransferOrder.status != transfer_cancelled
     ).all()
 
+    # 门票订单（已含门票接送的合并金额）
+    from app.models import TicketOrder
+    ticket_rows = db.session.query(
+        TicketOrder.created_at, TicketOrder.total_price
+    ).filter(
+        TicketOrder.created_at >= start,
+        ~TicketOrder.status.in_(ticket_cancelled_set)
+    ).all()
+
     shop_count = len(shop_rows)
     shop_total = sum(float(r.total_price or 0) for r in shop_rows)
     transfer_count = len(transfer_rows)
     transfer_total = sum(float(r.total_price or 0) for r in transfer_rows)
+    ticket_count = len(ticket_rows)
+    ticket_total = sum(float(r.total_price or 0) for r in ticket_rows)
 
     # Build chart data in Python
     if period == 'month':
@@ -642,10 +655,16 @@ def admin_analytics():
         if r.created_at:
             transfer_map[r.created_at.strftime(fmt)] += float(r.total_price or 0)
 
+    ticket_map = defaultdict(float)
+    for r in ticket_rows:
+        if r.created_at:
+            ticket_map[r.created_at.strftime(fmt)] += float(r.total_price or 0)
+
     chart = {
         'labels': labels,
         'shop': [round(shop_map.get(l, 0), 2) for l in labels],
-        'transfer': [round(transfer_map.get(l, 0), 2) for l in labels]
+        'transfer': [round(transfer_map.get(l, 0), 2) for l in labels],
+        'ticket': [round(ticket_map.get(l, 0), 2) for l in labels],
     }
 
     return success_response({
@@ -653,7 +672,9 @@ def admin_analytics():
         'shop_total': round(shop_total, 2),
         'transfer_count': transfer_count,
         'transfer_total': round(transfer_total, 2),
-        'total_revenue': round(shop_total + transfer_total, 2),
+        'ticket_count': ticket_count,
+        'ticket_total': round(ticket_total, 2),
+        'total_revenue': round(shop_total + transfer_total + ticket_total, 2),
         'chart': chart
     })
 
