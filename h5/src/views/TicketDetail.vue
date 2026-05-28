@@ -1105,6 +1105,9 @@ function scrollToSection(section) {
   map[section]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
+// 保存进入本页时的原始 title，离开时恢复
+const _prevTitle = typeof document !== 'undefined' ? document.title : ''
+
 async function loadData() {
   loading.value = true
   try {
@@ -1114,6 +1117,10 @@ async function loadData() {
       getTicketTransportOptions({ attraction_id: attractionId }).catch(() => ({ data: [] }))
     ])
     detail.value = detailRes.data
+    // 写 title：浏览器 tab 显示景点名 + WhatsApp 浮动按钮能读到
+    if (detail.value?.name) {
+      document.title = detail.value.name
+    }
     packages.value = detailRes.data?.packages || []
     transportOptions.value = transportRes.data || []
     selectedTransportId.value = ''
@@ -1141,6 +1148,10 @@ onUnmounted(() => {
   if (ticketNoticeTimer) {
     clearTimeout(ticketNoticeTimer)
     ticketNoticeTimer = null
+  }
+  // 离开门票详情时恢复 title
+  if (typeof document !== 'undefined' && _prevTitle) {
+    document.title = _prevTitle
   }
 })
 </script>

@@ -74,18 +74,18 @@ function onClick() {
 <style scoped>
 .wa-fab {
   position: fixed;
-  right: 18px;
-  bottom: 24px;
+  right: 14px;
+  bottom: 20px;
   z-index: 999;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 54px;
-  height: 54px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: #25d366;       /* WhatsApp 品牌绿 */
   color: #fff;
-  box-shadow: 0 8px 20px rgba(37, 211, 102, 0.45);
+  box-shadow: 0 6px 16px rgba(37, 211, 102, 0.4);
   text-decoration: none;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   animation: wa-pop 0.4s ease;
@@ -94,7 +94,7 @@ function onClick() {
 
 .wa-fab:hover {
   transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 12px 26px rgba(37, 211, 102, 0.55);
+  box-shadow: 0 10px 22px rgba(37, 211, 102, 0.5);
 }
 
 .wa-fab:active {
@@ -103,12 +103,12 @@ function onClick() {
 
 /* 底部 tabbar 高度约 56px，留出 12px 间隙 */
 .wa-fab--with-tabbar {
-  bottom: 80px;
+  bottom: 72px;
 }
 
 .wa-fab__icon {
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
 }
 
 /* 出现动画：从下方弹出 */
@@ -126,14 +126,14 @@ function onClick() {
 /* 桌面端稍微大一点 */
 @media (min-width: 1024px) {
   .wa-fab {
-    right: 28px;
-    bottom: 32px;
-    width: 60px;
-    height: 60px;
+    right: 24px;
+    bottom: 24px;
+    width: 50px;
+    height: 50px;
   }
   .wa-fab__icon {
-    width: 34px;
-    height: 34px;
+    width: 28px;
+    height: 28px;
   }
 }
 </style>

@@ -115,7 +115,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ImagePreview, showToast } from 'vant'
@@ -152,10 +152,18 @@ const productDescription = computed(() => {
   return value.replace(/\r\n/g, '\n').trim()
 })
 
+// 保存进入本页时的原始 title，离开时恢复
+const _prevTitle = typeof document !== 'undefined' ? document.title : ''
+
 onMounted(async () => {
   try {
     const res = await getProduct(route.params.id)
     product.value = res.data
+
+    // 把商品名写入页面 title：1) 浏览器 tab 显示商品名 2) WhatsApp 浮动按钮能读到
+    if (product.value?.name) {
+      document.title = product.value.name
+    }
 
     activeImage.value = 0
     if (product.value?.specs?.length) {
@@ -168,6 +176,13 @@ onMounted(async () => {
     showToast(e.message)
   } finally {
     loading.value = false
+  }
+})
+
+onUnmounted(() => {
+  // 离开商品详情时恢复 title，避免影响其它页面
+  if (typeof document !== 'undefined' && _prevTitle) {
+    document.title = _prevTitle
   }
 })
 
