@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from flask import request, current_app
 from app.api import api_bp
 from app.models import Wish
-from app import db
+from app import db, limiter
 from app.utils import success_response, error_response, admin_required, paginate_query, get_lang
 from app.utils.email import send_new_wish_to_admin, send_wish_received_to_customer
 
@@ -11,6 +11,7 @@ from app.utils.email import send_new_wish_to_admin, send_wish_received_to_custom
 # ==================== 公开接口（用户提交） ====================
 
 @api_bp.route('/wishes', methods=['POST'])
+@limiter.limit("3 per minute")  # 防垃圾灌水：同一 IP 每分钟最多 3 次许愿
 def create_wish():
     """用户提交许愿"""
     data = request.get_json() or {}

@@ -3,11 +3,24 @@ from flask import Flask, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from werkzeug.middleware.proxy_fix import ProxyFix
 from config import config
 
 # 初始化扩展
 db = SQLAlchemy()
 bcrypt = Bcrypt()
+
+# 限流器：按客户端 IP 限制访问频率
+# - 兜底每分钟 200 次（任何接口都会受限）
+# - 关键接口在路由上用 @limiter.limit("X per minute") 单独加严
+# - DEBUG 模式（本地开发）自动跳过限流，方便测试
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["200 per minute"],
+    storage_uri="memory://",  # 单实例够用；多实例时改为 redis://...
+)
 
 
 def _auto_migrate(app):
@@ -350,12 +363,34 @@ def create_app(config_name='default'):
     # 加载配置
     app.config.from_object(config[config_name])
 
+    # ProxyFix：让 Flask 信任反向代理（Railway/Nginx/Cloudflare）的
+    # X-Forwarded-For 等 header，这样 request.remote_addr 拿到的是真实用户 IP，
+    # 而不是代理的固定 IP（否则限流会把所有用户当成同一人，全部互相挤掉）
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
+
     # 确保上传目录存在
     os.makedirs(app.config.get('UPLOAD_FOLDER', 'uploads'), exist_ok=True)
 
     # 初始化扩展
     db.init_app(app)
     bcrypt.init_app(app)
+
+    # 初始化限流器
+    # DEBUG 模式下完全禁用，避免本地反复测试被 429 卡住
+    if app.config.get('DEBUG'):
+        app.config['RATELIMIT_ENABLED'] = False
+    limiter.init_app(app)
+
+    # 429 限流响应：统一 JSON 格式（不要 Flask-Limiter 默认的 HTML）
+    from flask import jsonify
+    @app.errorhandler(429)
+    def handle_ratelimit_exceeded(e):
+        return jsonify({
+            'code': 429,
+            'message': '请求过于频繁，请稍后再试',
+            'detail': str(getattr(e, 'description', '')),
+            'data': None
+        }), 429
 
     # 配置CORS
     # 解析 CORS_ORIGINS：支持 '*' 或逗号分隔的多个域名

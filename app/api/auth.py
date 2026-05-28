@@ -1,11 +1,12 @@
 from flask import request
 from app.api import api_bp
 from app.models import Admin
-from app import bcrypt
+from app import bcrypt, limiter
 from app.utils import generate_token, success_response, error_response
 
 
 @api_bp.route('/auth/login', methods=['POST'])
+@limiter.limit("5 per minute")  # 防爆破：同一 IP 每分钟最多 5 次登录尝试
 def admin_login():
     """管理员登录"""
     data = request.get_json()

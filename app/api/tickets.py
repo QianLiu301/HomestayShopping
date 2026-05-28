@@ -6,7 +6,7 @@ from app.models import (
     TicketAttraction, TicketPackage, TicketOrder, TicketTraveler,
     TicketTransportPrice, Vehicle, Coupon
 )
-from app import db
+from app import db, limiter
 from app.utils import success_response, error_response, paginate_query
 from config import config
 
@@ -139,6 +139,7 @@ def get_transport_options():
 
 
 @api_bp.route('/tickets/orders', methods=['POST'])
+@limiter.limit("20 per minute")  # 防止刷单/库存攻击
 def create_ticket_order():
     """创建门票订单"""
     data = request.get_json()
@@ -400,6 +401,7 @@ def create_ticket_order():
 
 
 @api_bp.route('/tickets/orders/query', methods=['POST'])
+@limiter.limit("30 per minute")  # 防止撞库批量拉取订单
 def query_ticket_order():
     """查询门票订单（通过 order_no 或 contact_email + contact_name）"""
     data = request.get_json()

@@ -6,7 +6,7 @@ from app.models import (
     Product, Vehicle, Location, Setting, Coupon, CouponUsage,
     TransferOrder, ShopOrder, OrderItem, TicketOrder
 )
-from app import db
+from app import db, limiter
 from app.utils import success_response, error_response, generate_order_no, get_lang
 from app.utils.storage import upload_file
 from app.utils.email import (
@@ -459,6 +459,7 @@ def create_shop_order():
 # ==================== 订单查询 ====================
 
 @api_bp.route('/orders/query', methods=['POST'])
+@limiter.limit("30 per minute")  # 防止用手机号撞库批量拉取订单
 def query_order():
     """查询订单（通过联系方式查询所有关联订单，或通过订单号+联系方式查询单个订单）"""
     data = request.get_json()
