@@ -58,7 +58,14 @@
               <span class="contact-label">WhatsApp</span>
               <span class="contact-value">{{ contactInfo.contact_whatsapp }}</span>
             </div>
-            <van-button size="mini" plain type="success" @click="copyText(contactInfo.contact_whatsapp)">{{ t('order.copy') }}</van-button>
+            <a
+              :href="buildWhatsAppUrl(contactInfo.contact_whatsapp, t('whatsapp.messageOrder', { orderNo }))"
+              target="_blank"
+              rel="noopener"
+              class="wa-chat-btn"
+            >
+              {{ t('whatsapp.chatNow') }}
+            </a>
           </div>
           <!-- WhatsApp QR -->
           <div v-if="contactInfo.contact_whatsapp_qr" class="contact-qr">
@@ -88,6 +95,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { buildWhatsAppUrl } from '../utils/whatsapp'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { showToast } from 'vant'
@@ -283,6 +291,28 @@ function fallbackCopy(text) {
   padding: 8px;
   background: #fff;
   border-radius: 10px;
+}
+
+/* WhatsApp 一键跳转按钮（订单成功页内嵌） */
+.wa-chat-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #25d366;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.wa-chat-btn:hover {
+  background: #1ebe5a;
+}
+.wa-chat-btn:active {
+  background: #18a64d;
 }
 
 .qr-image {

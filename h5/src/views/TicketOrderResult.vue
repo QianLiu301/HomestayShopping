@@ -56,7 +56,14 @@
               <span class="contact-label">WhatsApp</span>
               <span class="contact-value">{{ contactInfo.contact_whatsapp }}</span>
             </div>
-            <van-button size="mini" plain type="success" @click="copyText(contactInfo.contact_whatsapp)">{{ t('order.copy') }}</van-button>
+            <a
+              :href="buildWhatsAppUrl(contactInfo.contact_whatsapp, t('whatsapp.messageOrder', { orderNo }))"
+              target="_blank"
+              rel="noopener"
+              class="wa-chat-btn"
+            >
+              {{ t('whatsapp.chatNow') }}
+            </a>
           </div>
 
           <div v-if="contactInfo.contact_whatsapp_qr" class="contact-qr">
@@ -99,6 +106,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { buildWhatsAppUrl } from '../utils/whatsapp'
 import { showToast } from 'vant'
 import { getContactInfo } from '../api'
 import PaymentPopup from '../components/PaymentPopup.vue'
@@ -350,6 +358,24 @@ function fallbackCopy(text) {
   object-fit: contain;
   border-radius: 8px;
 }
+
+/* WhatsApp 一键跳转按钮 */
+.wa-chat-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #25d366;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.wa-chat-btn:hover { background: #1ebe5a; }
+.wa-chat-btn:active { background: #18a64d; }
 
 .contact-empty {
   text-align: center;
