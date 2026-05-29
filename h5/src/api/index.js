@@ -84,6 +84,13 @@ export const requestRefund = (data) => api.post('/orders/refund', data)
 export const submitReview = (data) => api.post('/reviews', data)
 export const getProductRating = (productId) => api.get(`/products/${productId}/rating`)
 
+// 通用业务评价（接送/门票）
+export const submitTransferReview = (data) => api.post('/reviews/transfer', data)
+export const submitTicketReview = (data) => api.post('/reviews/ticket', data)
+export const getTicketReviews = (attractionId, params) => api.get(`/reviews/ticket/${attractionId}`, { params })
+export const getTransferRecentReviews = (params) => api.get('/reviews/transfer/recent', { params })
+export const checkReviewStatus = (params) => api.get('/reviews/check', { params })
+
 // ==================== Coupons ====================
 export const verifyCoupon = (data) => api.post('/coupons/verify', data)
 

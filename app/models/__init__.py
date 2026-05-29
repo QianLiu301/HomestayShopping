@@ -632,6 +632,64 @@ class Review(db.Model):
         }
 
 
+class ServiceReview(db.Model):
+    """通用业务评价表：覆盖接送/门票/商城各业务线"""
+    __tablename__ = 'service_reviews'
+
+    id = db.Column(db.Integer, primary_key=True)
+    # 业务类型：transfer / ticket / shop
+    order_type = db.Column(db.String(20), nullable=False, index=True)
+    # 订单 ID（逻辑引用，不加 FK 约束以保持灵活）
+    order_id = db.Column(db.Integer, nullable=False, index=True)
+    # 订单号（冗余存储，便于排查）
+    order_no = db.Column(db.String(32), index=True)
+    # 评价对象 ID：transfer→vehicle_id; ticket→attraction_id; shop→留空或 product_id
+    target_id = db.Column(db.Integer, index=True)
+    # 评分 1-5
+    rating = db.Column(db.SmallInteger, nullable=False)
+    # 评价内容
+    comment = db.Column(db.Text)
+    # 评价人显示名（取自订单 contact_name）
+    reviewer_name = db.Column(db.String(50))
+    # 提交时的语言
+    lang = db.Column(db.String(10), default='zh')
+    # 0=已发布 1=管理员隐藏
+    status = db.Column(db.SmallInteger, default=0, index=True)
+    # 管理员回复
+    admin_reply = db.Column(db.Text)
+    replied_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=china_now, index=True)
+    updated_at = db.Column(db.DateTime, default=china_now, onupdate=china_now)
+
+    # 复合唯一约束：同一订单只能评价一次
+    __table_args__ = (
+        db.UniqueConstraint('order_type', 'order_id', name='uq_review_order'),
+    )
+
+    def to_dict(self, masked=False):
+        # masked=True 时姓名脱敏（公开列表用），masked=False 时完整（管理端用）
+        name = self.reviewer_name or ''
+        if masked and name:
+            # 用第一个字符 + ***，保护隐私
+            name = name[0] + '***'
+        return {
+            'id': self.id,
+            'order_type': self.order_type,
+            'order_id': self.order_id,
+            'order_no': self.order_no,
+            'target_id': self.target_id,
+            'rating': self.rating,
+            'comment': self.comment,
+            'reviewer_name': name,
+            'lang': self.lang,
+            'status': self.status,
+            'admin_reply': self.admin_reply,
+            'replied_at': self.replied_at.isoformat() if self.replied_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
 class Wish(db.Model):
     """许愿池：用户提交的定制需求"""
     __tablename__ = 'wishes'

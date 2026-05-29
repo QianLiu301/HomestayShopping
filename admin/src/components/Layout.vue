@@ -70,6 +70,11 @@
           <template #title>{{ $t('nav.wishes') }}</template>
         </el-menu-item>
 
+        <el-menu-item index="/reviews">
+          <el-icon><Star /></el-icon>
+          <template #title>{{ $t('nav.reviews') }}</template>
+        </el-menu-item>
+
         <el-menu-item index="/payment">
           <el-icon><CreditCard /></el-icon>
           <template #title>{{ $t('nav.payment') }}</template>
@@ -124,7 +129,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
-import { DataAnalysis, ShoppingBag, Van, List, Ticket, Discount, CreditCard, Fold, Expand, UserFilled, ArrowDown, ChatLineRound } from '@element-plus/icons-vue'
+import { DataAnalysis, ShoppingBag, Van, List, Ticket, Discount, CreditCard, Fold, Expand, UserFilled, ArrowDown, ChatLineRound, Star } from '@element-plus/icons-vue'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()

@@ -107,7 +107,27 @@
         </div>
         <template v-else></template>
       </div>
+
+      <!-- 评价区域：已支付/已使用的订单可评价 -->
+      <div v-if="canReviewTicket" class="review-box">
+        <div v-if="ticketReviewed" class="review-done">
+          <van-icon name="checked" size="18" color="#52c41a" />
+          <span>{{ t('review.alreadyReviewed') }}</span>
+        </div>
+        <van-button v-else round block type="primary" plain @click="openTicketReview">
+          ⭐ {{ t('review.button') }}
+        </van-button>
+      </div>
     </div>
+
+    <!-- 门票评价对话框 -->
+    <ReviewDialog
+      v-if="result"
+      v-model="reviewDialogVisible"
+      order-type="ticket"
+      :order-id="result.id"
+      @success="onReviewSuccess"
+    />
 
     <PaymentPopup
       v-model:show="showPaymentPopup"
@@ -128,6 +148,7 @@ import { useI18n } from 'vue-i18n'
 import { queryTicketOrders, getTicketOrder, confirmTicketPaid } from '../api/tickets'
 import LangSwitch from '../components/LangSwitch.vue'
 import PaymentPopup from '../components/PaymentPopup.vue'
+import ReviewDialog from '../components/ReviewDialog.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -142,6 +163,25 @@ const result = ref(null)
 const showPaymentPopup = ref(false)
 const paymentMethod = ref('wechat')
 const paymentProofSubmitted = ref(false)
+
+// 评价相关
+const reviewDialogVisible = ref(false)
+const ticketReviewed = ref(false)
+
+// 只有"已支付/已使用"的订单才能评价
+const canReviewTicket = computed(() => {
+  if (!result.value) return false
+  return result.value.status === 1 || result.value.status === 2
+})
+
+function openTicketReview() {
+  reviewDialogVisible.value = true
+}
+
+function onReviewSuccess() {
+  ticketReviewed.value = true
+  reviewDialogVisible.value = false
+}
 
 const packageNames = computed(() => {
   const list = result.value?.package_snapshot || []
@@ -330,6 +370,21 @@ onMounted(() => {
   background: #f0f9eb;
   color: #67c23a;
   font-size: 14px;
+  font-weight: 600;
+}
+
+.review-box {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.review-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #52c41a;
   font-weight: 600;
 }
 

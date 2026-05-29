@@ -29,7 +29,8 @@ const routes = [
       { path: 'tickets/packages', name: 'TicketPackages', component: () => import('../views/TicketPackages.vue'), meta: { title: 'Ticket Packages' } },
       { path: 'tickets/transport-pricing', name: 'TicketTransportPricing', component: () => import('../views/TicketTransportPricing.vue'), meta: { title: 'Ticket Transport Pricing' } },
       { path: 'tickets/orders', name: 'TicketOrders', component: () => import('../views/TicketOrders.vue'), meta: { title: 'Ticket Orders' } },
-      { path: 'wishes', name: 'Wishes', component: () => import('../views/Wishes.vue'), meta: { title: 'Wishes' } }
+      { path: 'wishes', name: 'Wishes', component: () => import('../views/Wishes.vue'), meta: { title: 'Wishes' } },
+      { path: 'reviews', name: 'Reviews', component: () => import('../views/Reviews.vue'), meta: { title: 'Reviews' } }
     ]
   }
 ]

@@ -205,6 +205,21 @@ def _auto_migrate(app):
         ('ticket_transport_prices', 'created_at', 'TIMESTAMP'),
         ('ticket_transport_prices', 'updated_at', 'TIMESTAMP'),
 
+        # 通用业务评价表（接送/门票/商城）
+        ('service_reviews', 'order_type', 'VARCHAR(20)'),
+        ('service_reviews', 'order_id', 'INTEGER'),
+        ('service_reviews', 'order_no', 'VARCHAR(32)'),
+        ('service_reviews', 'target_id', 'INTEGER'),
+        ('service_reviews', 'rating', 'SMALLINT'),
+        ('service_reviews', 'comment', 'TEXT'),
+        ('service_reviews', 'reviewer_name', 'VARCHAR(50)'),
+        ('service_reviews', 'lang', "VARCHAR(10) DEFAULT 'zh'"),
+        ('service_reviews', 'status', 'SMALLINT DEFAULT 0'),
+        ('service_reviews', 'admin_reply', 'TEXT'),
+        ('service_reviews', 'replied_at', 'TIMESTAMP'),
+        ('service_reviews', 'created_at', 'TIMESTAMP'),
+        ('service_reviews', 'updated_at', 'TIMESTAMP'),
+
         # 许愿池
         ('wishes', 'contact_name', 'VARCHAR(50)'),
         ('wishes', 'contact_phone', 'VARCHAR(30)'),

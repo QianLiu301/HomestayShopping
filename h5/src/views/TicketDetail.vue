@@ -389,6 +389,38 @@
         </aside>
       </div>
 
+      <!-- 用户评价区 -->
+      <div class="card ticket-reviews-card" v-if="detail">
+        <div class="ticket-reviews-card__head">
+          <h3 class="ticket-reviews-card__title">⭐ {{ t('review.sectionTitle') }}</h3>
+          <div v-if="reviewStats.total > 0" class="ticket-reviews-card__stat">
+            <span class="ticket-reviews-card__avg">{{ reviewStats.avg_rating }}</span>
+            <van-rate :model-value="reviewStats.avg_rating || 0" readonly allow-half size="14" color="#ffd21e" void-color="#e0e0e0" />
+            <span class="ticket-reviews-card__count">({{ t('review.reviewCount', { count: reviewStats.total }) }})</span>
+          </div>
+        </div>
+
+        <div v-if="reviewLoading" class="ticket-reviews-card__loading">
+          <van-loading size="20" />
+        </div>
+
+        <template v-else-if="reviewList.length">
+          <div v-for="r in reviewList" :key="r.id" class="ticket-review-item">
+            <div class="ticket-review-item__head">
+              <van-rate :model-value="r.rating" readonly size="13" color="#ffd21e" void-color="#e0e0e0" />
+              <span class="ticket-review-item__name">{{ r.reviewer_name || '匿名' }}</span>
+              <span class="ticket-review-item__date">{{ formatReviewDate(r.created_at) }}</span>
+            </div>
+            <div v-if="r.comment" class="ticket-review-item__comment">{{ r.comment }}</div>
+            <div v-if="r.admin_reply" class="ticket-review-item__reply">
+              <span class="ticket-review-item__reply-label">{{ t('review.adminReplyLabel') }}：</span>{{ r.admin_reply }}
+            </div>
+          </div>
+        </template>
+
+        <div v-else class="ticket-reviews-card__empty">{{ t('review.noReviews') }}</div>
+      </div>
+
       <div class="bottom-action mobile-bottom-action">
         <div>
           <div class="bottom-action__label">{{ t('tickets.selectedPackage') }}</div>
@@ -475,7 +507,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ImagePreview } from 'vant'
 import { getTicketAttraction, getTicketTransportOptions } from '../api/tickets'
-import { resolveUrl } from '../api'
+import { resolveUrl, getTicketReviews } from '../api'
 import LangSwitch from '../components/LangSwitch.vue'
 import { useCartStore } from '../stores/cart'
 
@@ -1108,6 +1140,36 @@ function scrollToSection(section) {
 // 保存进入本页时的原始 title，离开时恢复
 const _prevTitle = typeof document !== 'undefined' ? document.title : ''
 
+// ===== 评价数据 =====
+const reviewList = ref([])
+const reviewStats = ref({ avg_rating: null, total: 0 })
+const reviewLoading = ref(false)
+
+async function loadReviews(attractionId) {
+  reviewLoading.value = true
+  try {
+    const res = await getTicketReviews(attractionId, { page: 1, per_page: 10 })
+    reviewList.value = res.data?.list || []
+    reviewStats.value = {
+      avg_rating: res.data?.avg_rating,
+      total: res.data?.total || 0,
+    }
+  } catch (e) {
+    // 评价拉不到不影响主流程，静默
+    reviewList.value = []
+    reviewStats.value = { avg_rating: null, total: 0 }
+  } finally {
+    reviewLoading.value = false
+  }
+}
+
+function formatReviewDate(s) {
+  if (!s) return ''
+  const d = new Date(s)
+  if (isNaN(d.getTime())) return ''
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 async function loadData() {
   loading.value = true
   try {
@@ -1131,6 +1193,9 @@ async function loadData() {
     activeImage.value = 0
     currentMonth.value = getMonthStart(today)
     ensureSelectedDateIsValid()
+
+    // 异步加载评价（不阻塞主流程）
+    loadReviews(attractionId)
   } catch (error) {
     showInlineNotice(error.message || t('common.noData'), 'error')
   } finally {
@@ -2454,6 +2519,106 @@ onUnmounted(() => {
 .ticket-inline-notice--error,
 .ticket-inline-notice--info {
   background: rgba(33, 33, 33, 0.92);
+}
+
+/* ===== 用户评价区 ===== */
+.ticket-reviews-card {
+  margin: 12px;
+  margin-bottom: 100px;   /* 给底部 bottom-action 留空间 */
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 6px 24px rgba(15, 23, 42, 0.06);
+}
+.ticket-reviews-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f4ebe0;
+}
+.ticket-reviews-card__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #3b2b1f;
+  margin: 0;
+}
+.ticket-reviews-card__stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ticket-reviews-card__avg {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ff9800;
+}
+.ticket-reviews-card__count {
+  font-size: 12px;
+  color: #8d7b67;
+}
+.ticket-reviews-card__loading {
+  text-align: center;
+  padding: 24px 0;
+}
+.ticket-reviews-card__empty {
+  padding: 24px 0;
+  text-align: center;
+  font-size: 13px;
+  color: #aaa;
+}
+.ticket-review-item {
+  padding: 12px 0;
+  border-bottom: 1px solid #f7f0e6;
+}
+.ticket-review-item:last-child {
+  border-bottom: none;
+}
+.ticket-review-item__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.ticket-review-item__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a3728;
+}
+.ticket-review-item__date {
+  font-size: 12px;
+  color: #aaa;
+}
+.ticket-review-item__comment {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #5a4a3a;
+  white-space: pre-wrap;
+}
+.ticket-review-item__reply {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fff7e6;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #8a6635;
+}
+.ticket-review-item__reply-label {
+  font-weight: 600;
+}
+
+/* 桌面端：评价卡片 max-width，不要太宽 */
+@media (min-width: 1024px) {
+  .ticket-reviews-card {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 32px;
+  }
 }
 
 .bottom-action {

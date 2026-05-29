@@ -134,3 +134,8 @@ export const updateSettings = data => http.put('/admin/settings', data)
 export const getWishes = params => http.get('/admin/wishes', { params })
 export const updateWish = (id, data) => http.put(`/admin/wishes/${id}`, data)
 export const deleteWish = id => http.delete(`/admin/wishes/${id}`)
+
+// Reviews (评价管理：接送 / 门票 / 商城)
+export const getAdminReviews = params => http.get('/admin/reviews', { params })
+export const updateReview = (id, data) => http.put(`/admin/reviews/${id}`, data)
+export const deleteReview = id => http.delete(`/admin/reviews/${id}`)

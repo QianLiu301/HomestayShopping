@@ -243,7 +243,7 @@
           </div>
         </template>
 
-        <!-- Review section -->
+        <!-- Review section（商城）-->
         <template v-if="expandedIdx === idx && item.type === 'shop'">
           <div v-if="item.order.review" class="review-section">
             <div class="review-label">{{ t('review.myReview') }}</div>
@@ -251,8 +251,21 @@
             <div v-if="item.order.review.comment" class="review-comment">{{ item.order.review.comment }}</div>
           </div>
           <div v-else-if="item.order.status === 3" class="review-section">
-            <van-button size="small" type="primary" plain round @click.stop="openReview(item.order)">
+            <van-button size="small" type="primary" plain round @click.stop="openShopReview(item.order)">
               {{ t('review.writeReview') }}
+            </van-button>
+          </div>
+        </template>
+
+        <!-- Review section（接送 / 门票）-->
+        <template v-if="expandedIdx === idx && (item.type === 'transfer' || item.type === 'ticket')">
+          <div v-if="item._reviewed" class="review-section review-section--done">
+            <van-icon name="checked" size="16" color="#52c41a" />
+            <span>{{ t('review.alreadyReviewed') }}</span>
+          </div>
+          <div v-else-if="isReviewable(item)" class="review-section">
+            <van-button size="small" type="primary" plain round @click.stop="openServiceReview(item)">
+              ⭐ {{ t('review.button') }}
             </van-button>
           </div>
         </template>
@@ -322,7 +335,7 @@
       </div>
     </van-dialog>
 
-    <!-- Review dialog -->
+    <!-- 商城评价对话框（保留旧逻辑，兼容现有商城订单评价）-->
     <van-dialog
       v-model:show="reviewVisible"
       :title="t('review.title')"
@@ -345,6 +358,15 @@
         />
       </div>
     </van-dialog>
+
+    <!-- 通用业务评价对话框（接送/门票）-->
+    <ReviewDialog
+      v-if="serviceReviewItem"
+      v-model="serviceReviewVisible"
+      :order-type="serviceReviewItem.type"
+      :order-id="serviceReviewItem.order.id"
+      @success="onServiceReviewSuccess"
+    />
   </div>
 </template>
 
@@ -354,6 +376,7 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { queryOrder, submitReview, requestRefund } from '../api'
 import { showToast } from 'vant'
+import ReviewDialog from '../components/ReviewDialog.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -376,11 +399,45 @@ const refundSuccessVisible = ref(false)
 const refundLoading = ref(false)
 const refundOrder = ref(null)
 
-function openReview(order) {
+// ===== 商城评价（原有逻辑，保持向后兼容）=====
+function openShopReview(order) {
   reviewOrderId.value = order.id
   reviewRating.value = 5
   reviewComment.value = ''
   reviewVisible.value = true
+}
+// 旧名字兼容
+const openReview = openShopReview
+
+// ===== 接送/门票评价（新通用系统）=====
+const serviceReviewVisible = ref(false)
+const serviceReviewItem = ref(null)
+
+// 判断订单是否可评价
+function isReviewable(item) {
+  if (item._reviewed) return false
+  if (item.type === 'transfer') {
+    // 接送订单：已支付(1) / 已完成(2)
+    return item.order.status === 1 || item.order.status === 2
+  }
+  if (item.type === 'ticket') {
+    // 门票订单：已支付(1) / 已使用(2)
+    return item.order.status === 1 || item.order.status === 2
+  }
+  return false
+}
+
+function openServiceReview(item) {
+  serviceReviewItem.value = item
+  serviceReviewVisible.value = true
+}
+
+function onServiceReviewSuccess() {
+  // 标记当前订单"已评价"，让按钮变成 ✓
+  if (serviceReviewItem.value) {
+    serviceReviewItem.value._reviewed = true
+  }
+  serviceReviewVisible.value = false
 }
 
 async function onSubmitReview() {
@@ -751,6 +808,14 @@ onMounted(() => {
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid #f0f0f0;
+}
+
+.review-section--done {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #52c41a;
 }
 
 .review-label {
