@@ -221,6 +221,8 @@ class Product(db.Model):
             'is_featured': self.is_featured,
             'sort_order': self.sort_order,
             'sales_count': int(getattr(self, 'sales_count', 0) or 0),
+            'avg_rating': getattr(self, 'avg_rating', None),
+            'review_count': int(getattr(self, 'review_count', 0) or 0),
             'status': self.status
         }
 

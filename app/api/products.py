@@ -1,6 +1,6 @@
 from flask import request
 from app.api import api_bp
-from app.models import Product, Category, OrderItem, ShopOrder
+from app.models import Product, Category, OrderItem, ShopOrder, Review
 from app.utils import success_response, error_response, get_lang, paginate_query
 from app import db
 
@@ -19,6 +19,32 @@ def _get_product_sales_map(product_ids):
     ).group_by(OrderItem.product_id).all()
 
     return {product_id: int(sales or 0) for product_id, sales in rows}
+
+
+def _get_product_ratings_map(product_ids):
+    """批量获取一组商品的平均评分 + 评价数。
+    通过 Review → ShopOrder → OrderItem → Product 关联。
+    返回: { product_id: { 'avg_rating': float|None, 'review_count': int } }
+    """
+    if not product_ids:
+        return {}
+
+    rows = db.session.query(
+        OrderItem.product_id,
+        db.func.avg(Review.rating).label('avg'),
+        db.func.count(Review.id).label('cnt'),
+    ).join(ShopOrder, OrderItem.order_id == ShopOrder.id) \
+     .join(Review, Review.order_id == ShopOrder.id) \
+     .filter(OrderItem.product_id.in_(product_ids)) \
+     .group_by(OrderItem.product_id).all()
+
+    return {
+        pid: {
+            'avg_rating': round(float(avg), 1) if avg is not None else None,
+            'review_count': int(cnt or 0),
+        }
+        for pid, avg, cnt in rows
+    }
 
 
 @api_bp.route('/products', methods=['GET'])
@@ -86,9 +112,13 @@ def get_products():
     result = paginate_query(query, page, per_page)
     product_ids = [p.id for p in result['items']]
     sales_map = _get_product_sales_map(product_ids)
+    ratings_map = _get_product_ratings_map(product_ids)
 
     for product in result['items']:
         product.sales_count = sales_map.get(product.id, 0)
+        rating = ratings_map.get(product.id, {})
+        product.avg_rating = rating.get('avg_rating')
+        product.review_count = rating.get('review_count', 0)
 
     return success_response({
         'list': [p.to_dict(lang) for p in result['items']],
@@ -110,6 +140,9 @@ def get_product(product_id):
         return error_response('商品不存在', 404)
 
     product.sales_count = _get_product_sales_map([product.id]).get(product.id, 0)
+    rating = _get_product_ratings_map([product.id]).get(product.id, {})
+    product.avg_rating = rating.get('avg_rating')
+    product.review_count = rating.get('review_count', 0)
 
     return success_response(product.to_dict(lang))
 
@@ -125,8 +158,13 @@ def get_featured_products():
         .limit(limit)\
         .all()
 
-    sales_map = _get_product_sales_map([p.id for p in products])
+    product_ids = [p.id for p in products]
+    sales_map = _get_product_sales_map(product_ids)
+    ratings_map = _get_product_ratings_map(product_ids)
     for product in products:
         product.sales_count = sales_map.get(product.id, 0)
+        rating = ratings_map.get(product.id, {})
+        product.avg_rating = rating.get('avg_rating')
+        product.review_count = rating.get('review_count', 0)
 
     return success_response([p.to_dict(lang) for p in products])

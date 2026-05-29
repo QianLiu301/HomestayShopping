@@ -69,9 +69,19 @@
                 </div>
 
                 <div class="product-name shop-card__name">{{ product.name }}</div>
+
+                <!-- 评分 + 销量行（有数据才显示）-->
+                <div v-if="product.avg_rating || product.sales_count > 0" class="shop-card__stats">
+                  <span v-if="product.avg_rating" class="shop-card__rating">
+                    <span class="shop-card__rating-star">⭐</span>
+                    <span class="shop-card__rating-value">{{ product.avg_rating }}</span>
+                    <span v-if="product.review_count" class="shop-card__rating-count">({{ product.review_count }})</span>
+                  </span>
+                  <span v-if="product.sales_count > 0" class="shop-card__sales">{{ t('shop.soldCount', { count: product.sales_count }) }}</span>
+                </div>
+
                 <div class="shop-card__meta">
                   <span>{{ t('shop.meta') }}</span>
-                  <span v-if="product.sales_count > 0" class="shop-card__sales">{{ t('shop.soldCount', { count: product.sales_count }) }}</span>
                 </div>
 
                 <div class="shop-card__price-row">
@@ -396,6 +406,38 @@ function onRefresh() {
 
 .shop-card__sales {
   color: #9b9388;
+  font-size: 12px;
+}
+
+/* 评分 + 销量行 */
+.shop-card__stats {
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.shop-card__rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fff7e6;
+  font-size: 12px;
+  font-weight: 600;
+  color: #d97706;
+}
+.shop-card__rating-star {
+  font-size: 11px;
+}
+.shop-card__rating-value {
+  font-size: 12px;
+}
+.shop-card__rating-count {
+  font-size: 11px;
+  color: #8a6635;
+  font-weight: 500;
 }
 
 .shop-card__price-row {

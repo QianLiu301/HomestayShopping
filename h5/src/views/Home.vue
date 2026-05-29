@@ -231,6 +231,15 @@
             </div>
             <div class="si-info">
               <h3>{{ product.name }}</h3>
+
+              <!-- 评分 + 销量小标 -->
+              <div v-if="product.avg_rating || product.sales_count > 0" class="si-stats">
+                <span v-if="product.avg_rating" class="si-rating">
+                  ⭐ {{ product.avg_rating }}<span v-if="product.review_count" class="si-rating-count"> ({{ product.review_count }})</span>
+                </span>
+                <span v-if="product.sales_count > 0" class="si-sales">{{ t('shop.soldCount', { count: product.sales_count }) }}</span>
+              </div>
+
               <div class="si-price-wrap">
                 <p class="si-price">¥{{ product.price }}</p>
                 <p v-if="product.price" class="si-price-ref">≈ {{ formatUsdReference(product.price) }}</p>
@@ -868,6 +877,26 @@ async function onSubmitWish() {
 .si-view { color: #fff; font-size: 14px; font-weight: 600; letter-spacing: 1px; padding: 10px 24px; border: 1.5px solid #fff; border-radius: 50px; }
 .si-info { padding: 16px 20px; }
 .si-info h3 { font-size: 15px; font-weight: 500; line-height: 1.4; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.si-stats {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+.si-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fff7e6;
+  color: #d97706;
+  font-weight: 600;
+}
+.si-rating-count { color: #8a6635; font-weight: 500; }
+.si-sales { color: #9b9388; }
 .si-price-wrap { display: flex; flex-direction: column; gap: 4px; }
 .si-price { margin: 0; font-size: 18px; font-weight: 700; color: var(--accent); }
 .si-price-ref { margin: 0; font-size: 12px; line-height: 1.25; color: #9b9388; }
