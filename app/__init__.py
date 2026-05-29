@@ -370,6 +370,77 @@ def _auto_migrate(app):
                 except Exception:
                     db.session.rollback()
 
+        # ============ 性能索引：批量创建索引（仅 PG）============
+        # 给高频查询/过滤/排序的列加索引，订单量上来后查询不会变慢
+        # 命名规范: idx_<table>_<column>
+        indexes_to_ensure = [
+            # ----- 商城订单 -----
+            ('shop_orders', 'contact_phone'),
+            ('shop_orders', 'contact_email'),
+            ('shop_orders', 'status'),
+            ('shop_orders', 'created_at'),
+            ('shop_orders', 'booking_no'),
+            ('shop_orders', 'payment_status'),
+            # ----- 接送订单 -----
+            ('transfer_orders', 'contact_phone'),
+            ('transfer_orders', 'contact_email'),
+            ('transfer_orders', 'status'),
+            ('transfer_orders', 'created_at'),
+            ('transfer_orders', 'vehicle_id'),
+            ('transfer_orders', 'booking_no'),
+            ('transfer_orders', 'payment_status'),
+            # ----- 门票订单 -----
+            ('ticket_orders', 'contact_phone'),
+            ('ticket_orders', 'contact_email'),
+            ('ticket_orders', 'status'),
+            ('ticket_orders', 'created_at'),
+            ('ticket_orders', 'attraction_id'),
+            ('ticket_orders', 'booking_no'),
+            ('ticket_orders', 'payment_status'),
+            ('ticket_orders', 'visit_date'),
+            # ----- 商品 -----
+            ('products', 'status'),
+            ('products', 'is_featured'),
+            ('products', 'category_id'),
+            ('products', 'created_at'),
+            # ----- 订单明细：JOIN/聚合关键 -----
+            ('order_items', 'order_id'),
+            ('order_items', 'product_id'),
+            # ----- 门票景点 / 票种 -----
+            ('ticket_attractions', 'status'),
+            ('ticket_attractions', 'featured'),
+            ('ticket_attractions', 'city'),
+            ('ticket_packages', 'attraction_id'),
+            ('ticket_packages', 'status'),
+            # ----- 车辆 -----
+            ('vehicles', 'status'),
+            # ----- 分类 -----
+            ('categories', 'status'),
+            # ----- 优惠券 -----
+            ('coupons', 'status'),
+            # ----- 评价（老 + 新）-----
+            ('reviews', 'order_id'),
+            ('service_reviews', 'order_type'),
+            ('service_reviews', 'target_id'),
+            ('service_reviews', 'status'),
+            ('service_reviews', 'created_at'),
+            # ----- 许愿池 -----
+            ('wishes', 'status'),
+            ('wishes', 'created_at'),
+        ]
+        if is_pg:
+            for table, column in indexes_to_ensure:
+                index_name = f'idx_{table}_{column}'
+                try:
+                    db.session.execute(db.text(
+                        f'CREATE INDEX IF NOT EXISTS {index_name} ON {table} ({column})'
+                    ))
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    # 列可能不存在（旧表/新功能），静默跳过
+                    app.logger.debug(f'Skip index {index_name}: {e}')
+
 
 def create_app(config_name='default'):
     """应用工厂函数"""
@@ -491,6 +562,100 @@ def create_app(config_name='default'):
     @app.route('/health')
     def health_check():
         return {'status': 'ok', 'message': 'Homestay API is running'}
+
+    # ==================== SEO: sitemap.xml + robots.txt ====================
+    # 主站域名（用户访问的公开域名，不是 api 域名）
+    SITE_DOMAIN = os.getenv('SITE_DOMAIN', 'https://shanghai-tour-guide.com')
+
+    @app.route('/robots.txt')
+    def robots_txt():
+        """搜索引擎抓取规则"""
+        from flask import Response
+        body = (
+            "User-agent: *\n"
+            "Allow: /\n"
+            "Disallow: /admin\n"
+            "Disallow: /api\n"
+            "Disallow: /order-query\n"
+            "Disallow: /checkout\n"
+            "Disallow: /ticket-checkout\n"
+            "Disallow: /order-result\n"
+            "Disallow: /ticket-order-result\n"
+            f"\nSitemap: {SITE_DOMAIN}/sitemap.xml\n"
+            f"Sitemap: {SITE_DOMAIN}/api/sitemap.xml\n"
+        )
+        return Response(body, mimetype='text/plain')
+
+    @app.route('/sitemap.xml')
+    @app.route('/api/sitemap.xml')
+    def sitemap_xml():
+        """动态生成 sitemap.xml：包含所有公开商品/景点/静态页"""
+        from flask import Response
+        from app.models import Product, TicketAttraction
+        from datetime import datetime
+
+        today = datetime.utcnow().strftime('%Y-%m-%d')
+        base = SITE_DOMAIN.rstrip('/')
+
+        urls = []
+
+        # 静态页面（高频访问）
+        for path, priority, freq in [
+            ('/',         '1.0', 'daily'),
+            ('/shop',     '0.9', 'daily'),
+            ('/tickets',  '0.9', 'daily'),
+            ('/transfer', '0.8', 'weekly'),
+        ]:
+            urls.append({
+                'loc': f'{base}{path}',
+                'lastmod': today,
+                'changefreq': freq,
+                'priority': priority,
+            })
+
+        # 商品详情页
+        try:
+            for p in Product.query.filter_by(status=1).all():
+                lastmod = p.updated_at if getattr(p, 'updated_at', None) else None
+                urls.append({
+                    'loc': f'{base}/product/{p.id}',
+                    'lastmod': lastmod.strftime('%Y-%m-%d') if lastmod else today,
+                    'changefreq': 'weekly',
+                    'priority': '0.7',
+                })
+        except Exception as e:
+            app.logger.warning(f'sitemap: failed to list products: {e}')
+
+        # 景点详情页
+        try:
+            for a in TicketAttraction.query.filter_by(status=1).all():
+                lastmod = a.updated_at if getattr(a, 'updated_at', None) else None
+                urls.append({
+                    'loc': f'{base}/tickets/{a.id}',
+                    'lastmod': lastmod.strftime('%Y-%m-%d') if lastmod else today,
+                    'changefreq': 'weekly',
+                    'priority': '0.7',
+                })
+        except Exception as e:
+            app.logger.warning(f'sitemap: failed to list attractions: {e}')
+
+        # 拼接 XML
+        items_xml = '\n'.join(
+            f'  <url>\n'
+            f'    <loc>{u["loc"]}</loc>\n'
+            f'    <lastmod>{u["lastmod"]}</lastmod>\n'
+            f'    <changefreq>{u["changefreq"]}</changefreq>\n'
+            f'    <priority>{u["priority"]}</priority>\n'
+            f'  </url>'
+            for u in urls
+        )
+        xml = (
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+            f'{items_xml}\n'
+            '</urlset>\n'
+        )
+        return Response(xml, mimetype='application/xml')
 
     # 提供 admin 前端静态文件
     admin_dist = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'admin', 'dist')
