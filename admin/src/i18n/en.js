@@ -24,7 +24,31 @@ export default {
     delivery: 'Delivery',
     wishes: 'Wish Pool',
     reviews: 'Reviews',
+    accounts: 'Accounts',
     logout: 'Logout'
+  },
+
+  accounts: {
+    title: 'Accounts',
+    create: 'New Account',
+    username: 'Username',
+    password: 'Password',
+    passwordPlaceholder: 'Min 6 chars (leave blank to keep)',
+    name: 'Name',
+    role: 'Role',
+    status: 'Status',
+    enabled: 'Enabled',
+    disabled: 'Disabled',
+    createdAt: 'Created',
+    save: 'Save',
+    cancel: 'Cancel',
+    editTitle: 'Edit Account',
+    createTitle: 'Create Account',
+    deleteConfirm: 'Delete this account? This cannot be undone.',
+    cantEditOwner: 'Owner account: only the name can be changed',
+    saved: 'Saved',
+    deleted: 'Deleted',
+    roleHint: 'Note: Owner account is provisioned by backend env vars, not via this page',
   },
 
   reviews: {

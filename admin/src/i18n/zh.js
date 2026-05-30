@@ -24,7 +24,31 @@ export default {
     delivery: '配送管理',
     wishes: '许愿池',
     reviews: '评价管理',
+    accounts: '账号管理',
     logout: '退出登录'
+  },
+
+  accounts: {
+    title: '账号管理',
+    create: '新建账号',
+    username: '用户名',
+    password: '密码',
+    passwordPlaceholder: '至少 6 个字符（不填则不修改）',
+    name: '姓名',
+    role: '角色',
+    status: '状态',
+    enabled: '启用',
+    disabled: '禁用',
+    createdAt: '创建时间',
+    save: '保存',
+    cancel: '取消',
+    editTitle: '编辑账号',
+    createTitle: '创建账号',
+    deleteConfirm: '确定删除该账号吗？删除后无法恢复',
+    cantEditOwner: 'Owner 账号只能改姓名',
+    saved: '保存成功',
+    deleted: '已删除',
+    roleHint: '注：Owner 账号由后端环境变量生成，不能在此创建',
   },
 
   reviews: {

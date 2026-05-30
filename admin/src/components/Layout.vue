@@ -14,70 +14,75 @@
         text-color="rgba(255,255,255,0.7)"
         active-text-color="#c8a97e"
       >
-        <el-menu-item index="/dashboard">
+        <el-menu-item v-if="can('/dashboard')" index="/dashboard">
           <el-icon><DataAnalysis /></el-icon>
           <template #title>{{ $t('nav.dashboard') }}</template>
         </el-menu-item>
 
-        <el-sub-menu index="shop-mgmt">
+        <el-sub-menu v-if="canGroup('shop-mgmt')" index="shop-mgmt">
           <template #title>
             <el-icon><ShoppingBag /></el-icon>
             <span>{{ $t('nav.shop') }}</span>
           </template>
-          <el-menu-item index="/products">{{ $t('nav.products') }}</el-menu-item>
-          <el-menu-item index="/categories">{{ $t('nav.categories') }}</el-menu-item>
+          <el-menu-item v-if="can('/products')" index="/products">{{ $t('nav.products') }}</el-menu-item>
+          <el-menu-item v-if="can('/categories')" index="/categories">{{ $t('nav.categories') }}</el-menu-item>
         </el-sub-menu>
 
-        <el-sub-menu index="transfer-mgmt">
+        <el-sub-menu v-if="canGroup('transfer-mgmt')" index="transfer-mgmt">
           <template #title>
             <el-icon><Van /></el-icon>
             <span>{{ $t('nav.transfer') }}</span>
           </template>
-          <el-menu-item index="/transfer/pricing">{{ $t('nav.transferPricing') }}</el-menu-item>
-          <el-menu-item index="/vehicles">{{ $t('nav.vehicles') }}</el-menu-item>
-          <el-menu-item index="/locations">{{ $t('nav.locations') }}</el-menu-item>
+          <el-menu-item v-if="can('/transfer/pricing')" index="/transfer/pricing">{{ $t('nav.transferPricing') }}</el-menu-item>
+          <el-menu-item v-if="can('/vehicles')" index="/vehicles">{{ $t('nav.vehicles') }}</el-menu-item>
+          <el-menu-item v-if="can('/locations')" index="/locations">{{ $t('nav.locations') }}</el-menu-item>
         </el-sub-menu>
 
-        <el-sub-menu index="tickets-mgmt">
+        <el-sub-menu v-if="canGroup('tickets-mgmt')" index="tickets-mgmt">
           <template #title>
             <el-icon><Ticket /></el-icon>
             <span>{{ $t('nav.tickets') }}</span>
           </template>
-          <el-menu-item index="/tickets/attractions">{{ $t('nav.ticketAttractions') }}</el-menu-item>
-          <el-menu-item index="/tickets/packages">{{ $t('nav.ticketPackages') }}</el-menu-item>
-          <el-menu-item index="/tickets/transport-pricing">{{ $t('nav.ticketTransportPricing') }}</el-menu-item>
-          <el-menu-item index="/tickets/orders">{{ $t('nav.ticketOrders') }}</el-menu-item>
+          <el-menu-item v-if="can('/tickets/attractions')" index="/tickets/attractions">{{ $t('nav.ticketAttractions') }}</el-menu-item>
+          <el-menu-item v-if="can('/tickets/packages')" index="/tickets/packages">{{ $t('nav.ticketPackages') }}</el-menu-item>
+          <el-menu-item v-if="can('/tickets/transport-pricing')" index="/tickets/transport-pricing">{{ $t('nav.ticketTransportPricing') }}</el-menu-item>
+          <el-menu-item v-if="can('/tickets/orders')" index="/tickets/orders">{{ $t('nav.ticketOrders') }}</el-menu-item>
         </el-sub-menu>
 
-        <el-sub-menu index="order-mgmt">
+        <el-sub-menu v-if="canGroup('order-mgmt')" index="order-mgmt">
           <template #title>
             <el-icon><List /></el-icon>
             <span>{{ $t('nav.orders') }}</span>
           </template>
-          <el-menu-item index="/orders/shop">{{ $t('nav.shopOrders') }}</el-menu-item>
-          <el-menu-item index="/orders/transfer">{{ $t('nav.transferOrders') }}</el-menu-item>
-          <el-menu-item index="/orders/refund">{{ $t('nav.refundManagement') }}</el-menu-item>
-          <el-menu-item index="/delivery">{{ $t('nav.delivery') }}</el-menu-item>
+          <el-menu-item v-if="can('/orders/shop')" index="/orders/shop">{{ $t('nav.shopOrders') }}</el-menu-item>
+          <el-menu-item v-if="can('/orders/transfer')" index="/orders/transfer">{{ $t('nav.transferOrders') }}</el-menu-item>
+          <el-menu-item v-if="can('/orders/refund')" index="/orders/refund">{{ $t('nav.refundManagement') }}</el-menu-item>
+          <el-menu-item v-if="can('/delivery')" index="/delivery">{{ $t('nav.delivery') }}</el-menu-item>
         </el-sub-menu>
 
-        <el-menu-item index="/coupons">
+        <el-menu-item v-if="can('/coupons')" index="/coupons">
           <el-icon><Discount /></el-icon>
           <template #title>{{ $t('nav.coupons') }}</template>
         </el-menu-item>
 
-        <el-menu-item index="/wishes">
+        <el-menu-item v-if="can('/wishes')" index="/wishes">
           <el-icon><ChatLineRound /></el-icon>
           <template #title>{{ $t('nav.wishes') }}</template>
         </el-menu-item>
 
-        <el-menu-item index="/reviews">
+        <el-menu-item v-if="can('/reviews')" index="/reviews">
           <el-icon><Star /></el-icon>
           <template #title>{{ $t('nav.reviews') }}</template>
         </el-menu-item>
 
-        <el-menu-item index="/payment">
+        <el-menu-item v-if="can('/payment')" index="/payment">
           <el-icon><CreditCard /></el-icon>
           <template #title>{{ $t('nav.payment') }}</template>
+        </el-menu-item>
+
+        <el-menu-item v-if="can('/accounts')" index="/accounts">
+          <el-icon><Avatar /></el-icon>
+          <template #title>{{ $t('nav.accounts') }}</template>
         </el-menu-item>
       </el-menu>
     </el-aside>
@@ -107,6 +112,7 @@
             <span class="user-info">
               <el-icon><UserFilled /></el-icon>
               {{ auth.user?.name || auth.user?.username || 'Admin' }}
+              <span v-if="currentRoleLabel" class="role-badge">{{ currentRoleLabel }}</span>
               <el-icon class="el-icon--right"><ArrowDown /></el-icon>
             </span>
             <template #dropdown>
@@ -129,7 +135,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
-import { DataAnalysis, ShoppingBag, Van, List, Ticket, Discount, CreditCard, Fold, Expand, UserFilled, ArrowDown, ChatLineRound, Star } from '@element-plus/icons-vue'
+import { DataAnalysis, ShoppingBag, Van, List, Ticket, Discount, CreditCard, Fold, Expand, UserFilled, ArrowDown, ChatLineRound, Star, Avatar } from '@element-plus/icons-vue'
+import { canAccess, canAccessGroup, ROLE_LABELS } from '../utils/permissions'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
@@ -137,6 +144,17 @@ const router = useRouter()
 const route = useRoute()
 const isMobile = ref(window.innerWidth <= 768)
 const isCollapse = ref(isMobile.value)
+
+// 当前角色 + 权限助手
+const currentRole = computed(() => auth.user?.role || '')
+const currentRoleLabel = computed(() => ROLE_LABELS[currentRole.value] || '')
+
+function can(path) {
+  return canAccess(path, currentRole.value)
+}
+function canGroup(groupKey) {
+  return canAccessGroup(groupKey, currentRole.value)
+}
 
 function onResize() {
   isMobile.value = window.innerWidth <= 768
@@ -220,6 +238,16 @@ function onCommand(cmd) {
 .lang-btn { display: flex; align-items: center; gap: 4px; font-size: 13px; color: #4a3728; cursor: pointer; padding: 4px 8px; border-radius: 4px; border: 1px solid #e8dfd4; }
 .lang-btn:hover { border-color: #c8a97e; color: #c8a97e; }
 .user-info { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; color: #4a3728; }
+.role-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  margin-left: 4px;
+  border-radius: 999px;
+  background: rgba(200, 169, 126, 0.18);
+  color: #8a6b3a;
+  font-size: 11px;
+  font-weight: 600;
+}
 .main { background: #faf6ef; padding: 24px; }
 
 /* Mobile overlay */

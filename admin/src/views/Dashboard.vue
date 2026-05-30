@@ -9,9 +9,10 @@
       </el-radio-group>
     </div>
 
-    <!-- Row 1: Revenue cards (4 cards) -->
+    <!-- Row 1: Revenue cards -->
+    <!-- 接送专员只看到接送营收一张卡 -->
     <el-row :gutter="16">
-      <el-col :xs="12" :sm="12" :md="6">
+      <el-col v-if="!isTransferOps" :xs="12" :sm="12" :md="6">
         <el-card shadow="hover" class="stat-card stat-card--compact">
           <div class="stat-icon" style="background:#f0f5ff">
             <el-icon :size="22" color="#4a7cf7"><TrendCharts /></el-icon>
@@ -22,7 +23,7 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :xs="12" :sm="12" :md="6">
+      <el-col v-if="!isTransferOps" :xs="12" :sm="12" :md="6">
         <el-card shadow="hover" class="stat-card stat-card--compact">
           <div class="stat-icon" style="background:#f6ffed">
             <el-icon :size="22" color="#52c41a"><ShoppingCart /></el-icon>
@@ -44,7 +45,7 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :xs="12" :sm="12" :md="6">
+      <el-col v-if="!isTransferOps" :xs="12" :sm="12" :md="6">
         <el-card shadow="hover" class="stat-card stat-card--compact">
           <div class="stat-icon" style="background:#fff1f0">
             <el-icon :size="22" color="#eb6f5c"><Ticket /></el-icon>
@@ -57,9 +58,9 @@
       </el-col>
     </el-row>
 
-    <!-- Row 2: Count cards (5 cards, flex 等分 1 行) -->
+    <!-- Row 2: Count cards (按角色过滤) -->
     <div class="count-row">
-      <div class="count-cell" v-for="card in countCards" :key="card.key">
+      <div class="count-cell" v-for="card in visibleCountCards" :key="card.key">
         <el-card shadow="hover" class="stat-card stat-card--compact" @click="card.go && router.push(card.go)" :class="{ clickable: card.go }">
           <div class="stat-icon" :style="{ background: card.bg }">
             <el-icon :size="22" :color="card.iconColor"><component :is="card.icon" /></el-icon>
@@ -72,9 +73,9 @@
       </div>
     </div>
 
-    <!-- Pending orders: 4 columns (shop / transfer / ticket / wishes) -->
+    <!-- Pending orders (按角色显示不同列) -->
     <el-row :gutter="16" style="margin-top:20px">
-      <el-col :xs="24" :sm="12" :lg="6">
+      <el-col v-if="!isTransferOps" :xs="24" :sm="12" :lg="6">
         <el-card shadow="hover" class="pending-card">
           <template #header>{{ $t('dashboard.recentShopOrders') }}</template>
           <el-table :data="recentShopOrders" size="small" stripe height="280">
@@ -91,7 +92,7 @@
         </el-card>
       </el-col>
 
-      <el-col :xs="24" :sm="12" :lg="6">
+      <el-col :xs="24" :sm="12" :lg="isTransferOps ? 24 : 6">
         <el-card shadow="hover" class="pending-card">
           <template #header>{{ $t('dashboard.recentTransferOrders') }}</template>
           <el-table :data="recentTransferOrders" size="small" stripe height="280">
@@ -106,7 +107,7 @@
         </el-card>
       </el-col>
 
-      <el-col :xs="24" :sm="12" :lg="6">
+      <el-col v-if="!isTransferOps" :xs="24" :sm="12" :lg="6">
         <el-card shadow="hover" class="pending-card">
           <template #header>{{ $t('dashboard.recentTicketOrders') }}</template>
           <el-table :data="recentTicketOrders" size="small" stripe height="280">
@@ -123,7 +124,7 @@
         </el-card>
       </el-col>
 
-      <el-col :xs="24" :sm="12" :lg="6">
+      <el-col v-if="!isTransferOps" :xs="24" :sm="12" :lg="6">
         <el-card shadow="hover" class="pending-card">
           <template #header>{{ $t('dashboard.recentWishes') }}</template>
           <el-table :data="recentWishes" size="small" stripe height="280">
@@ -180,6 +181,11 @@ import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
 import { getShopOrders, getTransferOrders, getProducts, getAnalytics, getTopProducts, getWishes } from '../api'
 import { getTicketOrders } from '../api/tickets'
+import { useAuthStore } from '../stores/auth'
+import { ROLE_TRANSFER_OPS } from '../utils/permissions'
+
+const auth = useAuthStore()
+const isTransferOps = computed(() => auth.user?.role === ROLE_TRANSFER_OPS)
 
 use([BarChart, GridComponent, TooltipComponent, LegendComponent, CanvasRenderer])
 
@@ -202,6 +208,13 @@ const countCards = ref([
   { key: 'ticketOrders',   value: '-', icon: markRaw(Ticket),        bg: '#fff1f0', iconColor: '#eb6f5c', go: '/tickets/orders' },
   { key: 'pendingWishes',  value: '-', icon: markRaw(ChatLineRound), bg: '#f9f0ff', iconColor: '#9254de', go: '/wishes' },
 ])
+
+// 接送专员只看到"接送订单"这一张计数卡
+const visibleCountCards = computed(() =>
+  isTransferOps.value
+    ? countCards.value.filter(c => c.key === 'transferOrders')
+    : countCards.value
+)
 
 const recentShopOrders = ref([])
 const recentTransferOrders = ref([])
@@ -285,6 +298,13 @@ async function loadAnalytics() {
 
 async function loadCounts() {
   try {
+    // 接送专员只能调接送订单接口
+    if (isTransferOps.value) {
+      const transRes = await getTransferOrders({ page: 1, per_page: 1 })
+      countCards.value[2].value = transRes.data?.total ?? 0
+      return
+    }
+
     const [prodRes, shopRes, transRes, ticketRes, wishRes] = await Promise.all([
       getProducts({ page: 1, per_page: 1 }),
       getShopOrders({ page: 1, per_page: 1 }),
@@ -304,6 +324,13 @@ async function loadCounts() {
 
 async function loadRecentOrders() {
   try {
+    if (isTransferOps.value) {
+      // 接送专员只拉接送订单
+      const transRes = await getTransferOrders({ page: 1, per_page: 10, status: 0 })
+      recentTransferOrders.value = transRes.data?.list || transRes.data?.items || []
+      return
+    }
+
     const [shopRes, transRes, ticketRes, wishRes] = await Promise.all([
       getShopOrders({ page: 1, per_page: 10, status: 0 }),
       getTransferOrders({ page: 1, per_page: 10, status: 0 }),
@@ -320,6 +347,7 @@ async function loadRecentOrders() {
 }
 
 async function loadTopProducts() {
+  if (isTransferOps.value) return  // 接送专员看不到商品销售榜
   try {
     const res = await getTopProducts({ limit: 10 })
     topProducts.value = res.data || []

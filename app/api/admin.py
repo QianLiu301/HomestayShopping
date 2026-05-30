@@ -667,6 +667,24 @@ def admin_analytics():
         'ticket': [round(ticket_map.get(l, 0), 2) for l in labels],
     }
 
+    # 接送专员只能看到接送数据：其他业务清零隐藏
+    from app.utils.permissions import current_role, ROLE_TRANSFER_OPS
+    if current_role() == ROLE_TRANSFER_OPS:
+        return success_response({
+            'shop_count': 0, 'shop_total': 0,
+            'transfer_count': transfer_count,
+            'transfer_total': round(transfer_total, 2),
+            'ticket_count': 0, 'ticket_total': 0,
+            'total_revenue': round(transfer_total, 2),
+            'chart': {
+                'labels': chart['labels'],
+                'shop': [0 for _ in chart['labels']],
+                'transfer': chart['transfer'],
+                'ticket': [0 for _ in chart['labels']],
+            },
+            'restricted_to_transfer': True,  # 前端据此隐藏其他卡片
+        })
+
     return success_response({
         'shop_count': shop_count,
         'shop_total': round(shop_total, 2),
@@ -1118,30 +1136,35 @@ def admin_get_cancelled_orders():
     refund_status = request.args.get('refund_status', type=int)
     keyword = request.args.get('keyword', '')
     
+    # 接送专员只能看接送：完全跳过商城查询
+    from app.utils.permissions import current_role, ROLE_TRANSFER_OPS
+    transfer_ops_only = current_role() == ROLE_TRANSFER_OPS
+
     # 不设置默认日期筛选；未选择日期时返回全部已取消订单
-    
-    # 查询商城已取消订单 (status=4)
-    shop_query = ShopOrder.query.filter_by(status=4)
-    if date_start:
-        try:
-            shop_query = shop_query.filter(ShopOrder.cancelled_at >= datetime.fromisoformat(date_start))
-        except ValueError:
-            pass
-    if date_end:
-        try:
-            shop_query = shop_query.filter(ShopOrder.cancelled_at <= datetime.fromisoformat(date_end + 'T23:59:59'))
-        except ValueError:
-            pass
-    if refund_status is not None:
-        shop_query = shop_query.filter_by(refund_status=refund_status)
-    if keyword:
-        shop_query = shop_query.filter(
-            (ShopOrder.order_no.ilike(f'%{keyword}%')) |
-            (ShopOrder.contact_name.ilike(f'%{keyword}%')) |
-            (ShopOrder.contact_phone.ilike(f'%{keyword}%')) |
-            (ShopOrder.contact_email.ilike(f'%{keyword}%'))
-        )
-    
+
+    # 查询商城已取消订单 (status=4) — 接送专员看不到
+    shop_query = ShopOrder.query.filter_by(status=4) if not transfer_ops_only else None
+    if shop_query is not None:
+        if date_start:
+            try:
+                shop_query = shop_query.filter(ShopOrder.cancelled_at >= datetime.fromisoformat(date_start))
+            except ValueError:
+                pass
+        if date_end:
+            try:
+                shop_query = shop_query.filter(ShopOrder.cancelled_at <= datetime.fromisoformat(date_end + 'T23:59:59'))
+            except ValueError:
+                pass
+        if refund_status is not None:
+            shop_query = shop_query.filter_by(refund_status=refund_status)
+        if keyword:
+            shop_query = shop_query.filter(
+                (ShopOrder.order_no.ilike(f'%{keyword}%')) |
+                (ShopOrder.contact_name.ilike(f'%{keyword}%')) |
+                (ShopOrder.contact_phone.ilike(f'%{keyword}%')) |
+                (ShopOrder.contact_email.ilike(f'%{keyword}%'))
+            )
+
     # 查询接送机已取消订单 (status=3)
     transfer_query = TransferOrder.query.filter_by(status=3)
     if date_start:
@@ -1165,9 +1188,12 @@ def admin_get_cancelled_orders():
         )
     
     # 获取所有符合条件的订单
-    shop_orders = shop_query.order_by(ShopOrder.cancelled_at.desc().nullslast(), ShopOrder.created_at.desc()).all()
+    shop_orders = (
+        shop_query.order_by(ShopOrder.cancelled_at.desc().nullslast(), ShopOrder.created_at.desc()).all()
+        if shop_query is not None else []
+    )
     transfer_orders = transfer_query.order_by(TransferOrder.cancelled_at.desc().nullslast(), TransferOrder.created_at.desc()).all()
-    
+
     # 合并并标记订单类型
     all_orders = []
     for o in shop_orders:

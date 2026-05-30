@@ -688,7 +688,7 @@ def create_app(config_name='default'):
 
 
 def _ensure_admin(app):
-    """根据环境变量初始化/重置管理员账号"""
+    """根据环境变量初始化/重置主管理员账号（owner 角色）"""
     username = os.environ.get('ADMIN_USERNAME')
     password = os.environ.get('ADMIN_PASSWORD')
     if not username or not password:
@@ -697,27 +697,33 @@ def _ensure_admin(app):
     with app.app_context():
         from app.models import Admin
 
-        # 禁用所有其他管理员账号
-        Admin.query.filter(Admin.username != username).update({'status': 0})
-        db.session.commit()
+        # 注意：不再禁用其他账号（要支持多角色账号共存）
+        # 老逻辑会把所有其他 admin status=0，现在改为只保证主账号是 owner + 启用
 
         admin = Admin.query.filter_by(username=username).first()
         if admin:
-            # 密码可能已更新，每次用环境变量的值覆盖
-            new_hash = bcrypt.generate_password_hash(password).decode('utf-8')
-            if not bcrypt.check_password_hash(admin.password_hash, password):
-                admin.password_hash = new_hash
+            # 主账号始终保持 owner 角色 + 启用状态
+            changed = False
+            if admin.role != 'owner':
+                admin.role = 'owner'
+                changed = True
+            if admin.status != 1:
                 admin.status = 1
+                changed = True
+            if not bcrypt.check_password_hash(admin.password_hash, password):
+                admin.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+                changed = True
+            if changed:
                 db.session.commit()
-                app.logger.info(f'Admin password updated for: {username}')
+                app.logger.info(f'Owner account synced: {username}')
         else:
             admin = Admin(
                 username=username,
                 password_hash=bcrypt.generate_password_hash(password).decode('utf-8'),
-                name='Administrator',
-                role='admin',
+                name='Owner',
+                role='owner',
                 status=1
             )
             db.session.add(admin)
             db.session.commit()
-            app.logger.info(f'Admin account created: {username}')
+            app.logger.info(f'Owner account created: {username}')

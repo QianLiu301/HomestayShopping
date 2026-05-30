@@ -37,11 +37,11 @@ def decode_token(token):
 
 
 def admin_required(f):
-    """管理员认证装饰器"""
+    """管理员认证装饰器：验证 Token + 检查路由级角色权限"""
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
-        
+
         # 从Header获取Token
         if 'Authorization' in request.headers:
             auth_header = request.headers['Authorization']
@@ -51,19 +51,32 @@ def admin_required(f):
         # 兼容文件下载等无法方便设置 Authorization Header 的场景
         if not token:
             token = request.args.get('token')
-        
+
         if not token:
             return jsonify({'code': 401, 'message': '缺少认证Token'}), 401
-        
+
         payload = decode_token(token)
         if not payload:
             return jsonify({'code': 401, 'message': 'Token无效或已过期'}), 401
-        
+
         # 将用户信息添加到请求上下文
         request.admin_id = payload.get('admin_id')
         request.admin_username = payload.get('username')
-        request.admin_role = payload.get('role')
-        
+        request.admin_role = payload.get('role') or 'admin'
+
+        # 全局角色路由权限检查（RBAC）
+        # 用 import-on-call 避免循环导入
+        from app.utils.permissions import check_route_permission
+        ok, reason = check_route_permission(
+            request.path, request.method, request.admin_role
+        )
+        if not ok:
+            return jsonify({
+                'code': 403,
+                'message': '没有权限访问此功能',
+                'data': None
+            }), 403
+
         return f(*args, **kwargs)
     return decorated
 

@@ -10,12 +10,17 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchUser() {
     if (!token.value) {
       user.value = null
+      sessionStorage.removeItem('admin_role')
       return null
     }
 
     try {
       const res = await getAdminInfo()
       user.value = res.data
+      // 缓存角色到 sessionStorage 让 router redirect 函数也能拿到
+      if (user.value?.role) {
+        sessionStorage.setItem('admin_role', user.value.role)
+      }
       return user.value
     } catch {
       logout()
@@ -38,6 +43,7 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = ''
     user.value = null
     localStorage.removeItem('admin_token')
+    sessionStorage.removeItem('admin_role')
   }
 
   return { user, token, initialized, fetchUser, initAuth, setToken, logout }
