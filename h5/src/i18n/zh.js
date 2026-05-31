@@ -101,40 +101,109 @@ export default {
     agreeAnd: '和',
     privacy: {
       introTitle: '引言',
-      introContent: 'Homestay（以下简称"我们"）非常重视您的隐私。本隐私政策说明了我们在您使用我们的网站和服务时如何收集、使用、存储和保护您的个人信息。',
+      introContent: 'Shanghai Tour Guide（以下简称"我们"）非常重视您的隐私。本隐私政策详细说明了在您使用我们的网站和服务（包括机场接送、伴手礼商城、门票预订、定制需求等）时，我们如何收集、使用、存储、共享和保护您的个人信息，以及您享有的相关权利。',
+
+      // ===== 信息收集 =====
       collectTitle: '我们收集的信息',
-      collectIntro: '为了向您提供接送机和商城购物服务，我们可能收集以下信息：',
+      collectIntro: '为向您提供机场接送、商城购物、门票预订及定制服务，我们可能收集以下类型的信息：',
       collectName: '联系人姓名',
       collectPhone: '手机号码',
       collectEmail: '电子邮箱',
-      collectFlight: '航班信息（航班号、航班时间、机场）',
-      collectAddress: '配送地址（民宿地址或自定义地址）',
-      collectPayment: '支付凭证（付款截图或交易单号）',
-      collectOrder: '订单信息（商品、数量、金额）',
+      collectFlight: '航班信息（航班号、航班时间、起降机场）',
+      collectAddress: '地址信息（民宿/酒店地址、配送地址、房间号、第三方平台预订单号）',
+      collectPayment: '支付信息（付款截图、交易单号、支付金额），我们不存储您的银行卡或支付账户密码',
+      collectOrder: '订单信息（商品、数量、金额、订单状态、取消和退款记录）',
+      collectTraveler: '门票出行人信息（仅在购买门票时收集，可能包括姓名、国籍、证件类型、证件号码、出生日期、性别），用于实名制景区入园核验',
+      collectUGC: '您主动提交的内容（订单评价、许愿池需求描述、备注等）',
+      collectTechnical: '技术信息（IP 地址、浏览器类型、设备类型、操作系统、访问时间、访问页面），用于安全防护和服务优化',
+      collectLang: '语言和偏好设置（用于多语言显示）',
+
+      // ===== 信息使用 =====
       useTitle: '信息的使用',
-      useIntro: '我们收集的个人信息仅用于以下目的：',
-      useService: '提供和处理您预订的接送机服务或商品订单',
-      useContact: '就订单状态与您取得联系',
-      usePayment: '核实支付信息，完成交易',
-      useImprove: '改善我们的服务质量',
-      shareTitle: '信息共享',
-      shareContent: '我们不会出售您的个人信息。仅在以下情况下可能共享您的部分信息：',
-      shareDriver: '与接送机司机共享必要的接送信息（姓名、航班信息、地址）',
-      shareLegal: '法律法规要求或政府部门依法要求时',
+      useIntro: '我们仅在以下目的范围内使用您的个人信息：',
+      useService: '提供和处理您预订的接送、商品订单、门票订单及定制需求',
+      useContact: '就订单状态、支付、配送等事宜与您取得联系（通过电话、邮件、WhatsApp 等渠道）',
+      usePayment: '核实支付信息并完成交易',
+      useTicketCheck: '配合景区完成实名制入园核验',
+      useImprove: '通过分析访问数据改善我们的服务质量和用户体验',
+      useSecurity: '防止欺诈、滥用，保护账户和服务安全',
+      useLegal: '履行法律法规要求的义务',
+
+      // ===== 法律依据（GDPR）=====
+      legalBasisTitle: '处理您信息的法律依据',
+      legalBasisIntro: '根据通用数据保护条例（GDPR）及其他适用法律，我们处理您个人信息的法律依据包括：',
+      legalBasisContract: '履行合同：处理您的订单、提供您预订的服务',
+      legalBasisConsent: '您的明确同意：如订阅营销邮件、使用分析 Cookie 等',
+      legalBasisInterest: '正当利益：改善服务、保护账户安全、防止欺诈',
+      legalBasisCompliance: '法律义务：履行税务、反洗钱等法律法规要求',
+
+      // ===== 信息共享 =====
+      shareTitle: '信息共享与第三方服务',
+      shareContent: '我们不会出售您的个人信息。仅在以下情况下，我们可能将您的部分信息共享给特定的第三方：',
+      shareDriver: '接送服务司机：共享接送所需信息（姓名、航班号、机场、地址）',
+      shareAttraction: '景区运营方：在购买门票时，按景区要求共享出行人信息（用于实名核验）',
+      shareLegal: '主管机关：在法律法规要求或司法/行政机关依法要求时',
+      shareProviders: '我们使用的第三方服务商（仅在为您提供服务所必需的范围内）：',
+      shareDB: '数据库存储：Neon（PostgreSQL 托管服务，位于新加坡）',
+      shareCDN: '图片/文件存储：Cloudflare R2（全球 CDN）',
+      shareEmail: '邮件发送：Resend（订单确认与回执邮件）',
+      shareAnalytics: '网站分析：Google Analytics、Microsoft Clarity（详见 Cookie 章节）',
+      sharePayment: '支付平台：微信、支付宝（您直接与支付方完成交易，我们不接触您的支付凭据）',
+      shareWhatsApp: 'WhatsApp（仅在您主动点击客服按钮跳转聊天时，WhatsApp 会收集您的会话信息，详见 WhatsApp 隐私政策）',
+
+      // ===== 跨境数据传输（GDPR/PIPL 必需）=====
+      transferTitle: '跨境数据传输',
+      transferContent: '由于我们使用的部分服务商位于中国大陆以外（如新加坡、美国、爱尔兰），您的部分个人信息可能会传输至境外。我们会采取合理措施（包括与服务商签订标准数据保护协议）确保您的信息在传输和存储过程中受到与本政策同等级别的保护。',
+
+      // ===== 数据保留 =====
       storeTitle: '信息存储与安全',
-      storeContent: '我们采用行业标准的安全措施保护您的个人信息，包括数据加密和访问控制。您的数据存储在安全的云服务器上。我们仅在完成服务所需的期限内保留您的信息。',
+      storeContent: '我们采用行业标准的安全措施保护您的个人信息，包括数据库加密、HTTPS 传输、访问权限控制、密码哈希存储（bcrypt）、接口限流等。但请注意，没有任何互联网传输或电子存储方式是 100% 安全的。',
+      retentionTitle: '数据保留期限',
+      retentionIntro: '我们仅在为您提供服务所必需的期限内保留您的信息：',
+      retentionOrder: '订单及关联信息：自订单完成或取消后保留 3 年（用于售后、退款、税务等）',
+      retentionTraveler: '门票出行人证件信息：自景区入园日起保留 6 个月后删除',
+      retentionPayment: '支付截图：自订单完成后保留 1 年',
+      retentionLogs: '访问日志、IP 地址：保留 30-90 天用于安全分析',
+      retentionAnalytics: '分析数据（GA、Clarity）：按服务商默认期限（GA 默认 14 个月，Clarity 默认 13 个月）',
+      retentionAfter: '超过保留期限的数据将被永久删除或匿名化处理。',
+
+      // ===== 用户权利 =====
       rightsTitle: '您的权利',
-      rightsIntro: '根据适用法律，您享有以下权利：',
+      rightsIntro: '根据 GDPR、PIPL、CCPA 等适用法律，您享有以下权利：',
       rightsAccess: '查询和访问您的个人信息',
-      rightsCorrect: '更正不准确的个人信息',
-      rightsDelete: '请求删除您的个人信息',
-      rightsContact: '如需行使上述权利，请通过以下联系方式与我们取得联系。',
-      cookieTitle: 'Cookie 使用',
-      cookieContent: '我们的网站可能使用 Cookie 和类似技术来提升您的浏览体验。这些技术用于记住您的语言偏好等设置。您可以通过浏览器设置管理 Cookie。',
+      rightsCorrect: '更正不准确或不完整的个人信息',
+      rightsDelete: '请求删除您的个人信息（"被遗忘权"）',
+      rightsPortable: '获取您的个人信息副本，并以结构化、通用、机器可读的格式传输给其他控制者（数据可携权）',
+      rightsRestrict: '限制我们处理您信息的范围',
+      rightsObject: '反对我们出于直接营销等目的处理您的信息',
+      rightsWithdraw: '随时撤回您之前的同意（撤回不影响撤回前已合法处理的部分）',
+      rightsComplain: '向您所在地的数据保护监管机构投诉',
+      rightsContact: '如需行使上述权利，请通过本页底部的联系方式与我们取得联系。我们会在 30 天内回复您的请求。',
+
+      // ===== Cookie 详细说明 =====
+      cookieTitle: 'Cookie 与类似技术',
+      cookieIntro: '我们的网站使用 Cookie 和本地存储（localStorage / sessionStorage）。按用途分为以下几类：',
+      cookieEssentialTitle: '必要 Cookie（无需同意）',
+      cookieEssentialContent: '维持网站正常运转所必需，包括：登录态（admin_token）、语言偏好（lang）、购物车内容、界面布局偏好等。禁用这些 Cookie 会导致部分功能无法使用。',
+      cookieAnalyticsTitle: '分析 Cookie（需要您同意）',
+      cookieAnalyticsContent: '帮助我们了解用户如何使用网站以便改进。我们使用以下分析服务：',
+      cookieGA: 'Google Analytics 4（衡量 ID：G-34BFG6Y66L）—— Google LLC 提供，用于统计访问量、页面浏览、流量来源、设备类型等。可能写入 _ga、_gid 等 Cookie',
+      cookieClarity: 'Microsoft Clarity（项目 ID：wya7v6udqb）—— Microsoft Corporation 提供，用于会话回放、热力图、滚动深度分析。可能写入 _clck、_clsk 等 Cookie',
+      cookieControl: '您可以通过浏览器设置随时禁用或删除 Cookie，或使用浏览器的"无痕模式"访问我们的网站。禁用分析 Cookie 不影响订单、支付等核心功能。',
+
+      // ===== 儿童隐私 =====
+      childrenTitle: '儿童隐私',
+      childrenContent: '我们的服务不针对 16 岁以下儿童。我们不会有意收集 16 岁以下儿童的个人信息。如果家长或监护人发现其未成年子女在未取得监护人同意的情况下向我们提供了个人信息，请通过本页联系方式联系我们，我们会尽快删除相关信息。如门票订单包含儿童出行人信息，应由其法定监护人代为提交。',
+
+      // ===== 政策更新 =====
       updateTitle: '政策更新',
-      updateContent: '我们可能会不时更新本隐私政策。更新后的政策将在本页面发布，并注明最新修订日期。建议您定期查看。',
+      updateContent: '我们可能会不时更新本隐私政策（例如新增服务功能、应对法规变化时）。更新后的政策将在本页面发布并注明最新修订日期。如属重大变更（如新增数据共享方），我们会通过显著方式提前告知。建议您定期查看本页面以了解最新内容。',
+
+      // ===== 联系方式 =====
       contactTitle: '联系我们',
-      contactContent: '如对本隐私政策有任何疑问，请通过 support@shanghai-tour-guide.com 联系我们。'
+      contactContent: '如对本隐私政策有任何疑问、投诉或想行使您的权利，请通过以下方式联系我们：',
+      contactEmail: '邮箱：support@shanghai-tour-guide.com',
+      contactResponse: '我们承诺在收到您的请求后 30 天内回复。'
     },
     terms: {
       acceptTitle: '接受条款',

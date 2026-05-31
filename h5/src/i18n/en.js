@@ -101,40 +101,109 @@ export default {
     agreeAnd: 'and',
     privacy: {
       introTitle: 'Introduction',
-      introContent: 'Homestay ("we", "us") values your privacy. This Privacy Policy explains how we collect, use, store, and protect your personal information when you use our website and services.',
+      introContent: 'Shanghai Tour Guide ("we", "us") values your privacy. This Privacy Policy explains in detail how we collect, use, store, share, and protect your personal information when you use our website and services (including airport transfer, souvenir shop, ticket booking, and custom requests), as well as the rights you have.',
+
+      // ===== Information collected =====
       collectTitle: 'Information We Collect',
-      collectIntro: 'To provide airport transfer and shopping services, we may collect the following information:',
+      collectIntro: 'To provide airport transfer, shopping, ticket booking, and custom services, we may collect the following types of information:',
       collectName: 'Contact name',
       collectPhone: 'Phone number',
       collectEmail: 'Email address',
-      collectFlight: 'Flight information (flight number, time, airport)',
-      collectAddress: 'Delivery address (homestay location or custom address)',
-      collectPayment: 'Payment proof (payment screenshot or transaction ID)',
-      collectOrder: 'Order information (products, quantities, amounts)',
+      collectFlight: 'Flight information (flight number, time, departure/arrival airport)',
+      collectAddress: 'Address information (homestay/hotel address, delivery address, room number, third-party booking number)',
+      collectPayment: 'Payment information (payment screenshots, transaction IDs, amount). We do not store your bank card or payment account password.',
+      collectOrder: 'Order information (products, quantities, amount, order status, cancellation and refund records)',
+      collectTraveler: 'Ticket traveler information (only when purchasing tickets — may include name, nationality, document type, document number, date of birth, gender) for real-name verification at the attraction',
+      collectUGC: 'Content you submit (order reviews, wish-pool descriptions, notes)',
+      collectTechnical: 'Technical information (IP address, browser type, device type, OS, access time, pages visited) for security and service improvement',
+      collectLang: 'Language and preference settings (for multi-language display)',
+
+      // ===== Use of information =====
       useTitle: 'How We Use Your Information',
-      useIntro: 'We use the collected personal information solely for the following purposes:',
-      useService: 'Providing and processing your booked transfer service or product orders',
-      useContact: 'Contacting you regarding order status',
+      useIntro: 'We use your personal information only for the following purposes:',
+      useService: 'Providing and processing your booked transfers, product orders, ticket orders, and custom requests',
+      useContact: 'Contacting you regarding order status, payment, delivery, etc. (via phone, email, WhatsApp, and other channels)',
       usePayment: 'Verifying payment information and completing transactions',
-      useImprove: 'Improving our service quality',
-      shareTitle: 'Information Sharing',
-      shareContent: 'We do not sell your personal information. We may share limited information only in these cases:',
-      shareDriver: 'Sharing necessary pickup/dropoff details with drivers (name, flight info, address)',
-      shareLegal: 'When required by law or government authorities',
+      useTicketCheck: 'Cooperating with attractions for real-name verification at entry',
+      useImprove: 'Improving our service quality and user experience through analytics',
+      useSecurity: 'Preventing fraud and abuse, protecting account and service security',
+      useLegal: 'Fulfilling obligations required by laws and regulations',
+
+      // ===== Legal basis (GDPR) =====
+      legalBasisTitle: 'Legal Basis for Processing',
+      legalBasisIntro: 'Under the GDPR and other applicable laws, our legal bases for processing your personal information include:',
+      legalBasisContract: 'Contract performance: processing your orders and providing the services you booked',
+      legalBasisConsent: 'Your explicit consent: such as subscribing to marketing emails or enabling analytics cookies',
+      legalBasisInterest: 'Legitimate interest: improving services, protecting account security, and preventing fraud',
+      legalBasisCompliance: 'Legal obligations: complying with tax, anti-money-laundering, and similar laws',
+
+      // ===== Information sharing =====
+      shareTitle: 'Information Sharing & Third-Party Services',
+      shareContent: 'We do not sell your personal information. We may share limited information only in the following situations:',
+      shareDriver: 'Transfer drivers: shared with information necessary to perform the transfer (name, flight number, airport, address)',
+      shareAttraction: 'Attraction operators: when purchasing tickets, we share traveler information as required by the attraction for real-name verification',
+      shareLegal: 'Authorities: when required by law or by judicial/administrative authorities',
+      shareProviders: 'Third-party service providers we use (strictly limited to what is necessary to provide our services):',
+      shareDB: 'Database hosting: Neon (managed PostgreSQL, located in Singapore)',
+      shareCDN: 'Image/file storage: Cloudflare R2 (global CDN)',
+      shareEmail: 'Email delivery: Resend (order confirmations and receipts)',
+      shareAnalytics: 'Web analytics: Google Analytics, Microsoft Clarity (see the Cookies section)',
+      sharePayment: 'Payment platforms: WeChat Pay, Alipay (you transact directly with the payment provider; we do not access your payment credentials)',
+      shareWhatsApp: 'WhatsApp (only when you actively tap the support button to start a chat — WhatsApp collects your session info per their own privacy policy)',
+
+      // ===== Cross-border transfer =====
+      transferTitle: 'Cross-Border Data Transfers',
+      transferContent: 'Because some of the service providers we use are located outside mainland China (e.g., Singapore, USA, Ireland), some of your personal information may be transferred internationally. We take reasonable measures (including standard data protection agreements with providers) to ensure your information receives a level of protection equivalent to this policy during transit and storage.',
+
+      // ===== Storage & retention =====
       storeTitle: 'Data Storage & Security',
-      storeContent: 'We use industry-standard security measures to protect your personal information, including data encryption and access controls. Your data is stored on secure cloud servers. We retain your information only for as long as necessary to fulfill the service.',
+      storeContent: 'We use industry-standard security measures to protect your personal information, including database encryption, HTTPS transmission, access control, password hashing (bcrypt), and API rate limiting. Note: no method of internet transmission or electronic storage is 100% secure.',
+      retentionTitle: 'Data Retention Periods',
+      retentionIntro: 'We retain your information only for as long as necessary to provide our services:',
+      retentionOrder: 'Order data and related info: retained for 3 years from order completion or cancellation (for after-sales, refunds, tax purposes)',
+      retentionTraveler: 'Ticket traveler ID information: deleted 6 months after the visit date',
+      retentionPayment: 'Payment screenshots: retained for 1 year after order completion',
+      retentionLogs: 'Access logs, IP addresses: retained for 30-90 days for security analysis',
+      retentionAnalytics: 'Analytics data (GA, Clarity): per provider defaults (GA default 14 months, Clarity default 13 months)',
+      retentionAfter: 'Data beyond the retention period is permanently deleted or anonymized.',
+
+      // ===== Your rights =====
       rightsTitle: 'Your Rights',
-      rightsIntro: 'Under applicable laws, you have the following rights:',
+      rightsIntro: 'Under GDPR, PIPL, CCPA, and other applicable laws, you have the following rights:',
       rightsAccess: 'Access and review your personal information',
-      rightsCorrect: 'Correct inaccurate personal information',
-      rightsDelete: 'Request deletion of your personal information',
-      rightsContact: 'To exercise these rights, please contact us using the information below.',
-      cookieTitle: 'Cookies',
-      cookieContent: 'Our website may use cookies and similar technologies to enhance your browsing experience, such as remembering your language preferences. You can manage cookies through your browser settings.',
+      rightsCorrect: 'Correct inaccurate or incomplete personal information',
+      rightsDelete: 'Request deletion of your personal information (the "right to be forgotten")',
+      rightsPortable: 'Obtain a copy of your personal information in a structured, commonly used, machine-readable format and transfer it to another controller (data portability)',
+      rightsRestrict: 'Restrict our processing of your information',
+      rightsObject: 'Object to processing of your information for direct marketing or similar purposes',
+      rightsWithdraw: 'Withdraw your previous consent at any time (withdrawal does not affect processing already lawfully carried out)',
+      rightsComplain: 'Lodge a complaint with the data protection authority in your jurisdiction',
+      rightsContact: 'To exercise these rights, please contact us via the methods at the bottom of this page. We will respond within 30 days.',
+
+      // ===== Cookies =====
+      cookieTitle: 'Cookies & Similar Technologies',
+      cookieIntro: 'Our website uses cookies and local storage (localStorage / sessionStorage). They fall into the following categories by purpose:',
+      cookieEssentialTitle: 'Essential Cookies (no consent required)',
+      cookieEssentialContent: 'Necessary for the website to function, including: login state (admin_token), language preference (lang), cart contents, UI layout preference. Disabling these breaks core functionality.',
+      cookieAnalyticsTitle: 'Analytics Cookies (require your consent)',
+      cookieAnalyticsContent: 'Help us understand how users interact with the website so we can improve. We use the following analytics services:',
+      cookieGA: 'Google Analytics 4 (Measurement ID: G-34BFG6Y66L) — provided by Google LLC, used for traffic, page-view, source, and device statistics. May set cookies such as _ga, _gid.',
+      cookieClarity: 'Microsoft Clarity (Project ID: wya7v6udqb) — provided by Microsoft Corporation, used for session replay, heatmaps, and scroll-depth analysis. May set cookies such as _clck, _clsk.',
+      cookieControl: 'You can disable or delete cookies at any time via your browser settings, or use the browser\'s incognito mode. Disabling analytics cookies does not affect order, payment, or other core functions.',
+
+      // ===== Children =====
+      childrenTitle: 'Children\'s Privacy',
+      childrenContent: 'Our services are not directed to children under 16. We do not knowingly collect personal information from children under 16. If a parent or guardian discovers that their minor child has provided personal information to us without their consent, please contact us via the methods on this page and we will delete the information as soon as possible. If a ticket order includes a child traveler, it should be submitted by their legal guardian.',
+
+      // ===== Updates =====
       updateTitle: 'Policy Updates',
-      updateContent: 'We may update this Privacy Policy from time to time. The updated policy will be posted on this page with the latest revision date. We recommend checking periodically.',
+      updateContent: 'We may update this Privacy Policy from time to time (e.g., when adding new features or in response to regulatory changes). Updated policies will be posted on this page with the latest revision date. For material changes (such as new data-sharing recipients), we will provide prominent notice in advance. Please check this page periodically.',
+
+      // ===== Contact =====
       contactTitle: 'Contact Us',
-      contactContent: 'If you have any questions about this Privacy Policy, please contact us at support@shanghai-tour-guide.com.'
+      contactContent: 'If you have any questions, complaints, or wish to exercise your rights regarding this Privacy Policy, please contact us:',
+      contactEmail: 'Email: support@shanghai-tour-guide.com',
+      contactResponse: 'We commit to responding within 30 days of receiving your request.'
     },
     terms: {
       acceptTitle: 'Acceptance of Terms',
