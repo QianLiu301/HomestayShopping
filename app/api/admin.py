@@ -697,6 +697,261 @@ def admin_analytics():
     })
 
 
+# ==================== 营业数据 Excel 导出 ====================
+
+@api_bp.route('/admin/analytics/export', methods=['GET'])
+@admin_required
+def admin_analytics_export():
+    """导出指定时间段的营业明细 Excel（财务对账用）
+
+    生成 5 个 sheet：营收汇总 / 商城订单 / 接送订单 / 门票订单 / 退款记录
+    接送专员只会拿到接送相关的两个 sheet。
+    """
+    from datetime import datetime, timedelta
+    from io import BytesIO
+    from flask import send_file
+    from app.models import TicketOrder, ServiceReview  # noqa: F401
+    from app.utils.permissions import current_role, ROLE_TRANSFER_OPS
+
+    try:
+        import openpyxl
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+        from openpyxl.utils import get_column_letter
+    except ImportError:
+        return error_response('服务器缺少 openpyxl 依赖，请联系运维', 500)
+
+    period = request.args.get('period', 'month')
+    # 仅导出已支付订单（财务对账常用）
+    paid_only = request.args.get('paid_only', '0') in ('1', 'true', 'True')
+    is_transfer_only = current_role() == ROLE_TRANSFER_OPS
+
+    # 时间窗口（跟 analytics 接口保持一致）
+    now = datetime.now()
+    if period == 'quarter':
+        start = datetime(now.year, ((now.month - 1) // 3) * 3 + 1, 1)
+        period_label = f'{start.year}年Q{(start.month - 1) // 3 + 1}'
+    elif period == 'half_year':
+        start = datetime(now.year, now.month, 1) - timedelta(days=180)
+        start = datetime(start.year, start.month, 1)
+        period_label = f'近半年({start.strftime("%Y-%m")} ~ {now.strftime("%Y-%m")})'
+    else:
+        start = datetime(now.year, now.month, 1)
+        period_label = f'{start.strftime("%Y年%m月")}'
+
+    # ---- 样式 ----
+    header_font = Font(bold=True, color='FFFFFF', size=11)
+    header_fill = PatternFill('solid', fgColor='4A3728')
+    center = Alignment(horizontal='center', vertical='center')
+    left = Alignment(horizontal='left', vertical='center', wrap_text=True)
+    thin = Side(border_style='thin', color='DDD0BC')
+    border = Border(top=thin, left=thin, right=thin, bottom=thin)
+
+    def write_headers(ws, headers):
+        for col, label in enumerate(headers, start=1):
+            cell = ws.cell(row=1, column=col, value=label)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = center
+            cell.border = border
+
+    def autosize(ws, widths):
+        for i, w in enumerate(widths, start=1):
+            ws.column_dimensions[get_column_letter(i)].width = w
+
+    def status_label_shop(s):
+        return {0: '待处理', 1: '已确认', 2: '配送中', 3: '已完成', 4: '已取消'}.get(s, str(s))
+
+    def status_label_transfer(s):
+        return {0: '待支付', 1: '已确认', 2: '已完成', 3: '已取消'}.get(s, str(s))
+
+    def status_label_ticket(s):
+        return {0: '待支付', 1: '已支付', 2: '已使用', 3: '已取消', 4: '已退款'}.get(s, str(s))
+
+    def service_type_label(s):
+        return {'pickup': '接机', 'dropoff': '送机', 'combo': '接送组合'}.get(s, s or '')
+
+    def fmt_dt(dt):
+        return dt.strftime('%Y-%m-%d %H:%M') if dt else ''
+
+    # ============ 创建工作簿 ============
+    wb = openpyxl.Workbook()
+    wb.remove(wb.active)   # 删默认 sheet
+
+    # 拉数据（paid_only 时只取 payment_status=1 的）
+    def _maybe_paid(q, model):
+        if paid_only:
+            q = q.filter(model.payment_status == 1)
+        return q
+
+    shop_rows = [] if is_transfer_only else _maybe_paid(
+        ShopOrder.query.filter(ShopOrder.created_at >= start),
+        ShopOrder
+    ).order_by(ShopOrder.created_at.desc()).all()
+
+    transfer_rows = _maybe_paid(
+        TransferOrder.query.filter(TransferOrder.created_at >= start),
+        TransferOrder
+    ).order_by(TransferOrder.created_at.desc()).all()
+
+    ticket_rows = [] if is_transfer_only else _maybe_paid(
+        TicketOrder.query.filter(TicketOrder.created_at >= start),
+        TicketOrder
+    ).order_by(TicketOrder.created_at.desc()).all()
+
+    # ========== Sheet 1: 营收汇总 ==========
+    ws = wb.create_sheet('营收汇总')
+    ws.merge_cells('A1:B1')
+    scope_tag = ' [仅已支付]' if paid_only else ''
+    title_cell = ws.cell(row=1, column=1, value=f'营业数据汇总 — {period_label}{scope_tag}')
+    title_cell.font = Font(bold=True, size=14, color='4A3728')
+    title_cell.alignment = center
+    ws.row_dimensions[1].height = 28
+
+    ws.cell(row=2, column=1, value='导出时间')
+    ws.cell(row=2, column=2, value=fmt_dt(now))
+    ws.cell(row=3, column=1, value='数据范围')
+    ws.cell(row=3, column=2, value='仅已支付订单' if paid_only else '全部订单（含未付/取消/退款）')
+
+    shop_paid = [r for r in shop_rows if r.status != 4]
+    transfer_paid = [r for r in transfer_rows if r.status != 3]
+    ticket_paid = [r for r in ticket_rows if r.status not in (3, 4)]
+
+    rows_data = [
+        ('', ''),
+        ('指标', '数值'),
+    ]
+    if not is_transfer_only:
+        rows_data += [
+            ('商城订单数', len(shop_paid)),
+            ('商城营收 (¥)', round(sum(float(r.total_price or 0) for r in shop_paid), 2)),
+        ]
+    rows_data += [
+        ('接送订单数', len(transfer_paid)),
+        ('接送营收 (¥)', round(sum(float(r.total_price or 0) for r in transfer_paid), 2)),
+    ]
+    if not is_transfer_only:
+        rows_data += [
+            ('门票订单数', len(ticket_paid)),
+            ('门票营收 (¥)', round(sum(float(r.total_price or 0) for r in ticket_paid), 2)),
+            ('', ''),
+            ('总订单数', len(shop_paid) + len(transfer_paid) + len(ticket_paid)),
+            ('总营收 (¥)', round(
+                sum(float(r.total_price or 0) for r in shop_paid)
+                + sum(float(r.total_price or 0) for r in transfer_paid)
+                + sum(float(r.total_price or 0) for r in ticket_paid), 2
+            )),
+        ]
+
+    for i, (k, v) in enumerate(rows_data, start=4):
+        c1 = ws.cell(row=i, column=1, value=k)
+        c2 = ws.cell(row=i, column=2, value=v)
+        if k in ('指标',):
+            c1.font = header_font; c1.fill = header_fill; c1.alignment = center
+            c2.font = header_font; c2.fill = header_fill; c2.alignment = center
+        elif k.startswith('总'):
+            c1.font = Font(bold=True, color='B98745')
+            c2.font = Font(bold=True, color='B98745')
+    autosize(ws, [22, 22])
+
+    # ========== Sheet: 商城订单明细 ==========
+    if not is_transfer_only:
+        ws = wb.create_sheet('商城订单明细')
+        headers = ['订单号', '客户', '电话', '邮箱', '金额(¥)', '订单状态', '支付状态', '退款状态', '下单时间']
+        write_headers(ws, headers)
+        for i, o in enumerate(shop_rows, start=2):
+            ws.cell(row=i, column=1, value=o.order_no)
+            ws.cell(row=i, column=2, value=o.contact_name)
+            ws.cell(row=i, column=3, value=o.contact_phone or '')
+            ws.cell(row=i, column=4, value=o.contact_email or '')
+            ws.cell(row=i, column=5, value=float(o.total_price or 0))
+            ws.cell(row=i, column=6, value=status_label_shop(o.status))
+            ws.cell(row=i, column=7, value='已支付' if o.payment_status == 1 else '未支付')
+            ws.cell(row=i, column=8, value='已退款' if o.refund_status == 1 else '—')
+            ws.cell(row=i, column=9, value=fmt_dt(o.created_at))
+        autosize(ws, [26, 14, 16, 24, 12, 12, 12, 12, 20])
+
+    # ========== Sheet: 接送订单明细 ==========
+    ws = wb.create_sheet('接送订单明细')
+    headers = ['订单号', '客户', '电话', '邮箱', '服务类型', '金额(¥)', '订单状态', '支付状态', '退款状态', '下单时间']
+    write_headers(ws, headers)
+    for i, o in enumerate(transfer_rows, start=2):
+        ws.cell(row=i, column=1, value=o.order_no)
+        ws.cell(row=i, column=2, value=o.contact_name)
+        ws.cell(row=i, column=3, value=o.contact_phone or '')
+        ws.cell(row=i, column=4, value=o.contact_email or '')
+        ws.cell(row=i, column=5, value=service_type_label(o.service_type))
+        ws.cell(row=i, column=6, value=float(o.total_price or 0))
+        ws.cell(row=i, column=7, value=status_label_transfer(o.status))
+        ws.cell(row=i, column=8, value='已支付' if o.payment_status == 1 else '未支付')
+        ws.cell(row=i, column=9, value='已退款' if o.refund_status == 1 else '—')
+        ws.cell(row=i, column=10, value=fmt_dt(o.created_at))
+    autosize(ws, [26, 14, 16, 24, 12, 12, 12, 12, 12, 20])
+
+    # ========== Sheet: 门票订单明细 ==========
+    if not is_transfer_only:
+        ws = wb.create_sheet('门票订单明细')
+        headers = ['订单号', '客户', '电话', '邮箱', '景点ID', '游玩日期', '金额(¥)', '订单状态', '支付状态', '下单时间']
+        write_headers(ws, headers)
+        for i, o in enumerate(ticket_rows, start=2):
+            ws.cell(row=i, column=1, value=o.order_no)
+            ws.cell(row=i, column=2, value=o.contact_name)
+            ws.cell(row=i, column=3, value=o.contact_phone or '')
+            ws.cell(row=i, column=4, value=o.contact_email or '')
+            ws.cell(row=i, column=5, value=o.attraction_id)
+            ws.cell(row=i, column=6, value=str(o.visit_date) if o.visit_date else '')
+            ws.cell(row=i, column=7, value=float(o.total_price or 0))
+            ws.cell(row=i, column=8, value=status_label_ticket(o.status))
+            ws.cell(row=i, column=9, value='已支付' if o.payment_status == 1 else '未支付')
+            ws.cell(row=i, column=10, value=fmt_dt(o.created_at))
+        autosize(ws, [26, 14, 16, 24, 10, 14, 12, 12, 12, 20])
+
+    # ========== Sheet: 退款记录 ==========
+    ws = wb.create_sheet('退款记录')
+    headers = ['业务', '订单号', '客户', '金额(¥)', '退款金额(¥)', '订单状态', '退款时间', '取消时间']
+    write_headers(ws, headers)
+    row_idx = 2
+    if not is_transfer_only:
+        for o in shop_rows:
+            if o.refund_status == 1:
+                ws.cell(row=row_idx, column=1, value='商城')
+                ws.cell(row=row_idx, column=2, value=o.order_no)
+                ws.cell(row=row_idx, column=3, value=o.contact_name)
+                ws.cell(row=row_idx, column=4, value=float(o.total_price or 0))
+                ws.cell(row=row_idx, column=5, value=float(o.refund_amount or 0))
+                ws.cell(row=row_idx, column=6, value=status_label_shop(o.status))
+                ws.cell(row=row_idx, column=7, value=fmt_dt(o.refund_time))
+                ws.cell(row=row_idx, column=8, value=fmt_dt(o.cancelled_at))
+                row_idx += 1
+    for o in transfer_rows:
+        if o.refund_status == 1:
+            ws.cell(row=row_idx, column=1, value='接送')
+            ws.cell(row=row_idx, column=2, value=o.order_no)
+            ws.cell(row=row_idx, column=3, value=o.contact_name)
+            ws.cell(row=row_idx, column=4, value=float(o.total_price or 0))
+            ws.cell(row=row_idx, column=5, value=float(o.refund_amount or 0))
+            ws.cell(row=row_idx, column=6, value=status_label_transfer(o.status))
+            ws.cell(row=row_idx, column=7, value=fmt_dt(o.refund_time))
+            ws.cell(row=row_idx, column=8, value=fmt_dt(o.cancelled_at))
+            row_idx += 1
+    autosize(ws, [10, 26, 14, 12, 14, 12, 20, 20])
+
+    # ============ 输出文件 ============
+    buf = BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+
+    role_tag = '接送' if is_transfer_only else '全业务'
+    paid_tag = '_已支付' if paid_only else ''
+    filename = f'营业明细_{role_tag}{paid_tag}_{period}_{now.strftime("%Y%m%d_%H%M")}.xlsx'
+
+    return send_file(
+        buf,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=filename,
+    )
+
+
 # ==================== 订单管理 ====================
 
 @api_bp.route('/admin/orders/shop', methods=['GET'])

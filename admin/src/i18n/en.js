@@ -182,7 +182,11 @@ export default {
     topProducts: 'Top Selling Products',
     productName: 'Product',
     totalSales: 'Total Sales',
-    totalSalesAmount: 'Revenue'
+    totalSalesAmount: 'Revenue',
+    exportExcel: 'Export Excel',
+    exporting: 'Generating...',
+    exportTooltip: 'Export current period: summary / orders / refunds',
+    exportPaidOnly: 'Paid only (for reconciliation)'
   },
 
   // Products

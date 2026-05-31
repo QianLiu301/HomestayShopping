@@ -1,12 +1,29 @@
 <template>
   <div>
-    <!-- Period selector -->
+    <!-- Period selector + Export -->
     <div class="period-bar">
       <el-radio-group v-model="period" @change="loadAnalytics">
         <el-radio-button value="month">{{ $t('dashboard.thisMonth') }}</el-radio-button>
         <el-radio-button value="quarter">{{ $t('dashboard.thisQuarter') }}</el-radio-button>
         <el-radio-button value="half_year">{{ $t('dashboard.halfYear') }}</el-radio-button>
       </el-radio-group>
+
+      <div class="period-bar__right">
+        <el-checkbox v-model="exportPaidOnly">
+          {{ $t('dashboard.exportPaidOnly') }}
+        </el-checkbox>
+
+        <el-tooltip :content="$t('dashboard.exportTooltip')" placement="top">
+          <el-button
+            type="success"
+            :icon="Download"
+            :loading="exporting"
+            @click="onExportExcel"
+          >
+            {{ exporting ? $t('dashboard.exporting') : $t('dashboard.exportExcel') }}
+          </el-button>
+        </el-tooltip>
+      </div>
     </div>
 
     <!-- Row 1: Revenue cards -->
@@ -173,16 +190,17 @@
 import { ref, computed, markRaw, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { ShoppingCart, Van, TrendCharts, Goods, Ticket, ChatLineRound } from '@element-plus/icons-vue'
+import { ShoppingCart, Van, TrendCharts, Goods, Ticket, ChatLineRound, Download } from '@element-plus/icons-vue'
 import { use } from 'echarts/core'
 import { BarChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
-import { getShopOrders, getTransferOrders, getProducts, getAnalytics, getTopProducts, getWishes } from '../api'
+import http, { getShopOrders, getTransferOrders, getProducts, getAnalytics, getTopProducts, getWishes } from '../api'
 import { getTicketOrders } from '../api/tickets'
 import { useAuthStore } from '../stores/auth'
 import { ROLE_TRANSFER_OPS } from '../utils/permissions'
+import { ElMessage } from 'element-plus'
 
 const auth = useAuthStore()
 const isTransferOps = computed(() => auth.user?.role === ROLE_TRANSFER_OPS)
@@ -221,6 +239,51 @@ const recentTransferOrders = ref([])
 const recentTicketOrders = ref([])
 const recentWishes = ref([])
 const topProducts = ref([])
+
+// ===== Excel 导出 =====
+const exporting = ref(false)
+const exportPaidOnly = ref(false)   // ☑ 仅已支付（财务对账常用）
+
+async function onExportExcel() {
+  if (exporting.value) return
+  exporting.value = true
+  try {
+    // 用 axios 拉 blob，自动带上 JWT（http 实例会注入 Authorization 头）
+    const res = await http.get('/admin/analytics/export', {
+      params: {
+        period: period.value,
+        paid_only: exportPaidOnly.value ? 1 : 0,
+      },
+      responseType: 'blob',
+    })
+
+    // 解析后端返回的 filename（在 Content-Disposition 头里）
+    let filename = `report_${period.value}_${Date.now()}.xlsx`
+    const cd = res.headers?.['content-disposition'] || ''
+    const match = cd.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)/i)
+    if (match) {
+      filename = decodeURIComponent(match[1])
+    }
+
+    // 触发浏览器下载
+    const blob = new Blob([res.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    console.error('Export failed:', e)
+    ElMessage.error(e?.response?.data?.message || 'Export failed')
+  } finally {
+    exporting.value = false
+  }
+}
 
 const statusTypes = { 0: 'warning', 1: 'primary', 2: '', 3: 'success', 4: 'info' }
 const statusLabel = s => t(`orders.${['pending','confirmed','delivering','completed','cancelled'][s] || 'unknown'}`)
@@ -365,7 +428,19 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.period-bar { margin-bottom: 16px; }
+.period-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.period-bar__right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
 
 .stat-card { display: flex; align-items: center; }
 .stat-card :deep(.el-card__body) { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; }

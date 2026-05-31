@@ -31,7 +31,11 @@ http.interceptors.request.use(config => {
 let isLoggingOut = false
 
 http.interceptors.response.use(
-  res => res.data,
+  res => {
+    // 文件下载（blob）需要保留完整响应，以便读取 Content-Disposition 头里的文件名
+    if (res.config?.responseType === 'blob') return res
+    return res.data
+  },
   err => {
     const status = err.response?.status
     if (status === 401) {
@@ -145,3 +149,6 @@ export const getAccounts = params => http.get('/admin/accounts', { params })
 export const createAccount = data => http.post('/admin/accounts', data)
 export const updateAccount = (id, data) => http.put(`/admin/accounts/${id}`, data)
 export const deleteAccount = id => http.delete(`/admin/accounts/${id}`)
+
+// 导出原始 http 实例（用于特殊场景：blob 文件下载、自定义 headers 等）
+export default http

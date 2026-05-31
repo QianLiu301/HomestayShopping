@@ -182,7 +182,11 @@ export default {
     topProducts: '热销商品排行',
     productName: '商品名称',
     totalSales: '总销量',
-    totalSalesAmount: '销售额'
+    totalSalesAmount: '销售额',
+    exportExcel: '导出 Excel',
+    exporting: '正在生成...',
+    exportTooltip: '导出当前时间段的明细，含汇总/各业务订单/退款记录',
+    exportPaidOnly: '仅已支付（财务对账）'
   },
 
   // Products
