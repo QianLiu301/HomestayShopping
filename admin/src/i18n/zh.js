@@ -185,8 +185,11 @@ export default {
     totalSalesAmount: '销售额',
     exportExcel: '导出 Excel',
     exporting: '正在生成...',
-    exportTooltip: '导出当前时间段的明细，含汇总/各业务订单/退款记录',
-    exportPaidOnly: '仅已支付（财务对账）'
+    exportTooltip: '导出选中时间段的明细，含汇总/各业务订单/退款记录',
+    exportPaidOnly: '仅已支付（财务对账）',
+    exportThisMonth: '本月',
+    exportLastMonth: '上个月',
+    exportLast3Months: '前三个月'
   },
 
   // Products

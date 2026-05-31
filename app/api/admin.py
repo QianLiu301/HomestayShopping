@@ -725,18 +725,54 @@ def admin_analytics_export():
     paid_only = request.args.get('paid_only', '0') in ('1', 'true', 'True')
     is_transfer_only = current_role() == ROLE_TRANSFER_OPS
 
-    # 时间窗口（跟 analytics 接口保持一致）
+    # 时间窗口
+    # 支持的 period 值：
+    #   month         本月（当月 1 号 → 现在）—— 仪表盘视角
+    #   quarter       本季度（本季 1 号 → 现在）
+    #   half_year     近半年
+    #   last_month    上个月（上月 1 号 → 上月最后一天）—— 财务对账首选
+    #   last_3_months 前三个月（3 个月前 1 号 → 上月最后一天）—— 季度对账
     now = datetime.now()
+
+    def _month_start(y, m):
+        return datetime(y, m, 1)
+
+    def _next_month_start(y, m):
+        if m == 12:
+            return datetime(y + 1, 1, 1)
+        return datetime(y, m + 1, 1)
+
+    end = now  # 默认结束于此刻
+
     if period == 'quarter':
         start = datetime(now.year, ((now.month - 1) // 3) * 3 + 1, 1)
         period_label = f'{start.year}年Q{(start.month - 1) // 3 + 1}'
     elif period == 'half_year':
-        start = datetime(now.year, now.month, 1) - timedelta(days=180)
-        start = datetime(start.year, start.month, 1)
+        start = _month_start(now.year, now.month) - timedelta(days=180)
+        start = _month_start(start.year, start.month)
         period_label = f'近半年({start.strftime("%Y-%m")} ~ {now.strftime("%Y-%m")})'
+    elif period == 'last_month':
+        # 上个月 1 号 → 上月最后一天 23:59:59
+        last_month_end = _month_start(now.year, now.month) - timedelta(seconds=1)
+        start = _month_start(last_month_end.year, last_month_end.month)
+        end = last_month_end
+        period_label = f'{start.strftime("%Y年%m月")}（完整月）'
+    elif period == 'last_3_months':
+        # 3 个月前 1 号 → 上月最后一天
+        cur_first = _month_start(now.year, now.month)
+        last_month_end = cur_first - timedelta(seconds=1)
+        # 往前数 3 个完整月
+        y, m = last_month_end.year, last_month_end.month - 2
+        while m <= 0:
+            m += 12
+            y -= 1
+        start = _month_start(y, m)
+        end = last_month_end
+        period_label = f'前三个月({start.strftime("%Y-%m")} ~ {last_month_end.strftime("%Y-%m")})'
     else:
-        start = datetime(now.year, now.month, 1)
-        period_label = f'{start.strftime("%Y年%m月")}'
+        # 默认 month：本月
+        start = _month_start(now.year, now.month)
+        period_label = f'{start.strftime("%Y年%m月")}（截至{now.strftime("%m月%d日")}）'
 
     # ---- 样式 ----
     header_font = Font(bold=True, color='FFFFFF', size=11)
@@ -784,17 +820,17 @@ def admin_analytics_export():
         return q
 
     shop_rows = [] if is_transfer_only else _maybe_paid(
-        ShopOrder.query.filter(ShopOrder.created_at >= start),
+        ShopOrder.query.filter(ShopOrder.created_at >= start, ShopOrder.created_at <= end),
         ShopOrder
     ).order_by(ShopOrder.created_at.desc()).all()
 
     transfer_rows = _maybe_paid(
-        TransferOrder.query.filter(TransferOrder.created_at >= start),
+        TransferOrder.query.filter(TransferOrder.created_at >= start, TransferOrder.created_at <= end),
         TransferOrder
     ).order_by(TransferOrder.created_at.desc()).all()
 
     ticket_rows = [] if is_transfer_only else _maybe_paid(
-        TicketOrder.query.filter(TicketOrder.created_at >= start),
+        TicketOrder.query.filter(TicketOrder.created_at >= start, TicketOrder.created_at <= end),
         TicketOrder
     ).order_by(TicketOrder.created_at.desc()).all()
 

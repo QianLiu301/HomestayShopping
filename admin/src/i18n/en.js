@@ -185,8 +185,11 @@ export default {
     totalSalesAmount: 'Revenue',
     exportExcel: 'Export Excel',
     exporting: 'Generating...',
-    exportTooltip: 'Export current period: summary / orders / refunds',
-    exportPaidOnly: 'Paid only (for reconciliation)'
+    exportTooltip: 'Export selected period: summary / orders / refunds',
+    exportPaidOnly: 'Paid only (for reconciliation)',
+    exportThisMonth: 'This Month',
+    exportLastMonth: 'Last Month',
+    exportLast3Months: 'Last 3 Months'
   },
 
   // Products

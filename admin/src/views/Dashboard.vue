@@ -1,6 +1,6 @@
 <template>
   <div>
-    <!-- Period selector + Export -->
+    <!-- Period selector (用于看仪表盘) -->
     <div class="period-bar">
       <el-radio-group v-model="period" @change="loadAnalytics">
         <el-radio-button value="month">{{ $t('dashboard.thisMonth') }}</el-radio-button>
@@ -8,7 +8,18 @@
         <el-radio-button value="half_year">{{ $t('dashboard.halfYear') }}</el-radio-button>
       </el-radio-group>
 
+      <!-- 导出工具栏（独立时间段，用于财务对账）-->
       <div class="period-bar__right">
+        <el-select
+          v-model="exportPeriod"
+          size="default"
+          style="width: 140px"
+        >
+          <el-option :label="$t('dashboard.exportThisMonth')" value="month" />
+          <el-option :label="$t('dashboard.exportLastMonth')" value="last_month" />
+          <el-option :label="$t('dashboard.exportLast3Months')" value="last_3_months" />
+        </el-select>
+
         <el-checkbox v-model="exportPaidOnly">
           {{ $t('dashboard.exportPaidOnly') }}
         </el-checkbox>
@@ -242,6 +253,9 @@ const topProducts = ref([])
 
 // ===== Excel 导出 =====
 const exporting = ref(false)
+// 独立的导出时间段（跟仪表盘的 period 分开）
+// 财务对账场景默认选"上个月"，因为这是最常用的完整周期
+const exportPeriod = ref('last_month')
 const exportPaidOnly = ref(false)   // ☑ 仅已支付（财务对账常用）
 
 async function onExportExcel() {
@@ -251,7 +265,7 @@ async function onExportExcel() {
     // 用 axios 拉 blob，自动带上 JWT（http 实例会注入 Authorization 头）
     const res = await http.get('/admin/analytics/export', {
       params: {
-        period: period.value,
+        period: exportPeriod.value,
         paid_only: exportPaidOnly.value ? 1 : 0,
       },
       responseType: 'blob',
