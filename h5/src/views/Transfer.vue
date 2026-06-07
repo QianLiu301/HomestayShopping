@@ -675,6 +675,16 @@ onMounted(async () => {
   if (serviceType && ['pickup', 'dropoff', 'combo'].includes(serviceType)) {
     form.service_type = serviceType
   }
+  // 从 URL 参数读取交通方式
+  const tm = route.query.transport_mode
+  if (tm && ['flight', 'train'].includes(tm)) {
+    transportMode.value = tm
+    // 设置默认站点
+    if (tm === 'train') {
+      form.pickup_airport = 'SHRW'
+      dropoffAirport.value = 'SHRW'
+    }
+  }
 
   try {
     const [vRes] = await Promise.all([

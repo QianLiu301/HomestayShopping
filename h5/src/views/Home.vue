@@ -31,8 +31,19 @@
     <section id="services" class="section services-section">
       <div class="section-container">
         <div class="section-label">{{ t('nav.services') }}</div>
-        <h2 class="section-title-lg">{{ t('home.servicesTitle') }}</h2>
-        <p class="section-subtitle">{{ t('home.servicesSubtitle') }}</p>
+        <h2 class="section-title-lg">{{ homeTransportMode === 'train' ? t('home.trainServicesTitle') : t('home.servicesTitle') }}</h2>
+        <p class="section-subtitle">{{ homeTransportMode === 'train' ? t('home.trainServicesSubtitle') : t('home.servicesSubtitle') }}</p>
+
+        <div class="transport-mode-toggle">
+          <button type="button" class="mode-btn" :class="{ active: homeTransportMode === 'flight' }" @click="homeTransportMode = 'flight'">
+            <span class="mode-icon">✈️</span>
+            <span class="mode-label">{{ t('transfer.flightMode') }}</span>
+          </button>
+          <button type="button" class="mode-btn" :class="{ active: homeTransportMode === 'train' }" @click="homeTransportMode = 'train'">
+            <span class="mode-icon">🚄</span>
+            <span class="mode-label">{{ t('transfer.trainMode') }}</span>
+          </button>
+        </div>
 
         <div class="service-types">
           <div class="service-type" v-for="svc in serviceTypes" :key="svc.type" :class="{ active: activeService === svc.type }" @click="activeService = svc.type; goToTransfer(svc.type)">
@@ -418,14 +429,18 @@ const totalPages = ref(1)
 const hasMoreProducts = computed(() => currentPage.value < totalPages.value)
 const loadMoreTrigger = ref(null)
 const activeService = ref('pickup')
+const homeTransportMode = ref('flight')
 const queryOrderNo = ref('')
 const queryContact = ref('')
 
-const serviceTypes = computed(() => ([
-  { type: 'pickup', icon: '✈️', label: 'transfer.pickup' },
-  { type: 'dropoff', icon: '🛫', label: 'transfer.dropoff' },
-  { type: 'combo', icon: '🔄', label: 'transfer.combo' }
-]))
+const serviceTypes = computed(() => {
+  const isTrain = homeTransportMode.value === 'train'
+  return [
+    { type: 'pickup', icon: isTrain ? '🚄' : '✈️', label: isTrain ? 'transfer.trainPickup' : 'transfer.pickup' },
+    { type: 'dropoff', icon: isTrain ? '🚃' : '🛫', label: isTrain ? 'transfer.trainDropoff' : 'transfer.dropoff' },
+    { type: 'combo', icon: '🔄', label: isTrain ? 'transfer.trainCombo' : 'transfer.combo' }
+  ]
+})
 
 const homeShopSortOptions = computed(() => ([
   { value: 'default', label: t('shop.sortDefault') },
@@ -455,7 +470,7 @@ const steps = [
 ]
 
 function goToTransfer(serviceType, vehicleId = null) {
-  const query = { service_type: serviceType }
+  const query = { service_type: serviceType, transport_mode: homeTransportMode.value }
   if (vehicleId) query.vehicle_id = String(vehicleId)
   router.push({ path: '/transfer', query })
 }
@@ -761,6 +776,11 @@ async function onSubmitWish() {
 
 /* ===== SERVICES ===== */
 .services-section { background: var(--white); }
+.transport-mode-toggle { display: flex; gap: 12px; padding: 4px; background: #f5f5f5; border-radius: 12px; margin: 30px 0 0; max-width: 400px; }
+.mode-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px; border: none; border-radius: 10px; background: transparent; font-size: 15px; font-weight: 500; color: #666; cursor: pointer; transition: all 0.25s ease; }
+.mode-btn.active { background: #fff; color: var(--accent, #1a73e8); font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.mode-icon { font-size: 20px; }
+.mode-label { font-size: 14px; }
 .service-types { display: flex; gap: 16px; margin: 36px 0 28px; flex-wrap: wrap; }
 .service-type { flex: 1; min-width: 160px; padding: 18px 20px; border: 2px solid var(--border); border-radius: 16px; text-align: center; cursor: pointer; transition: all 0.3s; background: var(--white); }
 .service-type:hover { border-color: var(--accent); background: var(--accent-light); }
@@ -1112,6 +1132,7 @@ async function onSubmitWish() {
   .how-section { padding-top: 36px; padding-bottom: 48px; }
  
   /* Services mobile */
+  .transport-mode-toggle { max-width: 100%; margin-top: 20px; }
   .service-types { flex-direction: column; gap: 10px; margin: 24px 0 20px; }
   .service-type { min-width: unset; padding: 16px; display: flex; align-items: center; gap: 12px; text-align: left; border-radius: 12px; }
   .service-type .svc-icon { font-size: 24px; margin-bottom: 0; }
