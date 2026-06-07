@@ -908,20 +908,21 @@ def admin_analytics_export():
 
     # ========== Sheet: 接送订单明细 ==========
     ws = wb.create_sheet('接送订单明细')
-    headers = ['订单号', '客户', '电话', '邮箱', '服务类型', '金额(¥)', '订单状态', '支付状态', '退款状态', '下单时间']
+    headers = ['订单号', '客户', '电话', '邮箱', '交通方式', '服务类型', '金额(¥)', '订单状态', '支付状态', '退款状态', '下单时间']
     write_headers(ws, headers)
     for i, o in enumerate(transfer_rows, start=2):
         ws.cell(row=i, column=1, value=o.order_no)
         ws.cell(row=i, column=2, value=o.contact_name)
         ws.cell(row=i, column=3, value=o.contact_phone or '')
         ws.cell(row=i, column=4, value=o.contact_email or '')
-        ws.cell(row=i, column=5, value=service_type_label(o.service_type))
-        ws.cell(row=i, column=6, value=float(o.total_price or 0))
-        ws.cell(row=i, column=7, value=status_label_transfer(o.status))
-        ws.cell(row=i, column=8, value='已支付' if o.payment_status == 1 else '未支付')
-        ws.cell(row=i, column=9, value='已退款' if o.refund_status == 1 else '—')
-        ws.cell(row=i, column=10, value=fmt_dt(o.created_at))
-    autosize(ws, [26, 14, 16, 24, 12, 12, 12, 12, 12, 20])
+        ws.cell(row=i, column=5, value='火车站' if (o.transport_mode or 'flight') == 'train' else '飞机')
+        ws.cell(row=i, column=6, value=service_type_label(o.service_type))
+        ws.cell(row=i, column=7, value=float(o.total_price or 0))
+        ws.cell(row=i, column=8, value=status_label_transfer(o.status))
+        ws.cell(row=i, column=9, value='已支付' if o.payment_status == 1 else '未支付')
+        ws.cell(row=i, column=10, value='已退款' if o.refund_status == 1 else '—')
+        ws.cell(row=i, column=11, value=fmt_dt(o.created_at))
+    autosize(ws, [26, 14, 16, 24, 10, 12, 12, 12, 12, 12, 20])
 
     # ========== Sheet: 门票订单明细 ==========
     if not is_transfer_only:
@@ -1095,6 +1096,7 @@ def admin_get_transfer_orders():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     status = request.args.get('status', type=int)
+    transport_mode = request.args.get('transport_mode', '')
     keyword = request.args.get('keyword', '')
     date_start = request.args.get('date_start', '')
     date_end = request.args.get('date_end', '')
@@ -1103,6 +1105,8 @@ def admin_get_transfer_orders():
 
     if status is not None:
         query = query.filter_by(status=status)
+    if transport_mode in ('flight', 'train'):
+        query = query.filter_by(transport_mode=transport_mode)
     if keyword:
         query = query.filter(
             (TransferOrder.order_no.ilike(f'%{escape_like(keyword)}%')) |

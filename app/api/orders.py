@@ -756,12 +756,14 @@ def request_transfer_refund():
         target_datetime = min(candidates)
 
     if not target_datetime:
-        return error_response('订单缺少航班时间信息，请联系客服处理')
+        time_label = '出发时间' if (order.transport_mode or 'flight') == 'train' else '航班时间'
+        return error_response(f'订单缺少{time_label}信息，请联系客服处理')
 
     hours_until_target = (target_datetime - now).total_seconds() / 3600
 
     if hours_until_target < 48:
-        return error_response('距离航班时间不足48小时，无法免费取消，请联系客服处理')
+        time_label = '出发时间' if (order.transport_mode or 'flight') == 'train' else '航班时间'
+        return error_response(f'距离{time_label}不足48小时，无法免费取消，请联系客服处理')
 
     # 自动审批：退款 + 取消
     order.refund_status = 2
