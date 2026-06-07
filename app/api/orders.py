@@ -57,6 +57,7 @@ def get_transfer_price():
 
 
 @api_bp.route('/transfer/orders', methods=['POST'])
+@limiter.limit("10 per minute")
 def create_transfer_order():
     """创建接送机订单"""
     data = request.get_json()
@@ -271,6 +272,7 @@ def create_transfer_order():
 # ==================== 商城订单 ====================
 
 @api_bp.route('/shop/orders', methods=['POST'])
+@limiter.limit("10 per minute")
 def create_shop_order():
     """创建商城订单"""
     data = request.get_json()
@@ -548,6 +550,7 @@ def query_order():
 # ==================== 退款申请 ====================
 
 @api_bp.route('/orders/refund', methods=['POST'])
+@limiter.limit("10 per minute")
 def request_refund():
     """客户取消/退款订单
     - 未确认订单(status=0)：直接取消（未付款无需退款）
