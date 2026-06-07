@@ -421,10 +421,11 @@ class TransferOrder(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     order_no = db.Column(db.String(32), unique=True, nullable=False)
+    transport_mode = db.Column(db.String(10), default='flight')  # flight, train
     service_type = db.Column(db.String(20), nullable=False)  # pickup, dropoff, combo
     vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicles.id'))
-    # Pickup leg (接机)
-    pickup_airport = db.Column(db.String(10))   # PVG or SHA
+    # Pickup leg (接机/接站)
+    pickup_airport = db.Column(db.String(10))   # PVG, SHA, SHRW, SHS
     flight_no = db.Column(db.String(20))
     flight_time = db.Column(db.DateTime)
     # Dropoff leg (送机)
@@ -470,6 +471,7 @@ class TransferOrder(db.Model):
         return {
             'id': self.id,
             'order_no': self.order_no,
+            'transport_mode': self.transport_mode or 'flight',
             'service_type': self.service_type,
             'vehicle': self.vehicle.to_dict() if self.vehicle else None,
             'pickup_airport': self.pickup_airport,

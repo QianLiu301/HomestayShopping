@@ -59,7 +59,7 @@ def get_transfer_price():
 @api_bp.route('/transfer/orders', methods=['POST'])
 @limiter.limit("10 per minute")
 def create_transfer_order():
-    """创建接送机订单"""
+    """创建接送机/接送站订单"""
     data = request.get_json()
 
     if not data:
@@ -71,24 +71,40 @@ def create_transfer_order():
         if not data.get(field):
             return error_response(f'缺少必填字段: {field}')
 
+    # 交通方式：flight(飞机) 或 train(火车)
+    transport_mode = data.get('transport_mode', 'flight')
+    if transport_mode not in ('flight', 'train'):
+        transport_mode = 'flight'
+
+    # 合法站点代码
+    VALID_STATIONS = {
+        'flight': {'PVG', 'SHA'},
+        'train': {'SHRW', 'SHS'},
+    }
+    valid_codes = VALID_STATIONS[transport_mode]
+
     # 验证服务类型
     service_type = data.get('service_type')
     if service_type not in ['pickup', 'dropoff', 'combo']:
         return error_response('无效的服务类型')
 
-    # 验证航班信息（必填）
+    # 验证航班/车次信息（必填）
+    no_label = '车次号' if transport_mode == 'train' else '航班号'
+    station_label = '车站' if transport_mode == 'train' else '机场'
+
     if service_type in ['pickup', 'combo']:
         if not data.get('flight_no'):
-            return error_response('请填写接机航班号')
-        if not data.get('pickup_airport'):
-            return error_response('请选择接机机场')
+            return error_response(f'请填写接机/接站{no_label}')
+        pickup_station = data.get('pickup_airport')
+        if not pickup_station or pickup_station not in valid_codes:
+            return error_response(f'请选择正确的{station_label}')
     if service_type in ['dropoff', 'combo']:
         dropoff_fn = data.get('dropoff_flight_no') if service_type == 'combo' else data.get('flight_no')
         if not dropoff_fn:
-            return error_response('请填写送机航班号')
+            return error_response(f'请填写送机/送站{no_label}')
         dropoff_ap = data.get('dropoff_airport') if service_type == 'combo' else data.get('dropoff_airport')
-        if not dropoff_ap:
-            return error_response('请选择送机机场')
+        if not dropoff_ap or dropoff_ap not in valid_codes:
+            return error_response(f'请选择正确的{station_label}')
 
     # 验证车型
     vehicle = Vehicle.query.filter_by(id=data.get('vehicle_id'), status=1).first()
@@ -206,6 +222,7 @@ def create_transfer_order():
             total_price=total_price,
             payment_method=data.get('payment_method'),
             remark=data.get('remark'),
+            transport_mode=transport_mode,
             status=0
         )
 

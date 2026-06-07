@@ -91,9 +91,14 @@ def _service_type_label(service_type, lang='en'):
 
 
 def _airport_name(code):
-    """机场代码转名称"""
-    airports = {'PVG': 'Shanghai Pudong (PVG)', 'SHA': 'Shanghai Hongqiao (SHA)'}
-    return airports.get(code, code or '')
+    """机场/火车站代码转名称"""
+    stations = {
+        'PVG': 'Shanghai Pudong Airport (PVG)',
+        'SHA': 'Shanghai Hongqiao Airport (SHA)',
+        'SHRW': 'Shanghai Hongqiao Railway Station (SHRW)',
+        'SHS': 'Shanghai Railway Station (SHS)',
+    }
+    return stations.get(code, code or '')
 
 
 def _format_dt(dt_val):

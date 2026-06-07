@@ -40,6 +40,11 @@
             <el-tag size="small">{{ serviceTypeLabel(row.service_type) }}</el-tag>
           </template>
         </el-table-column>
+        <el-table-column :label="$t('orders.transportMode')" width="120">
+          <template #default="{ row }">
+            {{ transportModeLabel(row.transport_mode || 'flight') }}
+          </template>
+        </el-table-column>
         <el-table-column prop="booking_no" :label="$t('orders.bookingNo')" width="140">
           <template #default="{ row }">
             <el-button v-if="row.booking_no" link type="primary" @click="openDetail(row)">{{ row.booking_no }}</el-button>
@@ -83,6 +88,9 @@
         <el-descriptions-item :label="$t('orders.customer')">{{ current.contact_name }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.phone')">{{ current.contact_phone }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.email')">{{ current.contact_email }}</el-descriptions-item>
+        <el-descriptions-item v-if="current.transport_mode" :label="$t('orders.transportMode')">
+          {{ transportModeLabel(current.transport_mode) }}
+        </el-descriptions-item>
         <!-- Pickup leg -->
         <el-descriptions-item v-if="current.service_type === 'pickup' || current.service_type === 'combo'" :label="$t('orders.pickupAirport')">
           {{ airportLabel(current.pickup_airport) }}
@@ -217,8 +225,13 @@ function paymentMethodLabel(method) {
 }
 
 function airportLabel(code) {
-  const map = { PVG: t('orders.pudongAirport'), SHA: t('orders.hongqiaoAirport') }
+  const map = { PVG: t('orders.pudongAirport'), SHA: t('orders.hongqiaoAirport'), SHRW: t('orders.hongqiaoStation'), SHS: t('orders.shanghaiStation') }
   return code ? `${map[code] || code} (${code})` : '-'
+}
+
+function transportModeLabel(mode) {
+  if (mode === 'train') return '🚄 ' + t('orders.trainMode')
+  return '✈️ ' + t('orders.flightMode')
 }
 
 function onQuickDate(cmd) {

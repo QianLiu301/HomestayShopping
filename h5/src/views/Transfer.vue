@@ -7,6 +7,30 @@
     </div>
 
     <template v-else>
+      <!-- Transport mode toggle -->
+      <div class="card">
+        <div class="transport-mode-toggle">
+          <button
+            type="button"
+            class="mode-btn"
+            :class="{ active: transportMode === 'flight' }"
+            @click="transportMode = 'flight'"
+          >
+            <span class="mode-icon">✈️</span>
+            <span class="mode-label">{{ t('transfer.flightMode') }}</span>
+          </button>
+          <button
+            type="button"
+            class="mode-btn"
+            :class="{ active: transportMode === 'train' }"
+            @click="transportMode = 'train'"
+          >
+            <span class="mode-icon">🚄</span>
+            <span class="mode-label">{{ t('transfer.trainMode') }}</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Service type -->
       <div class="card">
         <div class="card-title">{{ t('transfer.title') }}</div>
@@ -85,28 +109,38 @@
           {{ t('transfer.pickupInfo') }}
         </div>
 
-        <!-- Airport selection -->
-        <div class="field-label">{{ t('transfer.selectAirport') }} <span class="required">*</span></div>
+        <!-- Station selection -->
+        <div class="field-label">{{ transportMode === 'flight' ? t('transfer.selectAirport') : t('transfer.selectStation') }} <span class="required">*</span></div>
         <van-radio-group v-model="form.pickup_airport" direction="horizontal" class="airport-radios">
-          <van-radio name="PVG">
-            <div class="airport-label">{{ t('transfer.pudongAirport') }} <span class="airport-code">PVG</span></div>
-          </van-radio>
-          <van-radio name="SHA">
-            <div class="airport-label">{{ t('transfer.hongqiaoAirport') }} <span class="airport-code">SHA</span></div>
-          </van-radio>
+          <template v-if="transportMode === 'flight'">
+            <van-radio name="PVG">
+              <div class="airport-label">{{ t('transfer.pudongAirport') }} <span class="airport-code">PVG</span></div>
+            </van-radio>
+            <van-radio name="SHA">
+              <div class="airport-label">{{ t('transfer.hongqiaoAirport') }} <span class="airport-code">SHA</span></div>
+            </van-radio>
+          </template>
+          <template v-else>
+            <van-radio name="SHRW">
+              <div class="airport-label">{{ t('transfer.hongqiaoStation') }} <span class="airport-code">SHRW</span></div>
+            </van-radio>
+            <van-radio name="SHS">
+              <div class="airport-label">{{ t('transfer.shanghaiStation') }} <span class="airport-code">SHS</span></div>
+            </van-radio>
+          </template>
         </van-radio-group>
 
-        <!-- Flight info -->
+        <!-- Flight/Train info -->
         <van-field
           v-model="form.flight_no"
-          :label="t('transfer.flightNo')"
-          :placeholder="t('transfer.flightNoPlaceholder')"
+          :label="transportMode === 'flight' ? t('transfer.flightNo') : t('transfer.trainNo')"
+          :placeholder="transportMode === 'flight' ? t('transfer.flightNoPlaceholder') : t('transfer.trainNoPlaceholder')"
           required
         />
         <van-field
-          :label="t('transfer.flightTime')"
+          :label="transportMode === 'flight' ? t('transfer.flightTime') : t('transfer.departureTime')"
           :model-value="form.flight_time ? formatDate(form.flight_time) : ''"
-          :placeholder="t('transfer.flightTime')"
+          :placeholder="transportMode === 'flight' ? t('transfer.flightTime') : t('transfer.departureTime')"
           readonly
           is-link
           @click="activeDatePicker = 'pickup'; showDatePicker = true"
@@ -115,8 +149,8 @@
         <!-- Route display -->
         <div class="route-display" v-if="form.pickup_airport">
           <div class="route-point from">
-            <van-icon name="location-o" color="#1a73e8" />
-            <span>{{ airportName(form.pickup_airport) }}</span>
+            <van-icon :name="transportMode === 'flight' ? 'location-o' : 'guide-o'" color="#1a73e8" />
+            <span>{{ stationName(form.pickup_airport) }}</span>
           </div>
           <div class="route-arrow">→</div>
           <div class="route-point to">
@@ -133,28 +167,38 @@
           {{ t('transfer.dropoffInfo') }}
         </div>
 
-        <!-- Airport selection -->
-        <div class="field-label">{{ t('transfer.selectAirport') }} <span class="required">*</span></div>
+        <!-- Station selection -->
+        <div class="field-label">{{ transportMode === 'flight' ? t('transfer.selectAirport') : t('transfer.selectStation') }} <span class="required">*</span></div>
         <van-radio-group v-model="dropoffAirport" direction="horizontal" class="airport-radios">
-          <van-radio name="PVG">
-            <div class="airport-label">{{ t('transfer.pudongAirport') }} <span class="airport-code">PVG</span></div>
-          </van-radio>
-          <van-radio name="SHA">
-            <div class="airport-label">{{ t('transfer.hongqiaoAirport') }} <span class="airport-code">SHA</span></div>
-          </van-radio>
+          <template v-if="transportMode === 'flight'">
+            <van-radio name="PVG">
+              <div class="airport-label">{{ t('transfer.pudongAirport') }} <span class="airport-code">PVG</span></div>
+            </van-radio>
+            <van-radio name="SHA">
+              <div class="airport-label">{{ t('transfer.hongqiaoAirport') }} <span class="airport-code">SHA</span></div>
+            </van-radio>
+          </template>
+          <template v-else>
+            <van-radio name="SHRW">
+              <div class="airport-label">{{ t('transfer.hongqiaoStation') }} <span class="airport-code">SHRW</span></div>
+            </van-radio>
+            <van-radio name="SHS">
+              <div class="airport-label">{{ t('transfer.shanghaiStation') }} <span class="airport-code">SHS</span></div>
+            </van-radio>
+          </template>
         </van-radio-group>
 
-        <!-- Flight info -->
+        <!-- Flight/Train info -->
         <van-field
           v-model="dropoffFlightNo"
-          :label="t('transfer.flightNo')"
-          :placeholder="t('transfer.flightNoPlaceholder')"
+          :label="transportMode === 'flight' ? t('transfer.flightNo') : t('transfer.trainNo')"
+          :placeholder="transportMode === 'flight' ? t('transfer.flightNoPlaceholder') : t('transfer.trainNoPlaceholder')"
           required
         />
         <van-field
-          :label="t('transfer.flightTime')"
+          :label="transportMode === 'flight' ? t('transfer.flightTime') : t('transfer.departureTime')"
           :model-value="dropoffFlightTime ? formatDate(dropoffFlightTime) : ''"
-          :placeholder="t('transfer.flightTime')"
+          :placeholder="transportMode === 'flight' ? t('transfer.flightTime') : t('transfer.departureTime')"
           readonly
           is-link
           @click="activeDatePicker = 'dropoff'; showDatePicker = true"
@@ -168,8 +212,8 @@
           </div>
           <div class="route-arrow">→</div>
           <div class="route-point to">
-            <van-icon name="location-o" color="#1a73e8" />
-            <span>{{ airportName(dropoffAirport) }}</span>
+            <van-icon :name="transportMode === 'flight' ? 'location-o' : 'guide-o'" color="#1a73e8" />
+            <span>{{ stationName(dropoffAirport) }}</span>
           </div>
         </div>
       </div>
@@ -323,6 +367,7 @@ const pageLoading = ref(true)
 const submitting = ref(false)
 const errorMsg = ref('')
 const vehicles = ref([])
+const transportMode = ref('flight') // 'flight' or 'train'
 
 const form = reactive({
   service_type: route.query.service_type || 'pickup',
@@ -361,6 +406,22 @@ const datePickerValue = ref([
   String(now.getMonth() + 1).padStart(2, '0'),
   String(now.getDate()).padStart(2, '0')
 ])
+
+// Reset station codes when transport mode switches
+watch(transportMode, (newMode) => {
+  if (newMode === 'flight') {
+    form.pickup_airport = 'PVG'
+    dropoffAirport.value = 'PVG'
+  } else {
+    form.pickup_airport = 'SHRW'
+    dropoffAirport.value = 'SHRW'
+  }
+  // Clear flight/train numbers when switching
+  form.flight_no = ''
+  form.flight_time = null
+  dropoffFlightNo.value = ''
+  dropoffFlightTime.value = null
+})
 
 const selectedVehicle = computed(() => vehicles.value.find(v => v.id === form.vehicle_id))
 
@@ -410,7 +471,13 @@ const totalPrice = computed(() => basePrice.value)
 function airportName(code) {
   if (code === 'PVG') return t('transfer.pudongAirport') + ' (PVG)'
   if (code === 'SHA') return t('transfer.hongqiaoAirport') + ' (SHA)'
+  if (code === 'SHRW') return t('transfer.hongqiaoStation') + ' (SHRW)'
+  if (code === 'SHS') return t('transfer.shanghaiStation') + ' (SHS)'
   return code
+}
+
+function stationName(code) {
+  return airportName(code)
 }
 
 function formatDate(d) {
@@ -515,19 +582,21 @@ async function onSubmit() {
   if (!form.vehicle_id) { validationFail(t('transfer.selectVehicle')); return }
 
   // Pickup validation
+  const stationTip = transportMode.value === 'flight' ? t('transfer.selectAirportTip') : t('transfer.selectStationTip')
+  const noRequired = transportMode.value === 'flight' ? t('transfer.flightNoRequired') : t('transfer.trainNoRequired')
   if (st === 'pickup' || st === 'combo') {
-    if (!form.pickup_airport) { validationFail(t('transfer.selectAirportTip')); return }
-    if (!form.flight_no.trim()) { validationFail(t('transfer.flightNoRequired')); return }
+    if (!form.pickup_airport) { validationFail(stationTip); return }
+    if (!form.flight_no.trim()) { validationFail(noRequired); return }
   }
 
   // Dropoff validation
   if (st === 'dropoff') {
-    if (!dropoffAirport.value) { validationFail(t('transfer.selectAirportTip')); return }
-    if (!dropoffFlightNo.value.trim()) { validationFail(t('transfer.flightNoRequired')); return }
+    if (!dropoffAirport.value) { validationFail(stationTip); return }
+    if (!dropoffFlightNo.value.trim()) { validationFail(noRequired); return }
   }
   if (st === 'combo') {
-    if (!dropoffAirport.value) { validationFail(t('transfer.selectAirportTip')); return }
-    if (!dropoffFlightNo.value.trim()) { validationFail(t('transfer.flightNoRequired')); return }
+    if (!dropoffAirport.value) { validationFail(stationTip); return }
+    if (!dropoffFlightNo.value.trim()) { validationFail(noRequired); return }
   }
 
   // Booking number
@@ -549,6 +618,7 @@ async function onSubmit() {
   const data = {
     service_type: st,
     vehicle_id: form.vehicle_id,
+    transport_mode: transportMode.value,
     booking_no: form.booking_no,
     contact_name: form.contact_name,
     contact_phone: form.contact_phone,
@@ -630,6 +700,46 @@ onMounted(async () => {
 <style scoped>
 .page-container {
   padding-top: 0;
+}
+
+.transport-mode-toggle {
+  display: flex;
+  gap: 12px;
+  padding: 4px;
+  background: #f5f5f5;
+  border-radius: 12px;
+}
+
+.mode-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.mode-btn.active {
+  background: #fff;
+  color: #1a73e8;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.mode-icon {
+  font-size: 20px;
+}
+
+.mode-label {
+  font-size: 14px;
 }
 
 .required {

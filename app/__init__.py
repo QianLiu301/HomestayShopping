@@ -26,6 +26,7 @@ limiter = Limiter(
 def _auto_migrate(app):
     """自动检查并添加缺失的数据库列，确保表存在"""
     columns_to_ensure = [
+        ('transfer_orders', 'transport_mode', "VARCHAR(10) DEFAULT 'flight'"),
         ('transfer_orders', 'pickup_airport', 'VARCHAR(10)'),
         ('transfer_orders', 'dropoff_airport', 'VARCHAR(10)'),
         ('transfer_orders', 'dropoff_flight_no', 'VARCHAR(20)'),
