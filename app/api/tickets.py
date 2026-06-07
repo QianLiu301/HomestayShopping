@@ -7,7 +7,7 @@ from app.models import (
     TicketTransportPrice, Vehicle, Coupon
 )
 from app import db, limiter
-from app.utils import success_response, error_response, paginate_query
+from app.utils import success_response, error_response, paginate_query, escape_like
 from config import config
 
 CHINA_TZ = timezone(timedelta(hours=8))
@@ -59,9 +59,10 @@ def get_attractions():
     if featured is not None:
         query = query.filter_by(featured=featured.lower() == 'true')
     if keyword:
+        safe_kw = f'%{escape_like(keyword)}%'
         query = query.filter(
-            (TicketAttraction.name_zh.ilike(f'%{keyword}%')) |
-            (TicketAttraction.name_en.ilike(f'%{keyword}%'))
+            (TicketAttraction.name_zh.ilike(safe_kw)) |
+            (TicketAttraction.name_en.ilike(safe_kw))
         )
 
     query = query.order_by(TicketAttraction.sort_order.desc(), TicketAttraction.id.desc())

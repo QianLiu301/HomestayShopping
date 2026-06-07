@@ -3,7 +3,7 @@ from flask import request
 from app.api import api_bp
 from app.models import Review, ShopOrder, OrderItem, Product, ServiceReview, TransferOrder, TicketOrder
 from app import db, limiter
-from app.utils import success_response, error_response, paginate_query, admin_required
+from app.utils import success_response, error_response, paginate_query, admin_required, escape_like
 
 
 @api_bp.route('/reviews', methods=['POST'])
@@ -256,7 +256,7 @@ def admin_list_reviews():
     if rating in (1, 2, 3, 4, 5):
         query = query.filter(ServiceReview.rating == rating)
     if keyword:
-        like = f'%{keyword}%'
+        like = f'%{escape_like(keyword)}%'
         query = query.filter(
             db.or_(
                 ServiceReview.order_no.ilike(like),

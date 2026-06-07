@@ -19,6 +19,7 @@ from app.utils.email import (
 
 
 @api_bp.route('/upload', methods=['POST'])
+@limiter.limit("10 per minute")
 def guest_upload_file():
     """公开上传接口 - 用于买家上传付款截图"""
     if 'file' not in request.files:
@@ -502,7 +503,7 @@ def query_order():
         if ticket_order:
             if _matches(ticket_order):
                 return success_response({
-                    'orders': [{'type': 'ticket', 'order': ticket_order.to_dict()}]
+                    'orders': [{'type': 'ticket', 'order': ticket_order.to_dict(mask_pii=True)}]
                 })
             return error_response('联系方式不匹配')
 
@@ -533,7 +534,7 @@ def query_order():
         (TicketOrder.contact_email == contact)
     ).order_by(TicketOrder.created_at.desc()).limit(50).all()
     for o in ticket_orders:
-        results.append({'type': 'ticket', 'order': o.to_dict()})
+        results.append({'type': 'ticket', 'order': o.to_dict(mask_pii=True)})
 
     # 按创建时间排序
     results.sort(key=lambda x: x['order'].get('created_at', ''), reverse=True)
@@ -660,6 +661,7 @@ def request_refund():
 # ==================== 用户确认已支付 ====================
 
 @api_bp.route('/orders/confirm-paid', methods=['POST'])
+@limiter.limit("10 per minute")
 def confirm_paid():
     """用户点击'我已支付'后，标记订单为待确认状态"""
     data = request.get_json()

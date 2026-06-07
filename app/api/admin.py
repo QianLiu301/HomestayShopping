@@ -9,7 +9,7 @@ from app.models import (
 )
 from app import db, bcrypt
 from app.utils import (
-    success_response, error_response, admin_required, paginate_query
+    success_response, error_response, admin_required, paginate_query, escape_like
 )
 from app.utils.storage import upload_file, get_r2_file
 from app.translations import auto_fill_translations
@@ -121,8 +121,8 @@ def admin_get_products():
         query = query.filter_by(status=status)
     if keyword:
         query = query.filter(
-            (Product.name_zh.ilike(f'%{keyword}%')) |
-            (Product.name_en.ilike(f'%{keyword}%'))
+            (Product.name_zh.ilike(f'%{escape_like(keyword)}%')) |
+            (Product.name_en.ilike(f'%{escape_like(keyword)}%'))
         )
     
     query = query.order_by(Product.sort_order.desc(), Product.id.desc())
@@ -1008,9 +1008,9 @@ def admin_get_shop_orders():
         query = query.filter_by(status=status)
     if keyword:
         query = query.filter(
-            (ShopOrder.order_no.ilike(f'%{keyword}%')) |
-            (ShopOrder.contact_name.ilike(f'%{keyword}%')) |
-            (ShopOrder.booking_no.ilike(f'%{keyword}%'))
+            (ShopOrder.order_no.ilike(f'%{escape_like(keyword)}%')) |
+            (ShopOrder.contact_name.ilike(f'%{escape_like(keyword)}%')) |
+            (ShopOrder.booking_no.ilike(f'%{escape_like(keyword)}%'))
         )
     if date_start:
         try:
@@ -1105,8 +1105,8 @@ def admin_get_transfer_orders():
         query = query.filter_by(status=status)
     if keyword:
         query = query.filter(
-            (TransferOrder.order_no.ilike(f'%{keyword}%')) |
-            (TransferOrder.contact_name.ilike(f'%{keyword}%'))
+            (TransferOrder.order_no.ilike(f'%{escape_like(keyword)}%')) |
+            (TransferOrder.contact_name.ilike(f'%{escape_like(keyword)}%'))
         )
     if date_start:
         try:
@@ -1248,10 +1248,10 @@ def admin_get_delivery_orders():
         query = query.filter_by(status=status)
     if keyword:
         query = query.filter(
-            (ShopOrder.order_no.ilike(f'%{keyword}%')) |
-            (ShopOrder.contact_name.ilike(f'%{keyword}%')) |
-            (ShopOrder.booking_no.ilike(f'%{keyword}%')) |
-            (ShopOrder.resolved_address.ilike(f'%{keyword}%'))
+            (ShopOrder.order_no.ilike(f'%{escape_like(keyword)}%')) |
+            (ShopOrder.contact_name.ilike(f'%{escape_like(keyword)}%')) |
+            (ShopOrder.booking_no.ilike(f'%{escape_like(keyword)}%')) |
+            (ShopOrder.resolved_address.ilike(f'%{escape_like(keyword)}%'))
         )
 
     # 按期望送达日期优先，退房日期次之，最后创建时间
@@ -1450,10 +1450,10 @@ def admin_get_cancelled_orders():
             shop_query = shop_query.filter_by(refund_status=refund_status)
         if keyword:
             shop_query = shop_query.filter(
-                (ShopOrder.order_no.ilike(f'%{keyword}%')) |
-                (ShopOrder.contact_name.ilike(f'%{keyword}%')) |
-                (ShopOrder.contact_phone.ilike(f'%{keyword}%')) |
-                (ShopOrder.contact_email.ilike(f'%{keyword}%'))
+                (ShopOrder.order_no.ilike(f'%{escape_like(keyword)}%')) |
+                (ShopOrder.contact_name.ilike(f'%{escape_like(keyword)}%')) |
+                (ShopOrder.contact_phone.ilike(f'%{escape_like(keyword)}%')) |
+                (ShopOrder.contact_email.ilike(f'%{escape_like(keyword)}%'))
             )
 
     # 查询接送机已取消订单 (status=3)
@@ -1472,10 +1472,10 @@ def admin_get_cancelled_orders():
         transfer_query = transfer_query.filter_by(refund_status=refund_status)
     if keyword:
         transfer_query = transfer_query.filter(
-            (TransferOrder.order_no.ilike(f'%{keyword}%')) |
-            (TransferOrder.contact_name.ilike(f'%{keyword}%')) |
-            (TransferOrder.contact_phone.ilike(f'%{keyword}%')) |
-            (TransferOrder.contact_email.ilike(f'%{keyword}%'))
+            (TransferOrder.order_no.ilike(f'%{escape_like(keyword)}%')) |
+            (TransferOrder.contact_name.ilike(f'%{escape_like(keyword)}%')) |
+            (TransferOrder.contact_phone.ilike(f'%{escape_like(keyword)}%')) |
+            (TransferOrder.contact_email.ilike(f'%{escape_like(keyword)}%'))
         )
     
     # 获取所有符合条件的订单
@@ -1550,10 +1550,10 @@ def admin_export_cancelled_orders():
         shop_query = shop_query.filter_by(refund_status=refund_status)
     if keyword:
         shop_query = shop_query.filter(
-            (ShopOrder.order_no.ilike(f'%{keyword}%')) |
-            (ShopOrder.contact_name.ilike(f'%{keyword}%')) |
-            (ShopOrder.contact_phone.ilike(f'%{keyword}%')) |
-            (ShopOrder.contact_email.ilike(f'%{keyword}%'))
+            (ShopOrder.order_no.ilike(f'%{escape_like(keyword)}%')) |
+            (ShopOrder.contact_name.ilike(f'%{escape_like(keyword)}%')) |
+            (ShopOrder.contact_phone.ilike(f'%{escape_like(keyword)}%')) |
+            (ShopOrder.contact_email.ilike(f'%{escape_like(keyword)}%'))
         )
     
     # 查询接送机已取消订单
@@ -1572,10 +1572,10 @@ def admin_export_cancelled_orders():
         transfer_query = transfer_query.filter_by(refund_status=refund_status)
     if keyword:
         transfer_query = transfer_query.filter(
-            (TransferOrder.order_no.ilike(f'%{keyword}%')) |
-            (TransferOrder.contact_name.ilike(f'%{keyword}%')) |
-            (TransferOrder.contact_phone.ilike(f'%{keyword}%')) |
-            (TransferOrder.contact_email.ilike(f'%{keyword}%'))
+            (TransferOrder.order_no.ilike(f'%{escape_like(keyword)}%')) |
+            (TransferOrder.contact_name.ilike(f'%{escape_like(keyword)}%')) |
+            (TransferOrder.contact_phone.ilike(f'%{escape_like(keyword)}%')) |
+            (TransferOrder.contact_email.ilike(f'%{escape_like(keyword)}%'))
         )
     
     shop_orders = shop_query.order_by(ShopOrder.cancelled_at.desc().nullslast()).all()
@@ -1729,8 +1729,8 @@ def admin_get_ticket_attractions():
         query = query.filter_by(city=city)
     if keyword:
         query = query.filter(
-            (TicketAttraction.name_zh.ilike(f'%{keyword}%')) |
-            (TicketAttraction.name_en.ilike(f'%{keyword}%'))
+            (TicketAttraction.name_zh.ilike(f'%{escape_like(keyword)}%')) |
+            (TicketAttraction.name_en.ilike(f'%{escape_like(keyword)}%'))
         )
 
     query = query.order_by(TicketAttraction.sort_order.desc(), TicketAttraction.id.desc())
@@ -1856,8 +1856,8 @@ def admin_get_ticket_packages():
         query = query.filter_by(status=status)
     if keyword:
         query = query.filter(
-            (TicketPackage.package_name_zh.ilike(f'%{keyword}%')) |
-            (TicketPackage.package_name_en.ilike(f'%{keyword}%'))
+            (TicketPackage.package_name_zh.ilike(f'%{escape_like(keyword)}%')) |
+            (TicketPackage.package_name_en.ilike(f'%{escape_like(keyword)}%'))
         )
 
     query = query.order_by(TicketPackage.sort_order.desc(), TicketPackage.id.desc())
@@ -2167,11 +2167,11 @@ def admin_get_ticket_orders():
         query = query.filter_by(payment_status=payment_status)
     if keyword:
         query = query.filter(
-            (TicketOrder.order_no.ilike(f'%{keyword}%')) |
-            (TicketOrder.contact_name.ilike(f'%{keyword}%')) |
-            (TicketOrder.contact_phone.ilike(f'%{keyword}%')) |
-            (TicketOrder.contact_email.ilike(f'%{keyword}%')) |
-            (TicketOrder.booking_no.ilike(f'%{keyword}%'))
+            (TicketOrder.order_no.ilike(f'%{escape_like(keyword)}%')) |
+            (TicketOrder.contact_name.ilike(f'%{escape_like(keyword)}%')) |
+            (TicketOrder.contact_phone.ilike(f'%{escape_like(keyword)}%')) |
+            (TicketOrder.contact_email.ilike(f'%{escape_like(keyword)}%')) |
+            (TicketOrder.booking_no.ilike(f'%{escape_like(keyword)}%'))
         )
     if date_start:
         try:

@@ -1018,7 +1018,7 @@ class TicketOrder(db.Model):
     travelers = db.relationship('TicketTraveler', backref='order', lazy='dynamic', cascade='all, delete-orphan')
     vouchers = db.relationship('TicketVoucher', backref='order', lazy='dynamic', cascade='all, delete-orphan')
 
-    def to_dict(self):
+    def to_dict(self, mask_pii=False):
         package_summary = self._build_package_summary(self.package_snapshot)
         return {
             'id': self.id,
@@ -1067,7 +1067,7 @@ class TicketOrder(db.Model):
             'refund_status': self.refund_status or 0,
             'refund_amount': float(self.refund_amount) if self.refund_amount is not None else None,
             'refund_time': self.refund_time.isoformat() if self.refund_time else None,
-            'travelers': [t.to_dict() for t in self.travelers],
+            'travelers': [t.to_dict(masked=mask_pii) for t in self.travelers],
             'vouchers': [v.to_dict() for v in self.vouchers],
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
@@ -1088,16 +1088,44 @@ class TicketTraveler(db.Model):
     gender = db.Column(db.String(10))
     created_at = db.Column(db.DateTime, default=china_now)
 
-    def to_dict(self):
+    @staticmethod
+    def _mask_document_no(doc_no):
+        """证件号脱敏：保留前2位和后2位，中间用*替代"""
+        if not doc_no:
+            return None
+        if len(doc_no) <= 4:
+            return doc_no[0] + '***'
+        return doc_no[:2] + '*' * (len(doc_no) - 4) + doc_no[-2:]
+
+    @staticmethod
+    def _mask_name(name):
+        """姓名脱敏：保留第一个字符，其余用*替代"""
+        if not name:
+            return None
+        if len(name) <= 1:
+            return name + '**'
+        return name[0] + '*' * (len(name) - 1)
+
+    def to_dict(self, masked=False):
+        full_name = self.full_name
+        document_no = self.document_no
+        dob = self.date_of_birth.isoformat() if self.date_of_birth else None
+
+        if masked:
+            full_name = self._mask_name(full_name)
+            document_no = self._mask_document_no(document_no)
+            if dob:
+                dob = dob[:4] + '-**-**'
+
         return {
             'id': self.id,
             'order_id': self.order_id,
             'traveler_type': self.traveler_type,
-            'full_name': self.full_name,
+            'full_name': full_name,
             'nationality': self.nationality,
             'document_type': self.document_type,
-            'document_no': self.document_no,
-            'date_of_birth': self.date_of_birth.isoformat() if self.date_of_birth else None,
+            'document_no': document_no,
+            'date_of_birth': dob,
             'gender': self.gender
         }
 

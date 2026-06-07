@@ -81,6 +81,11 @@ def admin_required(f):
     return decorated
 
 
+def escape_like(keyword):
+    """转义 LIKE/ILIKE 通配符，防止用户输入 % 或 _ 干扰查询"""
+    return keyword.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+
+
 def get_lang():
     """获取请求的语言参数"""
     lang = request.args.get('lang', 'zh')

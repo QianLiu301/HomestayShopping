@@ -4,7 +4,7 @@ from flask import request, current_app
 from app.api import api_bp
 from app.models import Wish
 from app import db, limiter
-from app.utils import success_response, error_response, admin_required, paginate_query, get_lang
+from app.utils import success_response, error_response, admin_required, paginate_query, get_lang, escape_like
 from app.utils.email import send_new_wish_to_admin, send_wish_received_to_customer
 
 
@@ -117,7 +117,7 @@ def admin_list_wishes():
         except (ValueError, TypeError):
             pass
     if keyword:
-        like = f'%{keyword}%'
+        like = f'%{escape_like(keyword)}%'
         query = query.filter(
             db.or_(
                 Wish.contact_name.ilike(like),
