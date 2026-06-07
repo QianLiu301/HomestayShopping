@@ -1,6 +1,6 @@
 <template>
   <div class="page-container">
-    <van-nav-bar :title="t('transfer.title')" left-arrow @click-left="$router.back()" />
+    <van-nav-bar :title="transportMode === 'train' ? t('transfer.trainTitle') : t('transfer.title')" left-arrow @click-left="$router.back()" />
 
     <div v-if="pageLoading" style="text-align: center; padding: 60px;">
       <van-loading size="24" />
@@ -33,18 +33,18 @@
 
       <!-- Service type -->
       <div class="card">
-        <div class="card-title">{{ t('transfer.title') }}</div>
+        <div class="card-title">{{ transportMode === 'train' ? t('transfer.trainTitle') : t('transfer.title') }}</div>
         <div class="entry-discount-banner" :class="{ active: form.service_type === 'combo' }">
           <div class="entry-discount-badge">90%</div>
-          <div class="entry-discount-text">{{ t('transfer.comboPromoBanner') }}</div>
+          <div class="entry-discount-text">{{ transportMode === 'train' ? t('transfer.trainComboPromoBanner') : t('transfer.comboPromoBanner') }}</div>
         </div>
         <van-radio-group v-model="form.service_type" direction="horizontal" class="service-radios">
-          <van-radio name="pickup">{{ t('transfer.pickup') }}</van-radio>
-          <van-radio name="dropoff">{{ t('transfer.dropoff') }}</van-radio>
-          <van-radio name="combo">{{ t('transfer.combo') }}</van-radio>
+          <van-radio name="pickup">{{ transportMode === 'train' ? t('transfer.trainPickup') : t('transfer.pickup') }}</van-radio>
+          <van-radio name="dropoff">{{ transportMode === 'train' ? t('transfer.trainDropoff') : t('transfer.dropoff') }}</van-radio>
+          <van-radio name="combo">{{ transportMode === 'train' ? t('transfer.trainCombo') : t('transfer.combo') }}</van-radio>
         </van-radio-group>
         <div v-if="form.service_type === 'combo'" class="combo-tip">
-          <div class="combo-tip-title">{{ t('transfer.combo') }}</div>
+          <div class="combo-tip-title">{{ transportMode === 'train' ? t('transfer.trainCombo') : t('transfer.combo') }}</div>
           <div class="combo-tip-desc">{{ t('transfer.comboPriceTip', { combo: vehicleServicePrice(selectedVehicle, 'combo') }) }}</div>
         </div>
         <div v-else-if="servicePriceTip" class="combo-tip service-tip">
@@ -106,7 +106,7 @@
       <div v-if="form.service_type === 'pickup' || form.service_type === 'combo'" class="card">
         <div class="card-title section-title pickup-title">
           <van-icon name="guide-o" size="18" />
-          {{ t('transfer.pickupInfo') }}
+          {{ transportMode === 'train' ? t('transfer.trainPickupInfo') : t('transfer.pickupInfo') }}
         </div>
 
         <!-- Station selection -->
@@ -164,7 +164,7 @@
       <div v-if="form.service_type === 'dropoff' || form.service_type === 'combo'" class="card">
         <div class="card-title section-title dropoff-title">
           <van-icon name="logistics" size="18" />
-          {{ t('transfer.dropoffInfo') }}
+          {{ transportMode === 'train' ? t('transfer.trainDropoffInfo') : t('transfer.dropoffInfo') }}
         </div>
 
         <!-- Station selection -->
