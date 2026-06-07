@@ -75,28 +75,28 @@
             </div>
             <!-- Pickup info -->
             <div v-if="item.order.pickup_airport" class="detail-row">
-              <span>{{ t('transfer.pickupInfo') }}</span>
-              <span>{{ item.order.pickup_airport === 'PVG' ? t('transfer.pudongAirport') : t('transfer.hongqiaoAirport') }}</span>
+              <span>{{ (item.order.transport_mode || 'flight') === 'train' ? t('transfer.trainPickupInfo') : t('transfer.pickupInfo') }}</span>
+              <span>{{ stationLabel(item.order.pickup_airport) }}</span>
             </div>
             <div v-if="item.order.flight_no" class="detail-row">
-              <span>{{ t('transfer.flightNo') }}</span>
+              <span>{{ (item.order.transport_mode || 'flight') === 'train' ? t('transfer.trainNo') : t('transfer.flightNo') }}</span>
               <span>{{ item.order.flight_no }}</span>
             </div>
             <div v-if="item.order.flight_time" class="detail-row">
-              <span>{{ t('transfer.flightTime') }}</span>
+              <span>{{ (item.order.transport_mode || 'flight') === 'train' ? t('transfer.departureTime') : t('transfer.flightTime') }}</span>
               <span>{{ formatTime(item.order.flight_time) }}</span>
             </div>
             <!-- Dropoff info -->
             <div v-if="item.order.dropoff_airport" class="detail-row">
-              <span>{{ t('transfer.dropoffInfo') }}</span>
-              <span>{{ item.order.dropoff_airport === 'PVG' ? t('transfer.pudongAirport') : t('transfer.hongqiaoAirport') }}</span>
+              <span>{{ (item.order.transport_mode || 'flight') === 'train' ? t('transfer.trainDropoffInfo') : t('transfer.dropoffInfo') }}</span>
+              <span>{{ stationLabel(item.order.dropoff_airport) }}</span>
             </div>
             <div v-if="item.order.dropoff_flight_no" class="detail-row">
-              <span>{{ t('transfer.flightNo') }}</span>
+              <span>{{ (item.order.transport_mode || 'flight') === 'train' ? t('transfer.trainNo') : t('transfer.flightNo') }}</span>
               <span>{{ item.order.dropoff_flight_no }}</span>
             </div>
             <div v-if="item.order.dropoff_flight_time" class="detail-row">
-              <span>{{ t('transfer.flightTime') }}</span>
+              <span>{{ (item.order.transport_mode || 'flight') === 'train' ? t('transfer.departureTime') : t('transfer.flightTime') }}</span>
               <span>{{ formatTime(item.order.dropoff_flight_time) }}</span>
             </div>
             <!-- Price breakdown -->
@@ -533,6 +533,16 @@ function statusTagType(status) {
   const map = { 0: 'warning', 1: 'primary', 2: 'primary', 3: 'success', 4: 'default' }
   // status: 0=待确认 1=已确认 2=配送中 3=已完成 4=已取消
   return map[status] || 'default'
+}
+
+function stationLabel(code) {
+  const map = {
+    PVG: t('transfer.pudongAirport'),
+    SHA: t('transfer.hongqiaoAirport'),
+    SHRW: t('transfer.hongqiaoStation'),
+    SHS: t('transfer.shanghaiStation'),
+  }
+  return map[code] || code || ''
 }
 
 function formatTime(iso) {
