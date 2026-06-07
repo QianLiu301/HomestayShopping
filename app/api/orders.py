@@ -658,6 +658,250 @@ def request_refund():
     }, '退款申请成功')
 
 
+# ==================== 接送机订单取消/退款 ====================
+
+@api_bp.route('/orders/transfer/refund', methods=['POST'])
+@limiter.limit("10 per minute")
+def request_transfer_refund():
+    """客户取消接送机订单
+    - 未确认订单(status=0)：直接取消（未付款无需退款）
+    - 已确认订单(status=1)：距离航班时间 ≥ 48小时可免费取消退款
+    - 已完成/已取消(status=2,3)：不可操作
+    """
+    from app.models import china_now
+    from datetime import datetime, timedelta
+
+    data = request.get_json()
+    if not data:
+        return error_response('请求数据为空')
+
+    order_no = data.get('order_no', '').strip()
+    contact = data.get('contact', '').strip()
+
+    if not order_no or not contact:
+        return error_response('缺少订单号或联系方式')
+
+    order = TransferOrder.query.filter_by(order_no=order_no).first()
+    if not order:
+        return error_response('订单不存在', 404)
+
+    # 验证联系方式
+    if contact not in {
+        (order.contact_email or '').strip(),
+        (order.contact_phone or '').strip(),
+        (order.contact_name or '').strip(),
+    }:
+        return error_response('联系方式不匹配')
+
+    # 已完成或已取消的不能操作
+    if order.status in (2, 3):
+        return error_response('该订单状态不支持取消')
+
+    if order.refund_status == 2:
+        return error_response('该订单已退款')
+
+    now = china_now()
+
+    # 未确认订单：直接取消
+    if order.status == 0:
+        order.status = 3  # 接送机: 3=已取消
+        order.cancelled_at = now
+        order.refund_status = 0
+        order.refund_amount = 0
+        db.session.commit()
+
+        # 通知客户
+        from flask import current_app
+        lang = request.args.get('lang', 'en')
+        send_cancel_notify_to_customer(
+            current_app._get_current_object(),
+            order.contact_email, order.order_no, order.contact_name, lang=lang,
+            total_price=float(order.total_price),
+        )
+
+        return success_response({
+            'order_no': order.order_no,
+            'cancelled': True
+        }, '订单已取消')
+
+    # 已确认订单：检查48小时规则（以最近的航班时间为基准）
+    target_datetime = None
+    # 取所有航班时间中最早的一个
+    candidates = []
+    if order.flight_time:
+        candidates.append(order.flight_time)
+    if order.dropoff_flight_time:
+        candidates.append(order.dropoff_flight_time)
+    if candidates:
+        target_datetime = min(candidates)
+
+    if not target_datetime:
+        return error_response('订单缺少航班时间信息，请联系客服处理')
+
+    hours_until_target = (target_datetime - now).total_seconds() / 3600
+
+    if hours_until_target < 48:
+        return error_response('距离航班时间不足48小时，无法免费取消，请联系客服处理')
+
+    # 自动审批：退款 + 取消
+    order.refund_status = 2
+    order.refund_amount = order.total_price
+    order.refund_time = now
+    order.cancelled_at = now
+    order.status = 3  # 已取消
+
+    db.session.commit()
+
+    # 发送通知
+    from flask import current_app
+    lang = request.args.get('lang', 'en')
+    app_obj = current_app._get_current_object()
+    vehicle_name = order.vehicle.name_zh if order.vehicle else ''
+    send_refund_notify_email(app_obj, order.order_no, float(order.total_price), order.contact_name,
+                             contact_phone=order.contact_phone or '',
+                             contact_email=order.contact_email or '',
+                             items_summary=f'{order.service_type} - {vehicle_name}')
+    send_refund_success_to_customer(app_obj, order.contact_email, order.order_no,
+                                    float(order.total_price), order.contact_name, lang=lang,
+                                    items_summary=f'{order.service_type} - {vehicle_name}')
+
+    return success_response({
+        'order_no': order.order_no,
+        'refund_amount': float(order.total_price),
+        'refund_time': order.refund_time.isoformat()
+    }, '退款申请成功')
+
+
+# ==================== 门票订单取消/退款 ====================
+
+@api_bp.route('/orders/ticket/refund', methods=['POST'])
+@limiter.limit("10 per minute")
+def request_ticket_refund():
+    """客户取消门票订单
+    - 未确认订单(status=0)：直接取消（未付款无需退款）
+    - 已确认订单(status=1)：距离游玩日期 ≥ 48小时可免费取消退款
+    - 已完成/已取消(status=2,3)：不可操作
+    """
+    from app.models import china_now
+    from datetime import datetime, timedelta
+
+    data = request.get_json()
+    if not data:
+        return error_response('请求数据为空')
+
+    order_no = data.get('order_no', '').strip()
+    contact = data.get('contact', '').strip()
+
+    if not order_no or not contact:
+        return error_response('缺少订单号或联系方式')
+
+    order = TicketOrder.query.filter_by(order_no=order_no).first()
+    if not order:
+        return error_response('订单不存在', 404)
+
+    # 验证联系方式
+    if contact not in {
+        (order.contact_email or '').strip(),
+        (order.contact_phone or '').strip(),
+        (order.contact_name or '').strip(),
+    }:
+        return error_response('联系方式不匹配')
+
+    # 已完成或已取消的不能操作
+    if order.status in (2, 3):
+        return error_response('该订单状态不支持取消')
+
+    if order.refund_status == 2:
+        return error_response('该订单已退款')
+
+    now = china_now()
+
+    # 未确认订单：直接取消
+    if order.status == 0:
+        order.status = 3  # 门票: 3=已取消
+        order.cancelled_at = now
+        order.refund_status = 0
+        order.refund_amount = 0
+        db.session.commit()
+
+        # 恢复库存
+        _restore_ticket_quota(order)
+
+        # 通知客户
+        from flask import current_app
+        lang = request.args.get('lang', 'en')
+        attraction_name = order.attraction.name_zh if order.attraction else ''
+        send_cancel_notify_to_customer(
+            current_app._get_current_object(),
+            order.contact_email, order.order_no, order.contact_name, lang=lang,
+            items_summary=attraction_name, total_price=float(order.total_price),
+        )
+
+        return success_response({
+            'order_no': order.order_no,
+            'cancelled': True
+        }, '订单已取消')
+
+    # 已确认订单：检查48小时规则（以游玩日期为基准）
+    if not order.visit_date:
+        return error_response('订单缺少游玩日期信息，请联系客服处理')
+
+    target_datetime = datetime.combine(order.visit_date, datetime.min.time())
+    hours_until_target = (target_datetime - now).total_seconds() / 3600
+
+    if hours_until_target < 48:
+        return error_response('距离游玩日期不足48小时，无法免费取消，请联系客服处理')
+
+    # 自动审批：退款 + 取消
+    order.refund_status = 2
+    order.refund_amount = order.total_price
+    order.refund_time = now
+    order.cancelled_at = now
+    order.status = 3  # 已取消
+
+    db.session.commit()
+
+    # 恢复库存
+    _restore_ticket_quota(order)
+
+    # 发送通知
+    from flask import current_app
+    lang = request.args.get('lang', 'en')
+    app_obj = current_app._get_current_object()
+    attraction_name = order.attraction.name_zh if order.attraction else ''
+    send_refund_notify_email(app_obj, order.order_no, float(order.total_price), order.contact_name,
+                             contact_phone=order.contact_phone or '',
+                             contact_email=order.contact_email or '',
+                             items_summary=attraction_name)
+    send_refund_success_to_customer(app_obj, order.contact_email, order.order_no,
+                                    float(order.total_price), order.contact_name, lang=lang,
+                                    items_summary=attraction_name)
+
+    return success_response({
+        'order_no': order.order_no,
+        'refund_amount': float(order.total_price),
+        'refund_time': order.refund_time.isoformat()
+    }, '退款申请成功')
+
+
+def _restore_ticket_quota(order):
+    """取消门票订单时恢复配额"""
+    from app.models import TicketPackage
+    if not order.package_snapshot:
+        return
+    snapshots = order.package_snapshot if isinstance(order.package_snapshot, list) else [order.package_snapshot]
+    for item in snapshots:
+        if not isinstance(item, dict):
+            continue
+        pkg_id = item.get('package_id')
+        quantity = item.get('quantity', 0)
+        if pkg_id and quantity:
+            pkg = TicketPackage.query.get(pkg_id)
+            if pkg and pkg.inventory_mode == 'manual_quota':
+                pkg.quota_used = max((pkg.quota_used or 0) - quantity, 0)
+    db.session.commit()
+
+
 # ==================== 用户确认已支付 ====================
 
 @api_bp.route('/orders/confirm-paid', methods=['POST'])

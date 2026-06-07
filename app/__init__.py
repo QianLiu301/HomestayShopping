@@ -684,6 +684,10 @@ def create_app(config_name='default'):
     # 确保管理员账号存在（通过环境变量配置）
     _ensure_admin(app)
 
+    # 启动定时任务（自动取消超时未支付订单等）
+    from app.tasks import init_scheduler
+    init_scheduler(app)
+
     return app
 
 
