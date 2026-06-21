@@ -120,7 +120,8 @@ def send_new_order_email(app, order_type, order_no, total_price, contact_name,
                          # 接送机订单额外字段
                          service_type=None, vehicle_name=None,
                          flight_no=None, flight_time=None, pickup_airport=None,
-                         dropoff_flight_no=None, dropoff_flight_time=None, dropoff_airport=None):
+                         dropoff_flight_no=None, dropoff_flight_time=None, dropoff_airport=None,
+                         luggage_count=None, sign_name=None):
     """新订单通知邮件 → 发给管理员"""
     _, _, notify_to = _get_resend_config()
     if not notify_to:
@@ -172,6 +173,10 @@ def send_new_order_email(app, order_type, order_no, total_price, contact_name,
             pass  # already shown above
         if dropoff_airport:
             rows += _row('送机机场', _airport_name(dropoff_airport))
+        if luggage_count:
+            rows += _row('行李件数', str(luggage_count))
+        if sign_name:
+            rows += _row('接机牌姓名', sign_name)
         if booking_no:
             rows += _row('预订单号', booking_no)
 

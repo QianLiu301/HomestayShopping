@@ -24,8 +24,52 @@
         </div>
       </div>
 
-      <!-- Contact to pay -->
-      <div class="contact-card">
+      <!-- Transfer order: pay driver offline -->
+      <div v-if="isTransfer" class="contact-card transfer-pay-card">
+        <div class="contact-header">
+          <span class="contact-icon">🚗</span>
+          <span class="contact-title">{{ t('order.transferPayTitle') }}</span>
+        </div>
+        <p class="contact-tip">{{ t('order.transferPayTip') }}</p>
+
+        <div class="transfer-pay-highlight">
+          <van-icon name="gold-coin-o" size="28" color="#d4710a" />
+          <span class="transfer-pay-amount">¥{{ amount }}</span>
+        </div>
+
+        <p class="contact-note">{{ t('order.transferPayNote') }}</p>
+
+        <div v-if="!contactLoading" class="contact-methods" style="margin-top: 12px;">
+          <!-- WhatsApp for questions -->
+          <div v-if="contactInfo.contact_whatsapp" class="contact-item">
+            <van-icon name="phone-o" size="20" color="#25d366" />
+            <div class="contact-detail">
+              <span class="contact-label">WhatsApp</span>
+              <span class="contact-value">{{ contactInfo.contact_whatsapp }}</span>
+            </div>
+            <a
+              :href="buildWhatsAppUrl(contactInfo.contact_whatsapp, t('whatsapp.messageOrder', { orderNo }))"
+              target="_blank"
+              rel="noopener"
+              class="wa-chat-btn"
+            >
+              {{ t('whatsapp.chatNow') }}
+            </a>
+          </div>
+          <!-- WeChat for questions -->
+          <div v-if="contactInfo.contact_wechat_id" class="contact-item">
+            <van-icon name="chat-o" size="20" color="#07c160" />
+            <div class="contact-detail">
+              <span class="contact-label">{{ t('order.wechatLabel') }}</span>
+              <span class="contact-value">{{ contactInfo.contact_wechat_id }}</span>
+            </div>
+            <van-button size="mini" plain type="success" @click="copyText(contactInfo.contact_wechat_id)">{{ t('order.copy') }}</van-button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Non-transfer order: contact to pay online -->
+      <div v-else class="contact-card">
         <div class="contact-header">
           <span class="contact-icon">📱</span>
           <span class="contact-title">{{ t('order.contactToPayTitle') }}</span>
@@ -106,6 +150,7 @@ const route = useRoute()
 
 const orderNo = route.query.orderNo || ''
 const amount = route.query.amount || '0'
+const isTransfer = route.query.type === 'transfer'
 
 const contactLoading = ref(true)
 const contactInfo = ref({
@@ -337,6 +382,40 @@ function fallbackCopy(text) {
   background: rgba(255,255,255,0.6);
   border-radius: 8px;
   line-height: 1.5;
+}
+
+.transfer-pay-card {
+  background: #f0f7ff;
+  border-color: #b8d8ff;
+}
+
+.transfer-pay-card .contact-title {
+  color: #1a73e8;
+}
+
+.transfer-pay-card .contact-tip {
+  color: #3d6fa5;
+}
+
+.transfer-pay-card .contact-note {
+  color: #3d6fa5;
+}
+
+.transfer-pay-highlight {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 12px;
+  margin: 12px 0;
+}
+
+.transfer-pay-amount {
+  font-size: 28px;
+  font-weight: 800;
+  color: #d4710a;
 }
 
 .result-actions {

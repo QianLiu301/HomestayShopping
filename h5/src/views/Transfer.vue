@@ -228,6 +228,29 @@
         <div class="booking-tip">{{ t('transfer.bookingNoTip') }}</div>
       </div>
 
+      <!-- Luggage & Sign -->
+      <div class="card">
+        <div class="card-title">{{ t('transfer.luggageCount') }} <span class="required">*</span></div>
+        <van-field
+          v-model="form.luggage_count"
+          :label="t('transfer.luggageCount')"
+          :placeholder="t('transfer.luggageCountPlaceholder')"
+          type="digit"
+          required
+        />
+        <div class="booking-tip">{{ t('transfer.luggageCountTip') }}</div>
+      </div>
+
+      <div v-if="form.service_type === 'pickup' || form.service_type === 'combo'" class="card">
+        <div class="card-title">{{ t('transfer.signName') }}</div>
+        <van-field
+          v-model="form.sign_name"
+          :label="t('transfer.signName')"
+          :placeholder="t('transfer.signNamePlaceholder')"
+        />
+        <div class="booking-tip">{{ t('transfer.signNameTip') }}</div>
+      </div>
+
       <!-- Contact info -->
       <div class="card">
         <div class="card-title">{{ t('transfer.contactInfo') }}</div>
@@ -376,6 +399,8 @@ const form = reactive({
   flight_no: '',
   flight_time: null,
   booking_no: '',
+  luggage_count: '',
+  sign_name: '',
   contact_name: '',
   contact_phone: '',
   contact_email: '',
@@ -602,6 +627,9 @@ async function onSubmit() {
   // Booking number
   if (!form.booking_no.trim()) { validationFail(t('transfer.bookingNoRequired')); return }
 
+  // Luggage count
+  if (!form.luggage_count || Number(form.luggage_count) < 1) { validationFail(t('transfer.luggageCountRequired')); return }
+
   // Contact
   if (!form.contact_name.trim()) { validationFail(t('transfer.contactNameRequired')); return }
   if (!form.contact_phone.trim() && !form.contact_email.trim()) { validationFail(t('checkout.phoneOrEmail')); return }
@@ -620,6 +648,8 @@ async function onSubmit() {
     vehicle_id: form.vehicle_id,
     transport_mode: transportMode.value,
     booking_no: form.booking_no,
+    luggage_count: Number(form.luggage_count),
+    sign_name: form.sign_name || undefined,
     contact_name: form.contact_name,
     contact_phone: form.contact_phone,
     contact_email: form.contact_email,

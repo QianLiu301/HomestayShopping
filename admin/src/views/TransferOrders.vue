@@ -40,6 +40,9 @@
             <el-tag size="small">{{ serviceTypeLabel(row.service_type) }}</el-tag>
           </template>
         </el-table-column>
+        <el-table-column :label="$t('orders.vehicleName')" width="140">
+          <template #default="{ row }">{{ row.vehicle ? (row.vehicle.name || row.vehicle.model || '-') : '-' }}</template>
+        </el-table-column>
         <el-table-column :label="$t('orders.transportMode')" width="120">
           <template #default="{ row }">
             {{ transportModeLabel(row.transport_mode || 'flight') }}
@@ -52,6 +55,9 @@
           </template>
         </el-table-column>
         <el-table-column prop="flight_no" :label="$t('orders.flightNo')" width="100" />
+        <el-table-column prop="luggage_count" :label="$t('orders.luggageCount')" width="90">
+          <template #default="{ row }">{{ row.luggage_count || '-' }}</template>
+        </el-table-column>
         <el-table-column :label="$t('orders.total')" width="100">
           <template #default="{ row }">¥{{ row.total_price }}</template>
         </el-table-column>
@@ -85,6 +91,15 @@
       <el-descriptions :column="1" border v-if="current">
         <el-descriptions-item :label="$t('orders.orderNo')">{{ current.order_no }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.serviceType')">{{ serviceTypeLabel(current.service_type) }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('orders.vehicleName')">
+          {{ current.vehicle ? (current.vehicle.name || '-') : '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item v-if="current.vehicle && current.vehicle.model" :label="$t('orders.vehicleModel')">
+          {{ current.vehicle.model }}
+        </el-descriptions-item>
+        <el-descriptions-item v-if="current.vehicle" :label="$t('orders.vehicleSeats')">
+          {{ current.vehicle.seats || '-' }}
+        </el-descriptions-item>
         <el-descriptions-item :label="$t('orders.customer')">{{ current.contact_name }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.phone')">{{ current.contact_phone }}</el-descriptions-item>
         <el-descriptions-item :label="$t('orders.email')">{{ current.contact_email }}</el-descriptions-item>
@@ -108,6 +123,13 @@
         </el-descriptions-item>
         <el-descriptions-item v-if="current.service_type === 'combo' && current.dropoff_flight_no" :label="$t('orders.dropoffFlightNo')">{{ current.dropoff_flight_no }}</el-descriptions-item>
         <el-descriptions-item v-if="current.service_type === 'combo' && current.dropoff_flight_time" :label="$t('orders.dropoffFlightTime')">{{ formatDate(current.dropoff_flight_time) }}</el-descriptions-item>
+        <!-- Luggage & Sign -->
+        <el-descriptions-item :label="$t('orders.luggageCount')">
+          {{ current.luggage_count || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item v-if="current.sign_name" :label="$t('orders.signName')">
+          {{ current.sign_name }}
+        </el-descriptions-item>
         <!-- Booking Number -->
         <el-descriptions-item :label="$t('orders.bookingNo')">
           {{ current.booking_no || '-' }}

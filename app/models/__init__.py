@@ -436,6 +436,8 @@ class TransferOrder(db.Model):
     location_id = db.Column(db.Integer, db.ForeignKey('locations.id'))
     custom_address = db.Column(db.Text)
     custom_district = db.Column(db.String(50))
+    luggage_count = db.Column(db.Integer)
+    sign_name = db.Column(db.String(100))
     # Booking number (third-party platform order number, e.g. Airbnb/Booking)
     booking_no = db.Column(db.String(100))
     # Resolved address (admin fills in after looking up booking_no)
@@ -483,6 +485,8 @@ class TransferOrder(db.Model):
             'location': self.location.to_dict() if self.location else None,
             'custom_address': self.custom_address,
             'custom_district': self.custom_district,
+            'luggage_count': self.luggage_count,
+            'sign_name': self.sign_name,
             'booking_no': self.booking_no,
             'resolved_address': self.resolved_address,
             'contact_name': self.contact_name,

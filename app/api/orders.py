@@ -111,6 +111,17 @@ def create_transfer_order():
     if not vehicle:
         return error_response('车型不存在')
 
+    # 行李数量（必填）
+    luggage_count = data.get('luggage_count')
+    if not luggage_count or not isinstance(luggage_count, int) or luggage_count < 1:
+        try:
+            luggage_count = int(luggage_count)
+            if luggage_count < 1:
+                return error_response('请填写行李件数（至少1件）')
+        except (TypeError, ValueError):
+            return error_response('请填写行李件数（至少1件）')
+    sign_name = data.get('sign_name', '').strip() or None
+
     # 验证民宿预订单号
     booking_no = data.get('booking_no')
     location_id = data.get('location_id')
@@ -208,6 +219,8 @@ def create_transfer_order():
             dropoff_airport=dropoff_airport_val,
             dropoff_flight_no=dropoff_flight_no,
             dropoff_flight_time=dropoff_flight_time,
+            luggage_count=luggage_count,
+            sign_name=sign_name,
             booking_no=booking_no,
             location_id=location_id,
             custom_address=custom_address,
@@ -259,6 +272,7 @@ def create_transfer_order():
             pickup_airport=pickup_airport,
             dropoff_flight_no=dropoff_flight_no, dropoff_flight_time=dropoff_flight_time,
             dropoff_airport=dropoff_airport_val,
+            luggage_count=luggage_count, sign_name=sign_name,
         )
         # 通知客户
         send_order_confirmation_to_customer(
