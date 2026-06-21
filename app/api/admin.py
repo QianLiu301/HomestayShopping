@@ -153,7 +153,7 @@ def admin_create_product():
 
     if not name_zh and not name_en:
         return error_response('商品名称不能为空')
-    if not data.get('price'):
+    if data.get('price') is None:
         return error_response('价格不能为空')
 
     name_fields = {
