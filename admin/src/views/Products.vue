@@ -388,7 +388,7 @@ function validateNameLengths() {
 async function onSave() {
   if (!form.name_en && !form.name_zh) return ElMessage.warning(t('common.nameRequired'))
   if (!form.category_id) return ElMessage.warning(t('products.categoryRequired'))
-  if (!form.price) return ElMessage.warning(t('products.priceRequired'))
+  if (form.price === null || form.price === undefined || form.price === '') return ElMessage.warning(t('products.priceRequired'))
   if (uploadingCount.value > 0) return ElMessage.warning('图片仍在上传中，请等待上传完成后再保存')
   if (!validateNameLengths()) return
 
