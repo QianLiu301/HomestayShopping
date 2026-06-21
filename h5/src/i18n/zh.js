@@ -12,6 +12,8 @@ export default {
     ticketsTitle: '门票玩乐',
     ticketsSubtitle: '上海热门景点门票轻松浏览 · 游玩须知与接送可选',
     ticketsCtaHint: '热门景点 / 游玩须知 / 可选接送',
+    guidesTitle: '免费攻略',
+    guidesCtaHint: '上海旅游攻略 / 免费阅读',
     servicesSubtitle: '专业司机，豪华车型，准时接送，让您的旅途无忧。', trainServicesSubtitle: '专业司机，豪华车型，准时接送，火车站无缝衔接。',
     servicesComingSoon: '车型即将上线', bookNow: '立即预订',
     shopTitle: '精选礼品系列',
@@ -382,6 +384,19 @@ export default {
     payWithWechat: '使用微信支付',
     payWithAlipay: '使用支付宝支付',
     paymentProofSubmitted: '已提交付款凭证，请等待商家确认'
+  },
+  guides: {
+    title: '免费攻略',
+    subtitle: '精选上海旅游攻略，免费阅读',
+    detailTitle: '攻略详情',
+    freeTag: '免费',
+    hasTicket: '可购票',
+    buyTicketHint: '点击前往购票',
+    loadMore: '加载更多',
+    cat_attraction: '景点',
+    cat_food: '美食',
+    cat_entertainment: '娱乐',
+    cat_shopping: '购物',
   },
   lang: { title: '语言', zh: '中文', en: 'English', ru: 'Русский', es: 'Español' }
 }

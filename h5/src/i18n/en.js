@@ -12,6 +12,8 @@ export default {
     ticketsTitle: 'Tickets & Experiences',
     ticketsSubtitle: 'Popular Shanghai attraction tickets at a glance · visit tips and optional transfer service',
     ticketsCtaHint: 'Attractions / Transfer',
+    guidesTitle: 'Free Guides',
+    guidesCtaHint: 'Shanghai Travel Guides / Free',
     servicesSubtitle: 'Professional drivers, luxury vehicles, and on-time pickup & dropoff for a seamless travel experience.', trainServicesSubtitle: 'Professional drivers, luxury vehicles, and on-time pickup & dropoff for a seamless station transfer.',
     servicesComingSoon: 'Vehicle options coming soon', bookNow: 'Book Now',
     shopTitle: 'Curated Gift Collection',
@@ -382,6 +384,19 @@ export default {
     payWithWechat: 'Pay with WeChat',
     payWithAlipay: 'Pay with Alipay',
     paymentProofSubmitted: 'Payment proof submitted. Please wait for confirmation.'
+  },
+  guides: {
+    title: 'Free Guides',
+    subtitle: 'Curated Shanghai travel guides, free to read',
+    detailTitle: 'Guide Details',
+    freeTag: 'Free',
+    hasTicket: 'Tickets Available',
+    buyTicketHint: 'Tap to buy tickets',
+    loadMore: 'Load More',
+    cat_attraction: 'Attractions',
+    cat_food: 'Food',
+    cat_entertainment: 'Entertainment',
+    cat_shopping: 'Shopping',
   },
   lang: { title: 'Language', zh: '中文', en: 'English', ru: 'Русский', es: 'Español' }
 }

@@ -12,6 +12,8 @@ export default {
     ticketsTitle: 'Билеты и развлечения',
     ticketsSubtitle: 'Популярные билеты в достопримечательности Шанхая · памятка для посещения и трансфер по желанию',
     ticketsCtaHint: 'Билеты / Трансфер',
+    guidesTitle: 'Бесплатные гиды',
+    guidesCtaHint: 'Путеводители по Шанхаю / Бесплатно',
     servicesComingSoon: 'Автомобили скоро появятся', bookNow: 'Забронировать',
     shopTitle: 'Коллекция подарков', shopSubtitle: 'Сувениры и местные специальности — заказ сегодня, доставка в номер до выезда.',
     productsComingSoon: 'Товары скоро появятся', viewAllProducts: 'Все товары', enterShopNow: 'Перейти в магазин', allProductsLoaded: 'Все товары загружены',
@@ -369,6 +371,19 @@ export default {
     payWithWechat: 'Оплатить через WeChat',
     payWithAlipay: 'Оплатить через Alipay',
     paymentProofSubmitted: 'Подтверждение оплаты отправлено. Пожалуйста, дождитесь подтверждения.'
+  },
+  guides: {
+    title: 'Бесплатные гиды',
+    subtitle: 'Путеводители по Шанхаю, бесплатно',
+    detailTitle: 'Подробности гида',
+    freeTag: 'Бесплатно',
+    hasTicket: 'Билеты доступны',
+    buyTicketHint: 'Нажмите для покупки билетов',
+    loadMore: 'Загрузить ещё',
+    cat_attraction: 'Достопримечательности',
+    cat_food: 'Еда',
+    cat_entertainment: 'Развлечения',
+    cat_shopping: 'Шопинг',
   },
   lang: { title: 'Язык', zh: '中文', en: 'English', ru: 'Русский', es: 'Español' }
 }

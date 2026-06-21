@@ -50,6 +50,7 @@ export const MENU_PERMISSIONS = {
 
   // 营销 / 服务
   '/coupons': [ROLE_OWNER, ROLE_ADMIN],
+  '/guides':  [ROLE_OWNER, ROLE_ADMIN, ROLE_CS],
   '/wishes':  [ROLE_OWNER, ROLE_ADMIN, ROLE_CS],
   '/reviews': [ROLE_OWNER, ROLE_ADMIN, ROLE_CS],
 

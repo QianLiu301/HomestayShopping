@@ -52,6 +52,17 @@ const routes = [
     meta: { tabBar: true }
   },
   {
+    path: '/guides',
+    name: 'Guides',
+    component: () => import('../views/Guides.vue'),
+    meta: { tabBar: true }
+  },
+  {
+    path: '/guides/:id',
+    name: 'GuideDetail',
+    component: () => import('../views/GuideDetail.vue')
+  },
+  {
     path: '/transfer',
     name: 'Transfer',
     component: () => import('../views/Transfer.vue')

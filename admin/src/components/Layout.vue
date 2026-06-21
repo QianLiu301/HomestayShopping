@@ -65,6 +65,11 @@
           <template #title>{{ $t('nav.coupons') }}</template>
         </el-menu-item>
 
+        <el-menu-item v-if="can('/guides')" index="/guides">
+          <el-icon><Notebook /></el-icon>
+          <template #title>{{ $t('nav.guides') }}</template>
+        </el-menu-item>
+
         <el-menu-item v-if="can('/wishes')" index="/wishes">
           <el-icon><ChatLineRound /></el-icon>
           <template #title>{{ $t('nav.wishes') }}</template>
@@ -135,7 +140,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
-import { DataAnalysis, ShoppingBag, Van, List, Ticket, Discount, CreditCard, Fold, Expand, UserFilled, ArrowDown, ChatLineRound, Star, Avatar } from '@element-plus/icons-vue'
+import { DataAnalysis, ShoppingBag, Van, List, Ticket, Discount, CreditCard, Fold, Expand, UserFilled, ArrowDown, ChatLineRound, Star, Avatar, Notebook } from '@element-plus/icons-vue'
 import { canAccess, canAccessGroup, ROLE_LABELS } from '../utils/permissions'
 
 const { t, locale } = useI18n()
@@ -178,6 +183,7 @@ const titleMap = {
   '/orders/refund': 'nav.refundManagement',
   '/delivery': 'nav.delivery',
   '/coupons': 'nav.coupons',
+  '/guides': 'nav.guides',
   '/payment': 'nav.payment'
 }
 

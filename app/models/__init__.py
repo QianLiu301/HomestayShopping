@@ -1167,6 +1167,62 @@ class TicketVoucher(db.Model):
         }
 
 
+class Guide(db.Model):
+    """免费攻略"""
+    __tablename__ = 'guides'
+
+    id = db.Column(db.Integer, primary_key=True)
+    title_zh = db.Column(db.String(200), nullable=False)
+    title_en = db.Column(db.String(200))
+    title_ru = db.Column(db.String(200))
+    title_es = db.Column(db.String(200))
+    summary_zh = db.Column(db.Text)
+    summary_en = db.Column(db.Text)
+    summary_ru = db.Column(db.Text)
+    summary_es = db.Column(db.Text)
+    content_zh = db.Column(db.Text)
+    content_en = db.Column(db.Text)
+    content_ru = db.Column(db.Text)
+    content_es = db.Column(db.Text)
+    cover_image = db.Column(db.String(255))
+    category = db.Column(db.String(50))  # food, attraction, entertainment, shopping
+    attraction_id = db.Column(db.Integer, db.ForeignKey('ticket_attractions.id'))
+    sort_order = db.Column(db.Integer, default=0)
+    status = db.Column(db.SmallInteger, default=1)  # 0=下架 1=上架
+    created_at = db.Column(db.DateTime, default=china_now)
+    updated_at = db.Column(db.DateTime, default=china_now, onupdate=china_now)
+
+    attraction = db.relationship('TicketAttraction', backref='guides')
+
+    def to_dict(self, lang='zh'):
+        return {
+            'id': self.id,
+            'title': _localized(self, 'title', lang),
+            'title_zh': self.title_zh,
+            'title_en': self.title_en,
+            'title_ru': self.title_ru,
+            'title_es': self.title_es,
+            'summary': _localized(self, 'summary', lang),
+            'summary_zh': self.summary_zh,
+            'summary_en': self.summary_en,
+            'summary_ru': self.summary_ru,
+            'summary_es': self.summary_es,
+            'content': _localized(self, 'content', lang),
+            'content_zh': self.content_zh,
+            'content_en': self.content_en,
+            'content_ru': self.content_ru,
+            'content_es': self.content_es,
+            'cover_image': _normalize_image_urls([self.cover_image])[0] if self.cover_image else None,
+            'category': self.category,
+            'attraction_id': self.attraction_id,
+            'attraction': self.attraction.to_dict(lang) if self.attraction else None,
+            'sort_order': self.sort_order,
+            'status': self.status,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
 class TicketTransportPrice(db.Model):
     """门票加购用车价格表"""
     __tablename__ = 'ticket_transport_prices'

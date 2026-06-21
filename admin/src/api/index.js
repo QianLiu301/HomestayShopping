@@ -144,6 +144,12 @@ export const getAdminReviews = params => http.get('/admin/reviews', { params })
 export const updateReview = (id, data) => http.put(`/admin/reviews/${id}`, data)
 export const deleteReview = id => http.delete(`/admin/reviews/${id}`)
 
+// Guides (免费攻略)
+export const getGuides = params => http.get('/admin/guides', { params })
+export const createGuide = data => http.post('/admin/guides', data)
+export const updateGuide = (id, data) => http.put(`/admin/guides/${id}`, data)
+export const deleteGuide = id => http.delete(`/admin/guides/${id}`)
+
 // Accounts (管理员账号管理 — 仅 owner)
 export const getAccounts = params => http.get('/admin/accounts', { params })
 export const createAccount = data => http.post('/admin/accounts', data)

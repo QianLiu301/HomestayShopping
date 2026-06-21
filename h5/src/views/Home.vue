@@ -19,6 +19,10 @@
             <span class="hero-action-btn__title">{{ t('home.ticketsTitle') }}</span>
             <span class="hero-action-btn__hint">{{ t('home.ticketsCtaHint') }}</span>
           </button>
+          <button type="button" class="btn btn-outline hero-action-btn hero-action-btn--outline" @click="goToGuides">
+            <span class="hero-action-btn__title">{{ t('home.guidesTitle') }}</span>
+            <span class="hero-action-btn__hint">{{ t('home.guidesCtaHint') }}</span>
+          </button>
         </div>
       </div>
       <div class="hero-scroll-hint">
@@ -356,6 +360,7 @@
             <h4>{{ t('home.quickLinks') }}</h4>
             <a href="#services">{{ t('nav.services') }}</a>
             <a href="#shop">{{ t('nav.shop') }}</a>
+            <router-link to="/guides">{{ t('home.guidesTitle') }}</router-link>
             <a href="#orders">{{ t('nav.orders') }}</a>
           </div>
           <div class="footer-links">
@@ -477,6 +482,10 @@ function goToTransfer(serviceType, vehicleId = null) {
 
 function goToTickets() {
   router.push('/tickets')
+}
+
+function goToGuides() {
+  router.push('/guides')
 }
 
 function goToShop() {

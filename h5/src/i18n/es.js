@@ -12,6 +12,8 @@ export default {
     ticketsTitle: 'Entradas y experiencias',
     ticketsSubtitle: 'Entradas a las atracciones populares de Shanghai · consejos de visita y traslado opcional',
     ticketsCtaHint: 'Lugares / Traslado',
+    guidesTitle: 'Guías gratis',
+    guidesCtaHint: 'Guías de viaje de Shanghai / Gratis',
     servicesComingSoon: 'Vehículos próximamente', bookNow: 'Reservar',
     shopTitle: 'Colección de regalos', shopSubtitle: 'Souvenirs y especialidades locales — pedido hoy, entregado en tu habitación.',
     productsComingSoon: 'Productos próximamente', viewAllProducts: 'Ver todos los productos', enterShopNow: 'Entrar a la tienda', allProductsLoaded: 'Todos los productos cargados',
@@ -369,6 +371,19 @@ export default {
     payWithWechat: 'Pagar con WeChat',
     payWithAlipay: 'Pagar con Alipay',
     paymentProofSubmitted: 'Comprobante enviado. Espere la confirmación del comercio.'
+  },
+  guides: {
+    title: 'Guías gratis',
+    subtitle: 'Guías de viaje de Shanghai seleccionadas, lectura gratuita',
+    detailTitle: 'Detalles de la guía',
+    freeTag: 'Gratis',
+    hasTicket: 'Entradas disponibles',
+    buyTicketHint: 'Toca para comprar entradas',
+    loadMore: 'Cargar más',
+    cat_attraction: 'Atracciones',
+    cat_food: 'Comida',
+    cat_entertainment: 'Entretenimiento',
+    cat_shopping: 'Compras',
   },
   lang: { title: 'Idioma', zh: '中文', en: 'English', ru: 'Русский', es: 'Español' }
 }

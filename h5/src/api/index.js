@@ -97,4 +97,8 @@ export const verifyCoupon = (data) => api.post('/coupons/verify', data)
 // ==================== Wishes (许愿池) ====================
 export const submitWish = (data) => api.post('/wishes', data)
 
+// ==================== Guides (免费攻略) ====================
+export const getGuides = (params) => api.get('/guides', { params })
+export const getGuide = (id) => api.get(`/guides/${id}`)
+
 export default api

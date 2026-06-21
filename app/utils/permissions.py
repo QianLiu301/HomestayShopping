@@ -185,6 +185,9 @@ ROUTE_PERMISSIONS = [
     # 许愿池
     ('/api/admin/wishes',          CAN_MANAGE_WISHES, CAN_MANAGE_WISHES),
 
+    # 攻略管理
+    ('/api/admin/guides',          CAN_MANAGE_WISHES, CAN_MANAGE_WISHES),
+
     # 评价管理
     ('/api/admin/reviews',         CAN_MANAGE_REVIEWS, CAN_MANAGE_REVIEWS),
 ]
