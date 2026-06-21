@@ -353,7 +353,7 @@ export default {
     resolvedAddress: '实际地址',
     resolvedAddressPlaceholder: '查询预订单号后填写实际民宿地址',
     luggageCount: '行李件数',
-    signName: '接机牌姓名',
+    signName: '接机牌内容',
     homestayAddress: '民宿地址',
     vehicleName: '车型',
     vehicleModel: '车型型号',

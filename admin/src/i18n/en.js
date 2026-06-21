@@ -353,7 +353,7 @@ export default {
     resolvedAddress: 'Resolved Address',
     resolvedAddressPlaceholder: 'Fill in the actual address after looking up the booking',
     luggageCount: 'Luggage Count',
-    signName: 'Pickup Sign Name',
+    signName: 'Pickup Sign',
     homestayAddress: 'Homestay Address',
     vehicleName: 'Vehicle',
     vehicleModel: 'Vehicle Model',
