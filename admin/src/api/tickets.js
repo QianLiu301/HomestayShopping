@@ -68,3 +68,4 @@ export const uploadTicketVoucher = (orderId, file) => {
 export const deleteTicketVoucher = (orderId, voucherId) =>
   http.delete(`/admin/ticket-orders/${orderId}/voucher?voucher_id=${voucherId}`)
 export const sendTicketVoucher = orderId => http.post(`/admin/ticket-orders/${orderId}/send-voucher`)
+export const batchDeleteTicketOrders = ids => http.post('/admin/ticket-orders/batch-delete', { ids })

@@ -1205,6 +1205,22 @@ def admin_batch_delete_transfer_orders():
     return success_response({'deleted': count}, f'已删除 {count} 个订单')
 
 
+@api_bp.route('/admin/ticket-orders/batch-delete', methods=['POST'])
+@admin_required
+def admin_batch_delete_ticket_orders():
+    """批量删除门票订单"""
+    data = request.get_json()
+    ids = data.get('ids', [])
+    if not ids:
+        return error_response('请选择要删除的订单')
+    orders = TicketOrder.query.filter(TicketOrder.id.in_(ids)).all()
+    count = len(orders)
+    for o in orders:
+        db.session.delete(o)
+    db.session.commit()
+    return success_response({'deleted': count}, f'已删除 {count} 个订单')
+
+
 # ==================== 确认收款 ====================
 
 @api_bp.route('/admin/orders/shop/<int:order_id>/confirm-payment', methods=['POST'])

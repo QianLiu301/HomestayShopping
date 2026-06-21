@@ -59,10 +59,16 @@
           </template>
         </el-dropdown>
       </div>
+      <div class="header-actions">
+        <el-button type="danger" :disabled="!selectedIds.length" :icon="Delete" @click="onBatchDelete">
+          {{ $t('orders.batchDelete') }} <span v-if="selectedIds.length">({{ selectedIds.length }})</span>
+        </el-button>
+      </div>
     </div>
 
     <el-card shadow="hover">
-      <el-table :data="list" v-loading="loading" stripe>
+      <el-table :data="list" v-loading="loading" stripe @selection-change="onSelectionChange">
+        <el-table-column type="selection" width="45" />
         <el-table-column prop="order_no" :label="tOrders.orderNo" width="190" />
 
         <el-table-column :label="tOrders.attraction" min-width="180" show-overflow-tooltip>
@@ -390,8 +396,8 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage } from 'element-plus'
-import { Search, Calendar } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, Calendar, Delete } from '@element-plus/icons-vue'
 import {
   getTicketOrders,
   getTicketOrder,
@@ -399,7 +405,8 @@ import {
   confirmTicketOrderPayment,
   uploadTicketVoucher,
   deleteTicketVoucher,
-  sendTicketVoucher
+  sendTicketVoucher,
+  batchDeleteTicketOrders
 } from '../api/tickets'
 import { resolveUrl } from '../api'
 
@@ -421,6 +428,7 @@ const keyword = ref('')
 const statusFilter = ref(undefined)
 const paymentStatusFilter = ref(undefined)
 const dateRange = ref(null)
+const selectedIds = ref([])
 
 const updateForm = reactive({
   status: 0,
@@ -596,6 +604,26 @@ function onQuickDate(cmd) {
   else if (cmd === '1y') d.setFullYear(d.getFullYear() - 1)
   dateRange.value = [d.toISOString().slice(0, 10), end]
   loadData()
+}
+
+function onSelectionChange(rows) {
+  selectedIds.value = rows.map(r => r.id)
+}
+
+async function onBatchDelete() {
+  try {
+    await ElMessageBox.confirm(
+      t('orders.batchDeleteConfirm', { count: selectedIds.value.length }),
+      t('orders.batchDeleteTitle'),
+      { type: 'warning', confirmButtonText: t('orders.confirmDelete'), cancelButtonText: t('common.close') }
+    )
+  } catch { return }
+  try {
+    const res = await batchDeleteTicketOrders(selectedIds.value)
+    ElMessage.success(res.message || t('common.updated'))
+    selectedIds.value = []
+    loadData()
+  } catch {}
 }
 
 async function loadData() {
