@@ -186,6 +186,7 @@ onMounted(async () => {
   margin: 0 0 24px;
   padding-bottom: 16px;
   border-bottom: 1px solid rgba(200, 169, 126, 0.2);
+  white-space: pre-wrap;
 }
 
 .detail-content {
@@ -193,6 +194,7 @@ onMounted(async () => {
   line-height: 1.8;
   color: var(--text, #3b2b1f);
   word-break: break-word;
+  white-space: pre-wrap;
 }
 
 .detail-content :deep(img) {
