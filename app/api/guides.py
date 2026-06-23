@@ -108,6 +108,9 @@ def admin_create_guide():
         if not attraction:
             return error_response('关联景点不存在')
 
+    images = data.get('images') or []
+    cover_image = data.get('cover_image') or (images[0] if images else None)
+
     guide = Guide(
         title_zh=title_zh,
         title_en=title_en,
@@ -121,7 +124,8 @@ def admin_create_guide():
         content_en=data.get('content_en') or data.get('content_zh'),
         content_ru=data.get('content_ru'),
         content_es=data.get('content_es'),
-        cover_image=data.get('cover_image'),
+        cover_image=cover_image,
+        images=images,
         category=data.get('category'),
         attraction_id=attraction_id or None,
         sort_order=data.get('sort_order', 0),
@@ -153,12 +157,19 @@ def admin_update_guide(guide_id):
         'title_zh', 'title_en', 'title_ru', 'title_es',
         'summary_zh', 'summary_en', 'summary_ru', 'summary_es',
         'content_zh', 'content_en', 'content_ru', 'content_es',
-        'cover_image', 'category', 'attraction_id',
+        'cover_image', 'images', 'category', 'attraction_id',
         'sort_order', 'status',
     ]
     for field in fields:
         if field in data:
             setattr(guide, field, data[field])
+
+    if 'images' in data:
+        images = data['images'] or []
+        if images and not data.get('cover_image'):
+            guide.cover_image = images[0]
+        elif not images:
+            guide.cover_image = None
 
     db.session.commit()
     return success_response(guide.to_dict(), '更新成功')

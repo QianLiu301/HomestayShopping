@@ -1189,6 +1189,7 @@ class Guide(db.Model):
     content_ru = db.Column(db.Text)
     content_es = db.Column(db.Text)
     cover_image = db.Column(db.String(255))
+    images = db.Column(db.JSON, default=[])
     category = db.Column(db.String(50))  # food, attraction, entertainment, shopping
     attraction_id = db.Column(db.Integer, db.ForeignKey('ticket_attractions.id'))
     sort_order = db.Column(db.Integer, default=0)
@@ -1217,6 +1218,7 @@ class Guide(db.Model):
             'content_ru': self.content_ru,
             'content_es': self.content_es,
             'cover_image': _normalize_image_urls([self.cover_image])[0] if self.cover_image else None,
+            'images': _normalize_image_urls(self.images or []),
             'category': self.category,
             'attraction_id': self.attraction_id,
             'attraction': self.attraction.to_dict(lang) if self.attraction else None,

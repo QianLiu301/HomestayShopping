@@ -33,7 +33,10 @@
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column :label="$t('guides.coverImage')" width="100">
           <template #default="{ row }">
-            <el-image v-if="row.cover_image" :src="resolveUrl(row.cover_image)" style="width:60px;height:60px;border-radius:6px" fit="cover" />
+            <div v-if="row.cover_image" style="position:relative;display:inline-block">
+              <el-image :src="resolveUrl(row.cover_image)" style="width:60px;height:60px;border-radius:6px" fit="cover" />
+              <span v-if="row.images?.length > 1" style="position:absolute;bottom:2px;right:2px;background:rgba(0,0,0,0.6);color:#fff;font-size:10px;padding:1px 5px;border-radius:4px">{{ row.images.length }}</span>
+            </div>
             <span v-else>-</span>
           </template>
         </el-table-column>
@@ -112,19 +115,38 @@
               <el-input v-model="form.summary_en" type="textarea" :rows="2" />
             </el-form-item>
 
-            <el-form-item :label="$t('guides.coverImage')">
-              <div class="cover-upload">
-                <el-image v-if="form.cover_image" :src="resolveUrl(form.cover_image)" style="width:120px;height:80px;border-radius:6px" fit="cover" />
+            <el-form-item :label="$t('guides.images')">
+              <div class="image-upload-area">
+                <div
+                  v-for="(file, idx) in fileList"
+                  :key="file.uid || idx"
+                  class="image-item"
+                  draggable="true"
+                  @dragstart="onDragStart($event, idx)"
+                  @dragover.prevent
+                  @drop="onDrop($event, idx)"
+                >
+                  <el-image :src="file.url" fit="cover" class="preview-img" />
+                  <div class="image-actions">
+                    <el-icon class="action-icon" @click="handleRemove(idx)"><Delete /></el-icon>
+                  </div>
+                  <div class="drag-handle">⋮⋮</div>
+                  <div v-if="idx === 0" class="cover-badge">{{ $t('guides.coverLabel') }}</div>
+                </div>
                 <el-upload
-                  action=""
-                  :auto-upload="false"
+                  :file-list="[]"
+                  :http-request="handleUpload"
                   :show-file-list="false"
                   accept="image/*"
-                  @change="onCoverChange"
+                  multiple
+                  class="upload-trigger"
                 >
-                  <el-button size="small">{{ form.cover_image ? $t('common.replace') : $t('common.upload') }}</el-button>
+                  <div class="upload-box">
+                    <el-icon><Plus /></el-icon>
+                  </div>
                 </el-upload>
               </div>
+              <div class="upload-tip">{{ $t('guides.dragToReorder') }}</div>
             </el-form-item>
 
             <el-form-item :label="$t('guides.category')">
@@ -172,7 +194,7 @@
 
       <template #footer>
         <el-button @click="showForm = false">{{ $t('common.cancel') }}</el-button>
-        <el-button type="primary" :loading="saving" @click="onSave">{{ $t('common.save') }}</el-button>
+        <el-button type="primary" :loading="saving || uploadingCount > 0" :disabled="uploadingCount > 0" @click="onSave">{{ uploadingCount > 0 ? '图片上传中...' : $t('common.save') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -181,7 +203,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Search, Plus } from '@element-plus/icons-vue'
+import { Search, Plus, Delete } from '@element-plus/icons-vue'
 import { getGuides, createGuide, updateGuide, deleteGuide, uploadFile as apiUploadFile, resolveUrl } from '../api'
 import http from '../api'
 
@@ -199,12 +221,15 @@ const showForm = ref(false)
 const editingId = ref(null)
 const saving = ref(false)
 const activeTab = ref('basic')
+const fileList = ref([])
+const uploadedImages = ref([])
+const draggedIndex = ref(null)
+const uploadingCount = ref(0)
 
 const defaultForm = () => ({
   title_zh: '', title_en: '', title_ru: '', title_es: '',
   summary_zh: '', summary_en: '', summary_ru: '', summary_es: '',
   content_zh: '', content_en: '', content_ru: '', content_es: '',
-  cover_image: '',
   category: '',
   attraction_id: null,
   sort_order: 0,
@@ -241,6 +266,8 @@ async function loadAttractions() {
 
 function openForm(row = null) {
   activeTab.value = 'basic'
+  fileList.value = []
+  uploadedImages.value = []
   if (row) {
     editingId.value = row.id
     form.value = {
@@ -256,12 +283,17 @@ function openForm(row = null) {
       content_en: row.content_en || '',
       content_ru: row.content_ru || '',
       content_es: row.content_es || '',
-      cover_image: row.cover_image || '',
       category: row.category || '',
       attraction_id: row.attraction_id || null,
       sort_order: row.sort_order || 0,
       status: row.status ?? 1,
     }
+    const images = row.images || (row.cover_image ? [row.cover_image] : [])
+    uploadedImages.value = [...images]
+    fileList.value = images.map((url, idx) => ({
+      name: `image-${idx}`,
+      url: resolveUrl(url)
+    }))
   } else {
     editingId.value = null
     form.value = defaultForm()
@@ -269,16 +301,53 @@ function openForm(row = null) {
   showForm.value = true
 }
 
-async function onCoverChange(upload) {
-  const file = upload.raw
-  if (!file) return
+async function handleUpload(options) {
+  uploadingCount.value++
   try {
-    const res = await apiUploadFile(file)
-    form.value.cover_image = res.data?.url || ''
-    ElMessage.success('上传成功')
-  } catch (e) {
-    ElMessage.error('上传失败')
+    const res = await apiUploadFile(options.file)
+    const url = res.data?.url
+    if (url) {
+      uploadedImages.value.push(url)
+      fileList.value.push({
+        name: options.file.name,
+        url: resolveUrl(url),
+        uid: options.file.uid
+      })
+      options.onSuccess?.(res)
+    } else {
+      options.onError?.(new Error('上传失败'))
+    }
+  } catch (err) {
+    options.onError?.(err)
+  } finally {
+    uploadingCount.value = Math.max(0, uploadingCount.value - 1)
   }
+}
+
+function handleRemove(idx) {
+  fileList.value.splice(idx, 1)
+  uploadedImages.value.splice(idx, 1)
+}
+
+function onDragStart(event, index) {
+  draggedIndex.value = index
+  event.dataTransfer.effectAllowed = 'move'
+}
+
+function onDrop(event, dropIndex) {
+  event.preventDefault()
+  const dragIndex = draggedIndex.value
+  if (dragIndex === null || dragIndex === dropIndex) return
+
+  const draggedFile = fileList.value[dragIndex]
+  fileList.value.splice(dragIndex, 1)
+  fileList.value.splice(dropIndex, 0, draggedFile)
+
+  const draggedUrl = uploadedImages.value[dragIndex]
+  uploadedImages.value.splice(dragIndex, 1)
+  uploadedImages.value.splice(dropIndex, 0, draggedUrl)
+
+  draggedIndex.value = null
 }
 
 async function onSave() {
@@ -287,10 +356,11 @@ async function onSave() {
   }
   saving.value = true
   try {
+    const data = { ...form.value, images: [...uploadedImages.value] }
     if (editingId.value) {
-      await updateGuide(editingId.value, form.value)
+      await updateGuide(editingId.value, data)
     } else {
-      await createGuide(form.value)
+      await createGuide(data)
     }
     showForm.value = false
     loadData(editingId.value ? page.value : 1)
@@ -337,9 +407,115 @@ onMounted(() => {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.cover-upload {
+
+.image-upload-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.image-item {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border: 1px solid #dcdfe6;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: move;
+  transition: all 0.2s;
+}
+
+.image-item:hover {
+  border-color: #c8a97e;
+  box-shadow: 0 2px 8px rgba(200, 169, 126, 0.2);
+}
+
+.preview-img {
+  width: 100%;
+  height: 100%;
+}
+
+.image-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.image-item:hover .image-actions {
+  opacity: 1;
+}
+
+.action-icon {
+  font-size: 20px;
+  color: #fff;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.action-icon:hover {
+  color: #f56c6c;
+}
+
+.drag-handle {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 14px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.cover-badge {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  padding: 2px 0;
+  background: rgba(200, 169, 126, 0.85);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.upload-trigger {
+  display: inline-block;
+}
+
+.upload-box {
+  width: 120px;
+  height: 120px;
+  border: 1px dashed #dcdfe6;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 28px;
+  color: #8c939d;
+}
+
+.upload-box:hover {
+  border-color: #c8a97e;
+  color: #c8a97e;
+}
+
+.upload-tip {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #909399;
 }
 </style>

@@ -7,8 +7,18 @@
     </div>
 
     <template v-else-if="guide">
-      <div v-if="guide.cover_image" class="detail-cover">
-        <img :src="$resolveUrl(guide.cover_image)" :alt="guide.title" />
+      <div v-if="guideImages.length > 1" class="detail-gallery">
+        <van-swipe :autoplay="4000" lazy-render class="gallery-swipe">
+          <van-swipe-item v-for="(img, idx) in guideImages" :key="idx">
+            <img :src="$resolveUrl(img)" :alt="`${guide.title} - ${idx + 1}`" class="gallery-img" />
+          </van-swipe-item>
+          <template #indicator="{ active, total }">
+            <div class="gallery-indicator">{{ active + 1 }} / {{ total }}</div>
+          </template>
+        </van-swipe>
+      </div>
+      <div v-else-if="guideImages.length === 1" class="detail-cover">
+        <img :src="$resolveUrl(guideImages[0])" :alt="guide.title" />
       </div>
 
       <div class="detail-body">
@@ -43,7 +53,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { getGuide } from '../api'
@@ -54,6 +64,13 @@ const router = useRouter()
 
 const guide = ref(null)
 const loading = ref(true)
+
+const guideImages = computed(() => {
+  if (!guide.value) return []
+  if (guide.value.images?.length) return guide.value.images
+  if (guide.value.cover_image) return [guide.value.cover_image]
+  return []
+})
 
 function goToAttraction() {
   if (guide.value?.attraction_id) {
@@ -83,6 +100,34 @@ onMounted(async () => {
   text-align: center;
   padding: 80px 20px;
   color: var(--text-light, #9b9388);
+}
+
+.detail-gallery {
+  width: 100%;
+  background: var(--warm-bg, #faf6ef);
+}
+
+.gallery-swipe {
+  width: 100%;
+  aspect-ratio: 16/9;
+}
+
+.gallery-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.gallery-indicator {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  padding: 2px 10px;
+  font-size: 12px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
 }
 
 .detail-cover {
