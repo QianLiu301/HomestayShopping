@@ -228,6 +228,22 @@
         <div class="booking-tip">{{ t('transfer.bookingNoTip') }}</div>
       </div>
 
+      <!-- Passenger Count -->
+      <div class="card">
+        <div class="card-title">{{ t('transfer.passengerCount') }} <span class="required">*</span></div>
+        <div class="passenger-row">
+          <div class="passenger-item">
+            <span class="passenger-label">{{ t('transfer.adultCount') }}</span>
+            <van-stepper v-model="form.adult_count" :min="1" :max="20" integer />
+          </div>
+          <div class="passenger-item">
+            <span class="passenger-label">{{ t('transfer.childCount') }}</span>
+            <van-stepper v-model="form.child_count" :min="0" :max="20" integer input-width="50px" />
+          </div>
+        </div>
+        <div class="booking-tip">{{ t('transfer.passengerCountTip') }}</div>
+      </div>
+
       <!-- Luggage & Sign -->
       <div class="card">
         <div class="card-title">{{ t('transfer.luggageCount') }} <span class="required">*</span></div>
@@ -401,6 +417,8 @@ const form = reactive({
   booking_no: '',
   luggage_count: '',
   sign_name: '',
+  adult_count: 1,
+  child_count: 0,
   contact_name: '',
   contact_phone: '',
   contact_email: '',
@@ -627,6 +645,9 @@ async function onSubmit() {
   // Booking number
   if (!form.booking_no.trim()) { validationFail(t('transfer.bookingNoRequired')); return }
 
+  // Passenger count
+  if (!form.adult_count || form.adult_count < 1) { validationFail(t('transfer.adultCountRequired')); return }
+
   // Luggage count
   if (!form.luggage_count || Number(form.luggage_count) < 1) { validationFail(t('transfer.luggageCountRequired')); return }
 
@@ -650,6 +671,8 @@ async function onSubmit() {
     booking_no: form.booking_no,
     luggage_count: Number(form.luggage_count),
     sign_name: form.sign_name || undefined,
+    adult_count: form.adult_count,
+    child_count: form.child_count,
     contact_name: form.contact_name,
     contact_phone: form.contact_phone,
     contact_email: form.contact_email,
@@ -1103,6 +1126,24 @@ onMounted(async () => {
   font-size: 12px;
   color: #999;
   line-height: 1.5;
+}
+
+.passenger-row {
+  display: flex;
+  gap: 24px;
+  padding: 8px 0;
+}
+
+.passenger-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.passenger-label {
+  font-size: 14px;
+  color: var(--text-primary, #333);
+  white-space: nowrap;
 }
 
 .price-line {

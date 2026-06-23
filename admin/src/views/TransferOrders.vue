@@ -58,6 +58,9 @@
         <el-table-column prop="luggage_count" :label="$t('orders.luggageCount')" width="90">
           <template #default="{ row }">{{ row.luggage_count || '-' }}</template>
         </el-table-column>
+        <el-table-column :label="$t('orders.passengerCount')" width="110">
+          <template #default="{ row }">{{ (row.adult_count || 1) + $t('orders.adultCount') }} {{ (row.child_count || 0) > 0 ? (row.child_count + $t('orders.childCount')) : '' }}</template>
+        </el-table-column>
         <el-table-column :label="$t('orders.total')" width="100">
           <template #default="{ row }">¥{{ row.total_price }}</template>
         </el-table-column>
@@ -129,6 +132,10 @@
         </el-descriptions-item>
         <el-descriptions-item v-if="current.sign_name" :label="$t('orders.signName')">
           {{ current.sign_name }}
+        </el-descriptions-item>
+        <!-- Passenger Count -->
+        <el-descriptions-item :label="$t('orders.passengerCount')">
+          {{ (current.adult_count || 1) }} {{ $t('orders.adultCount') }}，{{ current.child_count || 0 }} {{ $t('orders.childCount') }}
         </el-descriptions-item>
         <!-- Booking Number -->
         <el-descriptions-item :label="$t('orders.bookingNo')">

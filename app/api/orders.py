@@ -122,6 +122,22 @@ def create_transfer_order():
             return error_response('请填写行李件数（至少1件）')
     sign_name = data.get('sign_name', '').strip() or None
 
+    # 乘客人数
+    adult_count = data.get('adult_count')
+    try:
+        adult_count = int(adult_count) if adult_count is not None else 1
+    except (TypeError, ValueError):
+        adult_count = 1
+    if adult_count < 1:
+        return error_response('成人数量至少为1')
+    child_count = data.get('child_count')
+    try:
+        child_count = int(child_count) if child_count is not None else 0
+    except (TypeError, ValueError):
+        child_count = 0
+    if child_count < 0:
+        child_count = 0
+
     # 验证民宿预订单号
     booking_no = data.get('booking_no')
     location_id = data.get('location_id')
@@ -221,6 +237,8 @@ def create_transfer_order():
             dropoff_flight_time=dropoff_flight_time,
             luggage_count=luggage_count,
             sign_name=sign_name,
+            adult_count=adult_count,
+            child_count=child_count,
             booking_no=booking_no,
             location_id=location_id,
             custom_address=custom_address,
