@@ -684,7 +684,11 @@ export default {
     sortOrder: 'Sort Order',
     basicInfo: 'Basic Info',
     contentTab: 'Guide Content',
-    deleteConfirm: 'Are you sure to delete this guide?'
+    deleteConfirm: 'Are you sure to delete this guide?',
+    insertTicketLink: 'Insert Ticket Link',
+    selectAttraction: 'Select Attraction',
+    insertBtn: 'Insert',
+    targetField: 'Target Language',
   },
 
   // Ticket Orders

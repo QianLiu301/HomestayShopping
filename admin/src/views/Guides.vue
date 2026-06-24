@@ -175,18 +175,39 @@
         </el-tab-pane>
 
         <el-tab-pane :label="$t('guides.contentTab')" name="content">
+          <div class="insert-ticket-bar">
+            <span class="insert-label">{{ $t('guides.insertTicketLink') }}</span>
+            <el-select
+              v-model="insertAttractionId"
+              :placeholder="$t('guides.selectAttraction')"
+              filterable
+              clearable
+              style="width:260px"
+            >
+              <el-option v-for="a in attractions" :key="a.id" :label="a.name_zh || a.name_en" :value="a.id" />
+            </el-select>
+            <el-select v-model="insertTargetField" style="width:140px">
+              <el-option label="中文" value="content_zh" />
+              <el-option label="English" value="content_en" />
+              <el-option label="Русский" value="content_ru" />
+              <el-option label="Español" value="content_es" />
+            </el-select>
+            <el-button type="primary" plain size="small" :disabled="!insertAttractionId" @click="onInsertTicketLink">
+              {{ $t('guides.insertBtn') }}
+            </el-button>
+          </div>
           <el-form :model="form" label-width="140px">
             <el-form-item :label="$t('guides.contentZh')">
-              <el-input v-model="form.content_zh" type="textarea" :rows="12" placeholder="支持 HTML 格式" />
+              <el-input ref="contentZhRef" v-model="form.content_zh" type="textarea" :rows="12" placeholder="支持 HTML 格式" />
             </el-form-item>
             <el-form-item :label="$t('guides.contentEn')">
-              <el-input v-model="form.content_en" type="textarea" :rows="12" placeholder="Supports HTML format" />
+              <el-input ref="contentEnRef" v-model="form.content_en" type="textarea" :rows="12" placeholder="Supports HTML format" />
             </el-form-item>
             <el-form-item :label="$t('guides.contentRu')">
-              <el-input v-model="form.content_ru" type="textarea" :rows="8" />
+              <el-input ref="contentRuRef" v-model="form.content_ru" type="textarea" :rows="8" />
             </el-form-item>
             <el-form-item :label="$t('guides.contentEs')">
-              <el-input v-model="form.content_es" type="textarea" :rows="8" />
+              <el-input ref="contentEsRef" v-model="form.content_es" type="textarea" :rows="8" />
             </el-form-item>
           </el-form>
         </el-tab-pane>
@@ -225,6 +246,8 @@ const fileList = ref([])
 const uploadedImages = ref([])
 const draggedIndex = ref(null)
 const uploadingCount = ref(0)
+const insertAttractionId = ref(null)
+const insertTargetField = ref('content_zh')
 
 const defaultForm = () => ({
   title_zh: '', title_en: '', title_ru: '', title_es: '',
@@ -348,6 +371,19 @@ function onDrop(event, dropIndex) {
   uploadedImages.value.splice(dropIndex, 0, draggedUrl)
 
   draggedIndex.value = null
+}
+
+function onInsertTicketLink() {
+  const aid = insertAttractionId.value
+  if (!aid) return
+  const att = attractions.value.find(a => a.id === aid)
+  if (!att) return
+  const name = att.name_zh || att.name_en || ''
+  const tag = `{{ticket:${aid}:${name}}}`
+  const field = insertTargetField.value
+  form.value[field] = (form.value[field] || '') + '\n' + tag
+  ElMessage.success(`已插入「${name}」的门票链接`)
+  insertAttractionId.value = null
 }
 
 async function onSave() {
@@ -517,5 +553,24 @@ onMounted(() => {
   margin-top: 8px;
   font-size: 12px;
   color: #909399;
+}
+
+.insert-ticket-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: #fdf8f0;
+  border: 1px solid #ebe5df;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.insert-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a3728;
+  white-space: nowrap;
 }
 </style>

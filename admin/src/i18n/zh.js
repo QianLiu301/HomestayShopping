@@ -681,7 +681,11 @@ export default {
     sortOrder: '排序',
     basicInfo: '基本信息',
     contentTab: '攻略内容',
-    deleteConfirm: '确定删除该攻略？'
+    deleteConfirm: '确定删除该攻略？',
+    insertTicketLink: '插入景点门票链接',
+    selectAttraction: '选择景点',
+    insertBtn: '插入',
+    targetField: '目标语言',
   },
 
   // Ticket Orders

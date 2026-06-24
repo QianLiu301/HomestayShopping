@@ -31,7 +31,7 @@
 
         <p v-if="guide.summary" class="detail-summary">{{ guide.summary }}</p>
 
-        <div class="detail-content" v-html="guide.content"></div>
+        <div class="detail-content" v-html="renderedContent" @click="onContentClick"></div>
 
         <div v-if="guide.attraction" class="detail-ticket-cta" @click="goToAttraction">
           <div class="cta-left">
@@ -71,6 +71,28 @@ const guideImages = computed(() => {
   if (guide.value.cover_image) return [guide.value.cover_image]
   return []
 })
+
+const renderedContent = computed(() => {
+  if (!guide.value?.content) return ''
+  const hint = t('guides.buyTicketHint')
+  return guide.value.content.replace(
+    /\{\{ticket:(\d+):([^}]+)\}\}/g,
+    (_, id, name) =>
+      `<div class="inline-ticket-cta" data-ticket-id="${id}">` +
+        `<div class="cta-left"><span class="cta-icon">🎫</span>` +
+        `<div><div class="cta-title">${name}</div>` +
+        `<div class="cta-hint">${hint}</div></div></div>` +
+        `<span class="cta-arrow">→</span></div>`
+  )
+})
+
+function onContentClick(e) {
+  const cta = e.target.closest('.inline-ticket-cta')
+  if (cta) {
+    const id = cta.dataset.ticketId
+    if (id) router.push(`/tickets/${id}`)
+  }
+}
 
 function goToAttraction() {
   if (guide.value?.attraction_id) {
@@ -255,6 +277,48 @@ onMounted(async () => {
 .cta-arrow {
   font-size: 20px;
   color: var(--accent, #c8a97e);
+  font-weight: 700;
+}
+</style>
+
+<style>
+.detail-content .inline-ticket-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 16px 0;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fff7e6, #fef3e0);
+  border: 1px solid rgba(200, 169, 126, 0.3);
+  cursor: pointer;
+  transition: transform 0.2s;
+  white-space: normal;
+}
+.detail-content .inline-ticket-cta:active {
+  transform: scale(0.98);
+}
+.detail-content .inline-ticket-cta .cta-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.detail-content .inline-ticket-cta .cta-icon {
+  font-size: 28px;
+}
+.detail-content .inline-ticket-cta .cta-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #3b2b1f;
+}
+.detail-content .inline-ticket-cta .cta-hint {
+  font-size: 12px;
+  color: #c8a97e;
+  margin-top: 2px;
+}
+.detail-content .inline-ticket-cta .cta-arrow {
+  font-size: 20px;
+  color: #c8a97e;
   font-weight: 700;
 }
 </style>
