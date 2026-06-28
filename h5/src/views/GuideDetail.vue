@@ -8,10 +8,10 @@
 
     <template v-else-if="guide">
       <div v-if="guideImages.length > 1" class="detail-gallery">
-        <van-swipe :autoplay="4000" lazy-render class="gallery-swipe" indicator-color="#c8a97e">
+        <van-swipe :autoplay="4000" lazy-render class="gallery-swipe" indicator-color="#c8a97e" :style="{ height: swipeHeight }">
           <van-swipe-item v-for="(img, idx) in guideImages" :key="idx">
             <div class="gallery-slide">
-              <img :src="$resolveUrl(img)" :alt="`${guide.title} - ${idx + 1}`" class="gallery-img" />
+              <img :src="$resolveUrl(img)" :alt="`${guide.title} - ${idx + 1}`" class="gallery-img" @load="idx === 0 && onFirstImageLoad($event)" />
             </div>
           </van-swipe-item>
           <template #indicator="{ active, total }">
@@ -72,6 +72,17 @@ const router = useRouter()
 
 const guide = ref(null)
 const loading = ref(true)
+const swipeHeight = ref('auto')
+
+function onFirstImageLoad(e) {
+  const img = e.target
+  if (img.naturalHeight && img.naturalWidth) {
+    const containerWidth = img.closest('.detail-gallery')?.offsetWidth || window.innerWidth
+    const ratio = containerWidth / img.naturalWidth
+    const h = Math.round(img.naturalHeight * ratio)
+    swipeHeight.value = h + 'px'
+  }
+}
 
 const guideImages = computed(() => {
   if (!guide.value) return []
@@ -139,12 +150,11 @@ onMounted(async () => {
 
 .gallery-swipe {
   width: 100%;
-  height: 280px;
+  height: auto;
 }
 
 .gallery-slide {
   width: 100%;
-  height: 280px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -152,12 +162,10 @@ onMounted(async () => {
 }
 
 .gallery-img {
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
+  width: 100%;
   height: auto;
-  object-fit: contain;
   display: block;
+  object-fit: contain;
 }
 
 .gallery-bottom {
@@ -208,19 +216,12 @@ onMounted(async () => {
 
 .detail-cover {
   width: 100%;
-  height: 280px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
   background: var(--warm-bg, #faf6ef);
 }
 .detail-cover img {
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
+  width: 100%;
   height: auto;
-  object-fit: contain;
+  display: block;
 }
 
 .detail-body {
