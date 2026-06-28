@@ -222,7 +222,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, nextTick, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search, Plus, Delete } from '@element-plus/icons-vue'
 import { getGuides, createGuide, updateGuide, deleteGuide, uploadFile as apiUploadFile, resolveUrl } from '../api'
@@ -248,6 +248,11 @@ const draggedIndex = ref(null)
 const uploadingCount = ref(0)
 const insertAttractionId = ref(null)
 const insertTargetField = ref('content_zh')
+const contentZhRef = ref(null)
+const contentEnRef = ref(null)
+const contentRuRef = ref(null)
+const contentEsRef = ref(null)
+const contentRefMap = { content_zh: contentZhRef, content_en: contentEnRef, content_ru: contentRuRef, content_es: contentEsRef }
 
 const defaultForm = () => ({
   title_zh: '', title_en: '', title_ru: '', title_es: '',
@@ -381,7 +386,21 @@ function onInsertTicketLink() {
   const name = att.name_zh || att.name_en || ''
   const tag = `{{ticket:${aid}:${name}}}`
   const field = insertTargetField.value
-  form.value[field] = (form.value[field] || '') + '\n' + tag
+  const elInputRef = contentRefMap[field]
+  const textarea = elInputRef?.value?.$el?.querySelector('textarea')
+  const text = form.value[field] || ''
+  if (textarea) {
+    const start = textarea.selectionStart ?? text.length
+    const end = textarea.selectionEnd ?? start
+    form.value[field] = text.slice(0, start) + tag + text.slice(end)
+    nextTick(() => {
+      const pos = start + tag.length
+      textarea.focus()
+      textarea.setSelectionRange(pos, pos)
+    })
+  } else {
+    form.value[field] = text + '\n' + tag
+  }
   ElMessage.success(`已插入「${name}」的门票链接`)
   insertAttractionId.value = null
 }
