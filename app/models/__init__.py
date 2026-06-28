@@ -1,4 +1,5 @@
 import os
+import json
 from datetime import datetime, timezone, timedelta
 from app import db
 
@@ -19,6 +20,19 @@ def _localized(obj, field, lang):
 
 
 import re
+
+def _ensure_list(val):
+    if isinstance(val, list):
+        return val
+    if isinstance(val, str):
+        try:
+            parsed = json.loads(val)
+            if isinstance(parsed, list):
+                return parsed
+        except (json.JSONDecodeError, TypeError):
+            pass
+    return []
+
 
 def _normalize_image_urls(images):
     """
@@ -216,7 +230,7 @@ class Product(db.Model):
             'desc_es': self.desc_es,
             'price': float(self.price) if self.price else 0,
             'original_price': float(self.original_price) if self.original_price else None,
-            'images': _normalize_image_urls(self.images or []),
+            'images': _normalize_image_urls(_ensure_list(self.images)),
             'specs': self.specs,
             'is_featured': self.is_featured,
             'sort_order': self.sort_order,
@@ -264,7 +278,7 @@ class Vehicle(db.Model):
 
     def to_dict(self, lang='zh'):
         # 标准化图片 URL（与 Product 保持一致）
-        image_list = _normalize_image_urls(self.images or ([] if not self.image else [self.image]))
+        image_list = _normalize_image_urls(_ensure_list(self.images) or ([] if not self.image else [self.image]))
         image_url = image_list[0] if image_list else None
 
         capacity_desc = _localized(self, 'capacity_desc', lang)
@@ -830,7 +844,7 @@ class TicketAttraction(db.Model):
             'refund_rule_ru': self.refund_rule_ru,
             'refund_rule_es': self.refund_rule_es,
             'cover_image': _normalize_image_urls([self.cover_image])[0] if self.cover_image else None,
-            'images': _normalize_image_urls(self.images or []),
+            'images': _normalize_image_urls(_ensure_list(self.images)),
             'city': self.city,
             'category': self.category,
             'tags': self.tags or [],
@@ -1218,7 +1232,7 @@ class Guide(db.Model):
             'content_ru': self.content_ru,
             'content_es': self.content_es,
             'cover_image': _normalize_image_urls([self.cover_image])[0] if self.cover_image else None,
-            'images': _normalize_image_urls(self.images or []),
+            'images': _normalize_image_urls(_ensure_list(self.images)),
             'category': self.category,
             'attraction_id': self.attraction_id,
             'attraction': self.attraction.to_dict(lang) if self.attraction else None,

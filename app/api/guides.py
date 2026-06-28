@@ -109,6 +109,11 @@ def admin_create_guide():
             return error_response('关联景点不存在')
 
     images = data.get('images') or []
+    if isinstance(images, str):
+        try:
+            images = __import__('json').loads(images)
+        except Exception:
+            images = []
     cover_image = data.get('cover_image') or (images[0] if images else None)
 
     guide = Guide(
@@ -166,6 +171,12 @@ def admin_update_guide(guide_id):
 
     if 'images' in data:
         images = data['images'] or []
+        if isinstance(images, str):
+            try:
+                images = __import__('json').loads(images)
+            except Exception:
+                images = []
+        guide.images = images
         if images and not data.get('cover_image'):
             guide.cover_image = images[0]
         elif not images:
