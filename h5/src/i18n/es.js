@@ -379,6 +379,7 @@ export default {
     freeTag: 'Gratis',
     hasTicket: 'Entradas disponibles',
     buyTicketHint: 'Toca para comprar entradas',
+    swipeHint: '← Desliza para ver más fotos →',
     loadMore: 'Cargar más',
     cat_attraction: 'Atracciones',
     cat_food: 'Comida',

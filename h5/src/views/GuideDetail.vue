@@ -8,14 +8,22 @@
 
     <template v-else-if="guide">
       <div v-if="guideImages.length > 1" class="detail-gallery">
-        <van-swipe :autoplay="4000" lazy-render class="gallery-swipe">
+        <van-swipe :autoplay="4000" lazy-render class="gallery-swipe" indicator-color="#c8a97e">
           <van-swipe-item v-for="(img, idx) in guideImages" :key="idx">
-            <img :src="$resolveUrl(img)" :alt="`${guide.title} - ${idx + 1}`" class="gallery-img" />
+            <div class="gallery-slide">
+              <img :src="$resolveUrl(img)" :alt="`${guide.title} - ${idx + 1}`" class="gallery-img" />
+            </div>
           </van-swipe-item>
           <template #indicator="{ active, total }">
-            <div class="gallery-indicator">{{ active + 1 }} / {{ total }}</div>
+            <div class="gallery-bottom">
+              <div class="gallery-dots">
+                <span v-for="i in total" :key="i" :class="['dot', { active: i - 1 === active }]" />
+              </div>
+              <div class="gallery-counter">{{ active + 1 }} / {{ total }}</div>
+            </div>
           </template>
         </van-swipe>
+        <div class="swipe-hint">{{ t('guides.swipeHint') }}</div>
       </div>
       <div v-else-if="guideImages.length === 1" class="detail-cover">
         <img :src="$resolveUrl(guideImages[0])" :alt="guide.title" />
@@ -131,37 +139,88 @@ onMounted(async () => {
 
 .gallery-swipe {
   width: 100%;
-  aspect-ratio: 16/9;
+  height: 280px;
+}
+
+.gallery-slide {
+  width: 100%;
+  height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--warm-bg, #faf6ef);
 }
 
 .gallery-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
   display: block;
 }
 
-.gallery-indicator {
+.gallery-bottom {
   position: absolute;
-  right: 12px;
   bottom: 10px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.gallery-dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transition: all 0.3s;
+}
+
+.dot.active {
+  width: 18px;
+  border-radius: 3px;
+  background: var(--accent, #c8a97e);
+}
+
+.gallery-counter {
   padding: 2px 10px;
   font-size: 12px;
   color: #fff;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.45);
   border-radius: 10px;
+}
+
+.swipe-hint {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-light, #9b9388);
+  padding: 6px 0;
 }
 
 .detail-cover {
   width: 100%;
-  aspect-ratio: 16/9;
+  height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
   background: var(--warm-bg, #faf6ef);
 }
 .detail-cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
 }
 
 .detail-body {

@@ -379,6 +379,7 @@ export default {
     freeTag: 'Бесплатно',
     hasTicket: 'Билеты доступны',
     buyTicketHint: 'Нажмите для покупки билетов',
+    swipeHint: '← Листайте для просмотра фото →',
     loadMore: 'Загрузить ещё',
     cat_attraction: 'Достопримечательности',
     cat_food: 'Еда',
