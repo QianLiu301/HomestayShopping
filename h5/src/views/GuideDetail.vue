@@ -10,7 +10,7 @@
       <div v-if="guideImages.length > 1" class="detail-gallery">
         <van-swipe :autoplay="4000" lazy-render class="gallery-swipe" indicator-color="#c8a97e" :style="{ height: swipeHeight }">
           <van-swipe-item v-for="(img, idx) in guideImages" :key="idx">
-            <div class="gallery-slide">
+            <div class="gallery-slide" @click="previewImage(idx)">
               <img :src="$resolveUrl(img)" :alt="`${guide.title} - ${idx + 1}`" class="gallery-img" @load="idx === 0 && onFirstImageLoad($event)" />
             </div>
           </van-swipe-item>
@@ -25,7 +25,7 @@
         </van-swipe>
         <div class="swipe-hint">{{ t('guides.swipeHint') }}</div>
       </div>
-      <div v-else-if="guideImages.length === 1" class="detail-cover">
+      <div v-else-if="guideImages.length === 1" class="detail-cover" @click="previewImage(0)">
         <img :src="$resolveUrl(guideImages[0])" :alt="guide.title" />
       </div>
 
@@ -64,7 +64,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { getGuide } from '../api'
+import { ImagePreview } from 'vant'
+import { getGuide, resolveUrl } from '../api'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -111,6 +112,17 @@ function onContentClick(e) {
     const id = cta.dataset.ticketId
     if (id) router.push(`/tickets/${id}`)
   }
+}
+
+function previewImage(idx = 0) {
+  if (!guideImages.value.length) return
+  ImagePreview({
+    images: guideImages.value.map(img => resolveUrl(img)),
+    startPosition: idx,
+    closeable: true,
+    showIndex: true,
+    maxZoom: 5,
+  })
 }
 
 function goToAttraction() {
