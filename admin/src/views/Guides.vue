@@ -127,9 +127,7 @@
                   @drop="onDrop($event, idx)"
                 >
                   <el-image :src="file.url" fit="cover" class="preview-img" />
-                  <div class="image-actions">
-                    <el-icon class="action-icon" @click="handleRemove(idx)"><Delete /></el-icon>
-                  </div>
+                  <div class="image-remove-btn" @click="handleRemove(idx)">✕</div>
                   <div class="drag-handle">⋮⋮</div>
                   <div v-if="idx === 0" class="cover-badge">{{ $t('guides.coverLabel') }}</div>
                 </div>
@@ -490,33 +488,26 @@ onMounted(() => {
   height: 100%;
 }
 
-.image-actions {
+.image-remove-btn {
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  background: rgba(0, 0, 0, 0.5);
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  background: rgba(245, 108, 108, 0.85);
+  color: #fff;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.image-item:hover .image-actions {
-  opacity: 1;
-}
-
-.action-icon {
-  font-size: 20px;
-  color: #fff;
+  font-size: 13px;
   cursor: pointer;
-  padding: 8px;
+  z-index: 10;
+  line-height: 1;
 }
 
-.action-icon:hover {
-  color: #f56c6c;
+.image-remove-btn:hover {
+  background: #f56c6c;
 }
 
 .drag-handle {
