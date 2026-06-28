@@ -300,6 +300,7 @@ onMounted(() => loadGuides())
 @media (min-width: 600px) {
   .guides-list {
     grid-template-columns: repeat(2, 1fr);
+    max-width: 1200px;
   }
   .guide-card {
     flex-direction: column;
@@ -311,6 +312,15 @@ onMounted(() => loadGuides())
   }
   .guide-info {
     padding: 14px 16px 16px;
+  }
+}
+
+@media (min-width: 900px) {
+  .guides-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .guide-cover {
+    height: 200px;
   }
 }
 </style>
