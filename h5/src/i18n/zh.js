@@ -394,6 +394,7 @@ export default {
     buyTicketHint: '点击前往购票',
     swipeHint: '← 左右滑动查看更多图片 →',
     viewLocation: '点击查看位置',
+    amapLabel: '高德地图',
     loadMore: '加载更多',
     cat_attraction: '景点',
     cat_food: '美食',

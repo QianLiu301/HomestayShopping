@@ -67,7 +67,7 @@ import { useI18n } from 'vue-i18n'
 import { ImagePreview } from 'vant'
 import { getGuide, resolveUrl } from '../api'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 
@@ -114,19 +114,23 @@ const renderedContent = computed(() => {
   )
 
   // 地图位置卡片（高德 + Google 双链接）
+  // 标签格式：{{map:中文名}} 或 {{map:中文名|英文名}}
+  // 中文界面显示中文名，其它语言界面显示英文名（缺英文名时回退中文名）
   html = html.replace(
-    /\{\{map:([^}]+)\}\}/g,
-    (_, name) => {
-      const clean = name.trim()
-      const q = encodeURIComponent(clean)
-      const amapUrl = `https://uri.amap.com/search?keyword=${q}`
-      const googleUrl = `https://www.google.com/maps/search/?api=1&query=${q}`
+    /\{\{map:([^}|]+)(?:\|([^}]+))?\}\}/g,
+    (_, zhNameRaw, enNameRaw) => {
+      const zhName = zhNameRaw.trim()
+      const enName = (enNameRaw || '').trim() || zhName
+      const displayName = locale.value === 'zh' ? zhName : enName
+      // 高德用中文名搜索更准；Google 用英文名搜索更准
+      const amapUrl = `https://uri.amap.com/search?keyword=${encodeURIComponent(zhName)}`
+      const googleUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(enName)}`
       return `<div class="inline-map-card">` +
         `<div class="map-card-head"><span class="map-icon">📍</span>` +
-        `<div><div class="map-name">${escapeHtml(clean)}</div>` +
+        `<div><div class="map-name">${escapeHtml(displayName)}</div>` +
         `<div class="map-hint">${locationLabel}</div></div></div>` +
         `<div class="map-btns">` +
-        `<a class="map-btn map-btn-amap" href="${amapUrl}" target="_blank" rel="noopener">高德地图</a>` +
+        `<a class="map-btn map-btn-amap" href="${amapUrl}" target="_blank" rel="noopener">${t('guides.amapLabel')}</a>` +
         `<a class="map-btn map-btn-google" href="${googleUrl}" target="_blank" rel="noopener">Google Maps</a>` +
         `</div></div>`
     }

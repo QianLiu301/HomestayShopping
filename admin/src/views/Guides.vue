@@ -202,7 +202,8 @@
             </div>
             <div class="insert-row">
               <span class="insert-label">{{ $t('guides.insertMap') }}</span>
-              <el-input v-model="insertMapName" :placeholder="$t('guides.mapNamePlaceholder')" size="small" style="width:220px" />
+              <el-input v-model="insertMapName" :placeholder="$t('guides.mapNamePlaceholder')" size="small" style="width:200px" />
+              <el-input v-model="insertMapNameEn" :placeholder="$t('guides.mapNameEnPlaceholder')" size="small" style="width:200px" />
               <el-button type="primary" plain size="small" :disabled="!insertMapName.trim()" @click="onInsertMap">
                 {{ $t('guides.insertBtn') }}
               </el-button>
@@ -272,6 +273,7 @@ const insertAttractionId = ref(null)
 const insertTargetField = ref('content_zh')
 const syncAllLangs = ref(true)
 const insertMapName = ref('')
+const insertMapNameEn = ref('')
 const mediaUploading = ref(false)
 const contentFields = ['content_zh', 'content_en', 'content_ru', 'content_es']
 const contentZhRef = ref(null)
@@ -444,8 +446,11 @@ function onInsertTicketLink() {
 function onInsertMap() {
   const name = insertMapName.value.trim()
   if (!name) return
-  insertTag(`{{map:${name}}}`, `已插入「${name}」的位置卡片`)
+  const nameEn = insertMapNameEn.value.trim()
+  const tag = nameEn ? `{{map:${name}|${nameEn}}}` : `{{map:${name}}}`
+  insertTag(tag, `已插入「${name}」的位置卡片`)
   insertMapName.value = ''
+  insertMapNameEn.value = ''
 }
 
 async function handleContentImageUpload(options) {

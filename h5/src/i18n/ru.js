@@ -381,6 +381,7 @@ export default {
     buyTicketHint: 'Нажмите для покупки билетов',
     swipeHint: '← Листайте для просмотра фото →',
     viewLocation: 'Нажмите, чтобы открыть карту',
+    amapLabel: 'Amap (Китай)',
     loadMore: 'Загрузить ещё',
     cat_attraction: 'Достопримечательности',
     cat_food: 'Еда',
