@@ -7,26 +7,26 @@
         <h1 class="hero-title fade-in-up delay-1">{{ t('home.heroTitle') }}</h1>
         <p class="hero-subtitle fade-in-up delay-2">{{ t('home.heroSubtitle') }}</p>
         <div class="hero-actions fade-in-up delay-3">
-          <a href="#services" class="btn btn-primary hero-action-btn hero-action-btn--primary">
-            <span class="hero-action-btn__title">{{ t('home.bookTransfer') }}</span>
-            <span class="hero-action-btn__hint">{{ t('home.transferCtaHint') }}</span>
-          </a>
-          <a href="#shop" class="btn btn-outline hero-action-btn hero-action-btn--outline">
-            <span class="hero-action-btn__title">{{ t('home.exploreShop') }}</span>
-            <span class="hero-action-btn__hint">{{ t('home.shopCtaHint') }}</span>
-          </a>
-          <button type="button" class="btn btn-outline hero-action-btn hero-action-btn--outline hero-ticket-btn" @click="goToTickets">
-            <span class="hero-action-btn__title">{{ t('home.ticketsTitle') }}</span>
-            <span class="hero-action-btn__hint">{{ t('home.ticketsCtaHint') }}</span>
+          <button type="button" class="btn btn-primary hero-action-btn hero-action-btn--primary" @click="$router.push('/checkin')">
+            <span class="hero-action-btn__title">{{ t('home.checkinTitle') }}</span>
+            <span class="hero-action-btn__hint">{{ t('home.checkinCtaHint') }}</span>
           </button>
           <button type="button" class="btn btn-outline hero-action-btn hero-action-btn--outline" @click="goToGuides">
             <span class="hero-action-btn__title">{{ t('home.guidesTitle') }}</span>
             <span class="hero-action-btn__hint">{{ t('home.guidesCtaHint') }}</span>
           </button>
-          <button type="button" class="btn btn-outline hero-action-btn hero-action-btn--outline" @click="$router.push('/checkin')">
-            <span class="hero-action-btn__title">{{ t('home.checkinTitle') }}</span>
-            <span class="hero-action-btn__hint">{{ t('home.checkinCtaHint') }}</span>
+          <a href="#services" class="btn btn-outline hero-action-btn hero-action-btn--outline">
+            <span class="hero-action-btn__title">{{ t('home.bookTransfer') }}</span>
+            <span class="hero-action-btn__hint">{{ t('home.transferCtaHint') }}</span>
+          </a>
+          <button type="button" class="btn btn-outline hero-action-btn hero-action-btn--outline hero-ticket-btn" @click="goToTickets">
+            <span class="hero-action-btn__title">{{ t('home.ticketsTitle') }}</span>
+            <span class="hero-action-btn__hint">{{ t('home.ticketsCtaHint') }}</span>
           </button>
+          <a href="#shop" class="btn btn-outline hero-action-btn hero-action-btn--outline">
+            <span class="hero-action-btn__title">{{ t('home.exploreShop') }}</span>
+            <span class="hero-action-btn__hint">{{ t('home.shopCtaHint') }}</span>
+          </a>
         </div>
       </div>
       <div class="hero-scroll-hint">

@@ -218,7 +218,11 @@ onUnmounted(() => { window.removeEventListener('scroll', onScroll); document.rem
     padding: 12px 16px;
   }
   .hamburger { display: block; }
-  .desktop-lang { display: none; }
+  /* 手机端顶栏也显示语言切换按钮，方便客户随时切换语言 */
+  .desktop-lang { display: flex; font-size: 12px; }
+  .desktop-lang svg { width: 16px; height: 16px; }
   .mobile-lang-btn { display: none; }
+  /* 顶栏已有语言按钮，菜单里的语言项隐藏避免重复 */
+  .mobile-lang { display: none; }
 }
 </style>
