@@ -45,19 +45,19 @@
       <h2 class="success-title">{{ L.successTitle }}</h2>
       <p class="success-desc">{{ L.successDesc }}</p>
       <div class="success-links">
-        <button type="button" class="success-link primary" @click="$router.push('/guides')">
+        <button type="button" class="success-link primary" @click="goAfterSuccess('/guides')">
           <span class="link-title">{{ L.linkGuides }}</span>
           <span class="link-sub">{{ L.linkGuidesSub }}</span>
         </button>
-        <button type="button" class="success-link" @click="$router.push('/transfer')">
+        <button type="button" class="success-link" @click="goAfterSuccess('/transfer')">
           <span class="link-title">{{ L.linkTransfer }}</span>
           <span class="link-sub">{{ L.linkTransferSub }}</span>
         </button>
-        <button type="button" class="success-link" @click="$router.push('/tickets')">
+        <button type="button" class="success-link" @click="goAfterSuccess('/tickets')">
           <span class="link-title">{{ L.linkTickets }}</span>
           <span class="link-sub">{{ L.linkTicketsSub }}</span>
         </button>
-        <button type="button" class="success-link" @click="$router.push('/shop')">
+        <button type="button" class="success-link" @click="goAfterSuccess('/shop')">
           <span class="link-title">{{ L.linkShop }}</span>
           <span class="link-sub">{{ L.linkShopSub }}</span>
         </button>
@@ -215,7 +215,7 @@ const DICT = {
   en: {
     title: 'Guest Check-in Registration',
     noticeTitle: 'Registration Notice',
-    noticeBody: 'According to Chinese law, foreign nationals staying in accommodation other than hotels must register their stay with the local Public Security Bureau within 24 hours of check-in. This is your legal obligation and an important record for future visa applications. Please fill in the information truthfully (guests staying in hotels do not need to file this declaration themselves). False declarations, late declarations or failure to declare may be subject to penalties under the law.',
+    noticeBody: 'According to Chinese law, foreign nationals staying in accommodation other than hotels must register their stay with the local Public Security Bureau within 24 hours of check-in. This is your legal obligation and an important record for future visa applications. Please fill in the information truthfully. False declarations, late declarations or failure to declare may be subject to penalties under the law.',
     agreeLabel: 'I have read and agree',
     continueBtn: 'Continue',
     platformLabel: 'Booking Platform',
@@ -260,7 +260,7 @@ const DICT = {
   zh: {
     title: '住宿登记',
     noticeTitle: '登记须知',
-    noticeBody: '根据中国法律有关规定，境外人员在旅馆业以外场所入住后24小时内申报住宿登记是您应遵守的法律义务，也是您将来申请签证证件的重要依据。请如实填报相关信息（在上海市居住住所为宾旅馆的用户无需进行申报）。恶意虚假申报、超时申报或不申报均将被依法查处。',
+    noticeBody: '根据中国法律有关规定，境外人员在旅馆业以外场所入住后24小时内申报住宿登记是您应遵守的法律义务，也是您将来申请签证证件的重要依据。请如实填报相关信息。恶意虚假申报、超时申报或不申报均将被依法查处。',
     agreeLabel: '我已阅读并同意',
     continueBtn: '继续',
     platformLabel: '预订平台',
@@ -305,7 +305,7 @@ const DICT = {
   ja: {
     title: '宿泊登録',
     noticeTitle: '登録に関するご案内',
-    noticeBody: '中国の法律により、ホテル以外の場所に宿泊する外国人は、チェックイン後24時間以内に現地の公安機関へ宿泊登録を申告する法的義務があります。これは将来のビザ申請の重要な記録にもなります。情報は正確にご記入ください（ホテルに宿泊される方はご自身での申告は不要です）。虚偽申告・期限超過・未申告は法律により処罰される場合があります。',
+    noticeBody: '中国の法律により、ホテル以外の場所に宿泊する外国人は、チェックイン後24時間以内に現地の公安機関へ宿泊登録を申告する法的義務があります。これは将来のビザ申請の重要な記録にもなります。情報は正確にご記入ください。虚偽申告・期限超過・未申告は法律により処罰される場合があります。',
     agreeLabel: '内容を読み、同意します',
     continueBtn: '続ける',
     platformLabel: '予約プラットフォーム',
@@ -350,7 +350,7 @@ const DICT = {
   ko: {
     title: '숙박 등록',
     noticeTitle: '등록 안내',
-    noticeBody: '중국 법률에 따라 호텔 이외의 장소에 숙박하는 외국인은 체크인 후 24시간 이내에 현지 공안 기관에 숙박 등록을 신고해야 할 법적 의무가 있습니다. 이는 향후 비자 신청의 중요한 기록이기도 합니다. 정보를 사실대로 기입해 주세요(호텔에 숙박하시는 분은 직접 신고할 필요가 없습니다). 허위 신고, 기한 초과 또는 미신고 시 법에 따라 처벌될 수 있습니다.',
+    noticeBody: '중국 법률에 따라 호텔 이외의 장소에 숙박하는 외국인은 체크인 후 24시간 이내에 현지 공안 기관에 숙박 등록을 신고해야 할 법적 의무가 있습니다. 이는 향후 비자 신청의 중요한 기록이기도 합니다. 정보를 사실대로 기입해 주세요. 허위 신고, 기한 초과 또는 미신고 시 법에 따라 처벌될 수 있습니다.',
     agreeLabel: '내용을 읽고 동의합니다',
     continueBtn: '계속하기',
     platformLabel: '예약 플랫폼',
@@ -395,7 +395,7 @@ const DICT = {
   ru: {
     title: 'Регистрация проживания',
     noticeTitle: 'Уведомление о регистрации',
-    noticeBody: 'Согласно законодательству Китая, иностранные граждане, проживающие не в гостиницах, обязаны зарегистрировать своё проживание в местном отделении общественной безопасности в течение 24 часов после заселения. Это ваша юридическая обязанность и важная запись для будущих визовых заявлений. Пожалуйста, указывайте достоверную информацию (гостям отелей самостоятельная регистрация не требуется). Ложные сведения, просрочка или отсутствие регистрации могут повлечь ответственность по закону.',
+    noticeBody: 'Согласно законодательству Китая, иностранные граждане, проживающие не в гостиницах, обязаны зарегистрировать своё проживание в местном отделении общественной безопасности в течение 24 часов после заселения. Это ваша юридическая обязанность и важная запись для будущих визовых заявлений. Пожалуйста, указывайте достоверную информацию. Ложные сведения, просрочка или отсутствие регистрации могут повлечь ответственность по закону.',
     agreeLabel: 'Я прочитал(а) и согласен(на)',
     continueBtn: 'Продолжить',
     platformLabel: 'Платформа бронирования',
@@ -440,7 +440,7 @@ const DICT = {
   es: {
     title: 'Registro de alojamiento',
     noticeTitle: 'Aviso de registro',
-    noticeBody: 'Según la ley china, los extranjeros que se alojen en lugares distintos de hoteles deben registrar su estancia ante la oficina de seguridad pública local dentro de las 24 horas posteriores a su llegada. Es su obligación legal y un registro importante para futuras solicitudes de visado. Por favor, proporcione información veraz (los huéspedes de hoteles no necesitan declarar por sí mismos). Las declaraciones falsas, tardías o la falta de declaración pueden ser sancionadas por la ley.',
+    noticeBody: 'Según la ley china, los extranjeros que se alojen en lugares distintos de hoteles deben registrar su estancia ante la oficina de seguridad pública local dentro de las 24 horas posteriores a su llegada. Es su obligación legal y un registro importante para futuras solicitudes de visado. Por favor, proporcione información veraz. Las declaraciones falsas, tardías o la falta de declaración pueden ser sancionadas por la ley.',
     agreeLabel: 'He leído y acepto',
     continueBtn: 'Continuar',
     platformLabel: 'Plataforma de reserva',
@@ -565,6 +565,13 @@ async function onFileChange(e) {
   } finally {
     uploading[target] = false
   }
+}
+
+function goAfterSuccess(path) {
+  // 把全站语言同步为登记页所选语言（全站已支持 en/zh/ja/ko/ru/es）
+  localStorage.setItem('lang', lang.value)
+  // 用 replace 替换掉登记页的历史记录，浏览器返回时回到进入登记页之前的页面（如首页）
+  window.location.replace(path)
 }
 
 async function onSubmit() {
