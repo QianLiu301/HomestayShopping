@@ -46,10 +46,17 @@
       <el-table-column :label="$t('guestReg.docType')" width="110">
         <template #default="{ row }">{{ docTypeLabel(row.document_type) }}</template>
       </el-table-column>
+      <el-table-column prop="document_no" :label="$t('guestReg.docNo')" min-width="130" show-overflow-tooltip />
       <el-table-column :label="$t('guestReg.platform')" width="120">
         <template #default="{ row }">{{ platformLabel(row.platform) }}</template>
       </el-table-column>
       <el-table-column prop="booking_no" :label="$t('guestReg.bookingNo')" min-width="150" show-overflow-tooltip />
+      <el-table-column :label="$t('guestReg.stayDates')" width="180">
+        <template #default="{ row }">
+          <span v-if="row.checkin_date">{{ row.checkin_date }} ~ {{ row.checkout_date || '?' }}</span>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
       <el-table-column :label="$t('guestReg.photos')" width="150">
         <template #default="{ row }">
           <el-button link type="primary" size="small" @click="openDetail(row)">{{ $t('guestReg.viewPhotos') }}</el-button>
@@ -103,7 +110,10 @@
           <el-descriptions-item :label="$t('guestReg.name')">{{ current.full_name }}</el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.dob')">{{ current.date_of_birth }}</el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.docType')">{{ docTypeLabel(current.document_type) }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('guestReg.docNo')">{{ current.document_no || '-' }}</el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.platform')">{{ platformLabel(current.platform) }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('guestReg.checkinDate')">{{ current.checkin_date || '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('guestReg.checkoutDate')">{{ current.checkout_date || '-' }}</el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.bookingNo')">{{ current.booking_no }}</el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.status')">
             <el-tag :type="current.status === 1 ? 'success' : 'warning'" size="small">

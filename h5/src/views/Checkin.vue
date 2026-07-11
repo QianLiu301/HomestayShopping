@@ -88,7 +88,7 @@
 
       <div class="card">
         <div class="card-title">{{ L.bookingNoLabel }} <span class="required">*</span></div>
-        <input v-model.trim="form.booking_no" class="text-input" :placeholder="L.bookingNoPlaceholder" maxlength="100" />
+        <input v-model.trim="form.booking_no" class="text-input" :placeholder="L.bookingNoPlaceholder" maxlength="100" autocomplete="off" />
       </div>
 
       <div class="card">
@@ -101,19 +101,24 @@
       </div>
 
       <div class="card">
+        <div class="card-title">{{ L.docNoLabel }} <span class="required">*</span></div>
+        <input v-model.trim="form.document_no" class="text-input" :placeholder="L.docNoPlaceholder" maxlength="50" autocomplete="off" name="guest-doc-no" />
+      </div>
+
+      <div class="card">
         <div class="card-title">{{ L.nameLabel }} <span class="required">*</span></div>
         <div class="name-grid">
           <div class="field">
             <label class="field-label">{{ L.surname }} *</label>
-            <input v-model.trim="form.surname" class="text-input" :placeholder="L.surnamePlaceholder" maxlength="100" />
+            <input v-model.trim="form.surname" class="text-input" :placeholder="L.surnamePlaceholder" maxlength="100" autocomplete="off" name="guest-surname" />
           </div>
           <div class="field">
             <label class="field-label">{{ L.givenName }} *</label>
-            <input v-model.trim="form.given_name" class="text-input" :placeholder="L.givenNamePlaceholder" maxlength="100" />
+            <input v-model.trim="form.given_name" class="text-input" :placeholder="L.givenNamePlaceholder" maxlength="100" autocomplete="off" name="guest-given-name" />
           </div>
           <div class="field">
             <label class="field-label">{{ L.middleName }}</label>
-            <input v-model.trim="form.middle_name" class="text-input" :placeholder="L.middleNamePlaceholder" maxlength="100" />
+            <input v-model.trim="form.middle_name" class="text-input" :placeholder="L.middleNamePlaceholder" maxlength="100" autocomplete="off" name="guest-middle-name" />
           </div>
         </div>
         <p class="field-hint">{{ L.nameHint }}</p>
@@ -131,6 +136,7 @@
               inputmode="numeric"
               maxlength="2"
               placeholder="DD"
+              autocomplete="off"
             />
           </div>
           <div class="dob-field dob-field--month">
@@ -151,6 +157,7 @@
               inputmode="numeric"
               maxlength="4"
               placeholder="YYYY"
+              autocomplete="off"
             />
           </div>
         </div>
@@ -201,12 +208,39 @@
         <p class="privacy-note">🔒 {{ L.privacyNote }}</p>
       </div>
 
+      <div class="card">
+        <div class="card-title">{{ L.stayLabel }} <span class="required">*</span></div>
+        <div class="stay-row">
+          <div class="field">
+            <label class="field-label">{{ L.checkinDate }}</label>
+            <div class="text-input date-display" :class="{ empty: !form.checkin_date }" @click="openCalendar('in')">
+              {{ form.checkin_date || L.selectDate }}
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">{{ L.checkoutDate }}</label>
+            <div class="text-input date-display" :class="{ empty: !form.checkout_date }" @click="openCalendar('out')">
+              {{ form.checkout_date || L.selectDate }}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <button type="button" class="submit-btn" :disabled="submitting" @click="onSubmit">
         <van-loading v-if="submitting" size="18px" color="#fff" style="margin-right:6px" />
         {{ L.submitBtn }}
       </button>
 
       <input ref="fileInput" type="file" accept="image/*" style="display:none" @change="onFileChange" />
+
+      <van-calendar
+        v-model:show="showCalendar"
+        :min-date="calMinDate"
+        :max-date="calMaxDate"
+        color="#c8a97e"
+        :show-confirm="false"
+        @confirm="onCalendarConfirm"
+      />
     </div>
   </div>
 </template>
@@ -237,14 +271,17 @@ const DICT = {
     platformLabel: 'Booking Platform',
     bookingNoLabel: 'Booking / Reservation Number',
     bookingNoPlaceholder: 'Enter your booking confirmation number',
-    nameLabel: 'Name (as shown on passport)',
+    docNoLabel: 'Document Number',
+    docNoPlaceholder: 'Enter your passport / permit number',
+    errDocNo: 'Please enter your document number',
+    nameLabel: 'Name (as shown on your document)',
     surname: 'Surname',
     givenName: 'Given Name',
     middleName: 'Middle Name (optional)',
     surnamePlaceholder: 'e.g. SMITH',
     givenNamePlaceholder: 'e.g. JOHN',
     middleNamePlaceholder: 'Optional',
-    nameHint: 'Please enter your name exactly as it appears on your passport.',
+    nameHint: 'Please enter your name exactly as it appears on your document.',
     dobLabel: 'Date of Birth',
     dobDay: 'Day',
     dobMonth: 'Month',
@@ -261,6 +298,13 @@ const DICT = {
     handheldLabel: 'Photo of You Holding Your Passport',
     handheldPermitLabel: 'Photo of You Holding Your Permit',
     registerAgain: 'Register Another Guest',
+    stayLabel: 'Stay Dates',
+    checkinDate: 'Check-in Date',
+    checkoutDate: 'Check-out Date',
+    selectDate: 'Select date',
+    errCheckinDate: 'Please select your check-in date',
+    errCheckoutDate: 'Please select your check-out date',
+    errDateOrder: 'Check-out date must be after check-in date',
     sampleLabel: 'Example',
     uploadBtn: 'Upload Photo',
     privacyNote: 'This photo is used only for the homestay accommodation registration required by law. It will not be used for any other purpose.',
@@ -290,14 +334,17 @@ const DICT = {
     platformLabel: '预订平台',
     bookingNoLabel: '平台预约单号',
     bookingNoPlaceholder: '请输入预订确认单号',
-    nameLabel: '姓名（按护照填写）',
+    docNoLabel: '证件号码',
+    docNoPlaceholder: '请输入护照/通行证号码',
+    errDocNo: '请输入证件号码',
+    nameLabel: '姓名（按证件填写）',
     surname: '姓',
     givenName: '名',
     middleName: '中间名（选填）',
     surnamePlaceholder: '如：ZHANG',
     givenNamePlaceholder: '如：SAN',
     middleNamePlaceholder: '选填',
-    nameHint: '请严格按照护照上的拼写填写姓名。',
+    nameHint: '请严格按照证件上的拼写填写姓名。',
     dobLabel: '出生日期',
     dobDay: '日',
     dobMonth: '月',
@@ -314,6 +361,13 @@ const DICT = {
     handheldLabel: '手持护照照片',
     handheldPermitLabel: '手持通行证照片',
     registerAgain: '继续登记下一位',
+    stayLabel: '住宿日期',
+    checkinDate: '入住日期',
+    checkoutDate: '离开日期',
+    selectDate: '请选择日期',
+    errCheckinDate: '请选择入住日期',
+    errCheckoutDate: '请选择离开日期',
+    errDateOrder: '离开日期需晚于入住日期',
     sampleLabel: '示例',
     uploadBtn: '上传照片',
     privacyNote: '照片仅用于法律要求的民宿住宿登记申报，不作任何其他用途。',
@@ -343,14 +397,17 @@ const DICT = {
     platformLabel: '予約プラットフォーム',
     bookingNoLabel: '予約番号',
     bookingNoPlaceholder: '予約確認番号を入力してください',
-    nameLabel: '氏名（パスポート記載通り）',
+    docNoLabel: '証明書番号',
+    docNoPlaceholder: 'パスポート/通行証番号を入力してください',
+    errDocNo: '証明書番号を入力してください',
+    nameLabel: '氏名（証明書記載通り）',
     surname: '姓',
     givenName: '名',
     middleName: 'ミドルネーム（任意）',
     surnamePlaceholder: '例：YAMADA',
     givenNamePlaceholder: '例：TARO',
     middleNamePlaceholder: '任意',
-    nameHint: 'パスポートに記載されている通りに氏名をご記入ください。',
+    nameHint: '証明書に記載されている通りに氏名をご記入ください。',
     dobLabel: '生年月日',
     dobDay: '日',
     dobMonth: '月',
@@ -367,6 +424,13 @@ const DICT = {
     handheldLabel: 'パスポートを持った本人の写真',
     handheldPermitLabel: '通行証を持った本人の写真',
     registerAgain: '続けて別の方を登録',
+    stayLabel: '宿泊期間',
+    checkinDate: 'チェックイン日',
+    checkoutDate: 'チェックアウト日',
+    selectDate: '日付を選択',
+    errCheckinDate: 'チェックイン日を選択してください',
+    errCheckoutDate: 'チェックアウト日を選択してください',
+    errDateOrder: 'チェックアウト日はチェックイン日より後にしてください',
     sampleLabel: '見本',
     uploadBtn: '写真をアップロード',
     privacyNote: 'この写真は法律で義務付けられた民泊の宿泊登録のみに使用され、他の用途には一切使用されません。',
@@ -396,14 +460,17 @@ const DICT = {
     platformLabel: '예약 플랫폼',
     bookingNoLabel: '예약 번호',
     bookingNoPlaceholder: '예약 확인 번호를 입력하세요',
-    nameLabel: '이름 (여권 기재대로)',
+    docNoLabel: '증명서 번호',
+    docNoPlaceholder: '여권/통행증 번호를 입력해 주세요',
+    errDocNo: '증명서 번호를 입력해 주세요',
+    nameLabel: '이름 (증명서 기재대로)',
     surname: '성',
     givenName: '이름',
     middleName: '중간 이름 (선택)',
     surnamePlaceholder: '예: KIM',
     givenNamePlaceholder: '예: MINSU',
     middleNamePlaceholder: '선택 사항',
-    nameHint: '여권에 기재된 것과 동일하게 이름을 입력해 주세요.',
+    nameHint: '증명서에 기재된 것과 동일하게 이름을 입력해 주세요.',
     dobLabel: '생년월일',
     dobDay: '일',
     dobMonth: '월',
@@ -420,6 +487,13 @@ const DICT = {
     handheldLabel: '여권을 든 본인 사진',
     handheldPermitLabel: '통행증을 든 본인 사진',
     registerAgain: '다른 투숙객 등록하기',
+    stayLabel: '숙박 기간',
+    checkinDate: '체크인 날짜',
+    checkoutDate: '체크아웃 날짜',
+    selectDate: '날짜 선택',
+    errCheckinDate: '체크인 날짜를 선택해 주세요',
+    errCheckoutDate: '체크아웃 날짜를 선택해 주세요',
+    errDateOrder: '체크아웃 날짜는 체크인 날짜 이후여야 합니다',
     sampleLabel: '예시',
     uploadBtn: '사진 업로드',
     privacyNote: '이 사진은 법률상 요구되는 민박 숙박 등록 신고에만 사용되며, 다른 용도로는 일절 사용되지 않습니다.',
@@ -449,14 +523,17 @@ const DICT = {
     platformLabel: 'Платформа бронирования',
     bookingNoLabel: 'Номер бронирования',
     bookingNoPlaceholder: 'Введите номер подтверждения бронирования',
-    nameLabel: 'Имя (как в паспорте)',
+    docNoLabel: 'Номер документа',
+    docNoPlaceholder: 'Введите номер паспорта/разрешения',
+    errDocNo: 'Введите номер документа',
+    nameLabel: 'Имя (как в документе)',
     surname: 'Фамилия',
     givenName: 'Имя',
     middleName: 'Отчество / среднее имя (необязательно)',
     surnamePlaceholder: 'напр. IVANOV',
     givenNamePlaceholder: 'напр. IVAN',
     middleNamePlaceholder: 'Необязательно',
-    nameHint: 'Пожалуйста, введите имя точно так, как оно указано в паспорте.',
+    nameHint: 'Пожалуйста, введите имя точно так, как оно указано в документе.',
     dobLabel: 'Дата рождения',
     dobDay: 'День',
     dobMonth: 'Месяц',
@@ -473,6 +550,13 @@ const DICT = {
     handheldLabel: 'Фото с паспортом в руках',
     handheldPermitLabel: 'Фото с разрешением в руках',
     registerAgain: 'Зарегистрировать ещё одного гостя',
+    stayLabel: 'Даты проживания',
+    checkinDate: 'Дата заезда',
+    checkoutDate: 'Дата выезда',
+    selectDate: 'Выберите дату',
+    errCheckinDate: 'Выберите дату заезда',
+    errCheckoutDate: 'Выберите дату выезда',
+    errDateOrder: 'Дата выезда должна быть позже даты заезда',
     sampleLabel: 'Пример',
     uploadBtn: 'Загрузить фото',
     privacyNote: 'Фото используется только для обязательной по закону регистрации проживания и ни для каких других целей.',
@@ -502,14 +586,17 @@ const DICT = {
     platformLabel: 'Plataforma de reserva',
     bookingNoLabel: 'Número de reserva',
     bookingNoPlaceholder: 'Introduzca su número de confirmación',
-    nameLabel: 'Nombre (como aparece en el pasaporte)',
+    docNoLabel: 'Número de documento',
+    docNoPlaceholder: 'Introduzca el número de su pasaporte/permiso',
+    errDocNo: 'Introduzca el número de su documento',
+    nameLabel: 'Nombre (como aparece en el documento)',
     surname: 'Apellido',
     givenName: 'Nombre',
     middleName: 'Segundo nombre (opcional)',
     surnamePlaceholder: 'ej. GARCÍA',
     givenNamePlaceholder: 'ej. CARLOS',
     middleNamePlaceholder: 'Opcional',
-    nameHint: 'Introduzca su nombre exactamente como aparece en su pasaporte.',
+    nameHint: 'Introduzca su nombre exactamente como aparece en su documento.',
     dobLabel: 'Fecha de nacimiento',
     dobDay: 'Día',
     dobMonth: 'Mes',
@@ -526,6 +613,13 @@ const DICT = {
     handheldLabel: 'Foto sosteniendo su pasaporte',
     handheldPermitLabel: 'Foto sosteniendo su permiso',
     registerAgain: 'Registrar a otro huésped',
+    stayLabel: 'Fechas de estancia',
+    checkinDate: 'Fecha de entrada',
+    checkoutDate: 'Fecha de salida',
+    selectDate: 'Seleccione fecha',
+    errCheckinDate: 'Seleccione la fecha de entrada',
+    errCheckoutDate: 'Seleccione la fecha de salida',
+    errDateOrder: 'La fecha de salida debe ser posterior a la de entrada',
     sampleLabel: 'Ejemplo',
     uploadBtn: 'Subir foto',
     privacyNote: 'Esta foto se usa únicamente para el registro de alojamiento exigido por la ley y para ningún otro fin.',
@@ -582,13 +676,62 @@ const form = reactive({
   platform: '',
   booking_no: '',
   document_type: 'passport',
+  document_no: '',
   surname: '',
   given_name: '',
   middle_name: '',
   date_of_birth: '',
   passport_image: '',
   handheld_image: '',
+  checkin_date: '',
+  checkout_date: '',
 })
+
+// ===== 入住/离开日期日历选择 =====
+const showCalendar = ref(false)
+let calTarget = 'in'
+
+function fmtDate(d) {
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+const calMinDate = computed(() => {
+  if (calTarget === 'out' && form.checkin_date) {
+    const d = new Date(form.checkin_date)
+    d.setDate(d.getDate() + 1)
+    return d
+  }
+  // 入住日期：允许最近60天内（登记通常在入住后24小时内进行）
+  const d = new Date()
+  d.setDate(d.getDate() - 60)
+  return d
+})
+
+const calMaxDate = computed(() => {
+  const d = new Date()
+  d.setFullYear(d.getFullYear() + 1)
+  return d
+})
+
+function openCalendar(target) {
+  calTarget = target
+  showCalendar.value = true
+}
+
+function onCalendarConfirm(date) {
+  const val = fmtDate(date)
+  if (calTarget === 'in') {
+    form.checkin_date = val
+    // 入住日期改晚于原离开日期时，清空离开日期
+    if (form.checkout_date && form.checkout_date <= val) {
+      form.checkout_date = ''
+    }
+  } else {
+    form.checkout_date = val
+  }
+  showCalendar.value = false
+}
 
 // 证件样本图：护照 / 港澳通行证 / 台湾通行证 各一张（手持样本不随类型变化）
 const DOC_SAMPLES = {
@@ -602,6 +745,7 @@ const handheldPhotoLabel = computed(() => form.document_type === 'passport' ? L.
 
 function registerAnother() {
   // 保留预订平台和单号（通常同一订单多人登记），清空个人信息
+  form.document_no = ''
   form.surname = ''
   form.given_name = ''
   form.middle_name = ''
@@ -668,11 +812,15 @@ function goAfterSuccess(path) {
 async function onSubmit() {
   if (!form.platform) return showToast(L.value.errPlatform)
   if (!form.booking_no) return showToast(L.value.errBookingNo)
+  if (!form.document_no) return showToast(L.value.errDocNo)
   if (!form.surname || !form.given_name) return showToast(L.value.errName)
   form.date_of_birth = buildDob()
   if (!form.date_of_birth) return showToast(L.value.errDob)
   if (!form.passport_image) return showToast(L.value.errPassport)
   if (!form.handheld_image) return showToast(L.value.errHandheld)
+  if (!form.checkin_date) return showToast(L.value.errCheckinDate)
+  if (!form.checkout_date) return showToast(L.value.errCheckoutDate)
+  if (form.checkout_date <= form.checkin_date) return showToast(L.value.errDateOrder)
   if (uploading.passport || uploading.handheld) return
 
   submitting.value = true
@@ -681,12 +829,15 @@ async function onSubmit() {
       platform: form.platform,
       booking_no: form.booking_no,
       document_type: form.document_type,
+      document_no: form.document_no,
       surname: form.surname,
       given_name: form.given_name,
       middle_name: form.middle_name || undefined,
       date_of_birth: form.date_of_birth,
       passport_image: form.passport_image,
       handheld_image: form.handheld_image,
+      checkin_date: form.checkin_date,
+      checkout_date: form.checkout_date,
       lang: lang.value,
     })
     submitted.value = true
@@ -906,6 +1057,24 @@ async function onSubmit() {
   appearance: auto;
   -webkit-appearance: auto;
   height: 42px;
+}
+
+.stay-row {
+  display: flex;
+  gap: 10px;
+}
+
+.stay-row .field {
+  flex: 1;
+}
+
+.date-display {
+  cursor: pointer;
+  user-select: none;
+}
+
+.date-display.empty {
+  color: #b0a494;
 }
 
 .upload-row {

@@ -78,10 +78,32 @@ def create_guest_registration():
     if document_type not in VALID_DOC_TYPES:
         document_type = 'passport'
 
+    document_no = (data.get('document_no') or '').strip()
+    if not document_no:
+        return error_response('Document number is required')
+    if len(document_no) > 50:
+        return error_response('Document number too long')
+
+    def _parse_date(raw):
+        try:
+            return date.fromisoformat((raw or '').strip())
+        except (ValueError, TypeError):
+            return None
+
+    checkin_date = _parse_date(data.get('checkin_date'))
+    checkout_date = _parse_date(data.get('checkout_date'))
+    if not checkin_date or not checkout_date:
+        return error_response('Please select check-in and check-out dates')
+    if checkout_date <= checkin_date:
+        return error_response('Check-out date must be after check-in date')
+
     reg = GuestRegistration(
         platform=platform,
         booking_no=booking_no,
         document_type=document_type,
+        document_no=document_no,
+        checkin_date=checkin_date,
+        checkout_date=checkout_date,
         surname=surname,
         given_name=given_name,
         middle_name=middle_name,
@@ -116,6 +138,7 @@ def admin_list_guest_registrations():
                 GuestRegistration.surname.ilike(like),
                 GuestRegistration.given_name.ilike(like),
                 GuestRegistration.booking_no.ilike(like),
+                GuestRegistration.document_no.ilike(like),
             )
         )
     if status != '':
@@ -231,7 +254,7 @@ def admin_export_guest_registrations():
     thin = Side(border_style='thin', color='DDD0BC')
     border = Border(top=thin, left=thin, right=thin, bottom=thin)
 
-    headers = ['ID', '姓 (Surname)', '名 (Given Name)', '中间名', '出生日期', '证件类型', '预订平台', '预约单号', '申报状态', '登记时间']
+    headers = ['ID', '姓 (Surname)', '名 (Given Name)', '中间名', '出生日期', '证件类型', '证件号码', '预订平台', '预约单号', '入住日期', '离开日期', '申报状态', '登记时间']
     for col, label in enumerate(headers, start=1):
         cell = ws.cell(row=1, column=col, value=label)
         cell.font = header_font
@@ -248,12 +271,15 @@ def admin_export_guest_registrations():
         ws.cell(row=i, column=4, value=r.middle_name or '')
         ws.cell(row=i, column=5, value=r.date_of_birth.isoformat() if r.date_of_birth else '')
         ws.cell(row=i, column=6, value=doc_labels.get(r.document_type or 'passport', r.document_type))
-        ws.cell(row=i, column=7, value=platform_labels.get(r.platform, r.platform))
-        ws.cell(row=i, column=8, value=r.booking_no)
-        ws.cell(row=i, column=9, value='已申报' if r.status == 1 else '待申报')
-        ws.cell(row=i, column=10, value=r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at else '')
+        ws.cell(row=i, column=7, value=r.document_no or '')
+        ws.cell(row=i, column=8, value=platform_labels.get(r.platform, r.platform))
+        ws.cell(row=i, column=9, value=r.booking_no)
+        ws.cell(row=i, column=10, value=r.checkin_date.isoformat() if r.checkin_date else '')
+        ws.cell(row=i, column=11, value=r.checkout_date.isoformat() if r.checkout_date else '')
+        ws.cell(row=i, column=12, value='已申报' if r.status == 1 else '待申报')
+        ws.cell(row=i, column=13, value=r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at else '')
 
-    widths = [8, 16, 16, 14, 14, 14, 14, 24, 12, 20]
+    widths = [8, 16, 16, 14, 14, 14, 20, 14, 24, 13, 13, 12, 20]
     for i, w in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(i)].width = w
 

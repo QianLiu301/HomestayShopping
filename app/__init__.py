@@ -232,8 +232,11 @@ def _auto_migrate(app):
         ('shop_orders', 'cost_price', 'NUMERIC(10, 2)'),
         ('ticket_orders', 'cost_price', 'NUMERIC(10, 2)'),
 
-        # 住宿登记证件类型
+        # 住宿登记证件类型 + 住宿日期
         ('guest_registrations', 'document_type', "VARCHAR(20) DEFAULT 'passport'"),
+        ('guest_registrations', 'document_no', 'VARCHAR(50)'),
+        ('guest_registrations', 'checkin_date', 'DATE'),
+        ('guest_registrations', 'checkout_date', 'DATE'),
 
         # 许愿池
         ('wishes', 'contact_name', 'VARCHAR(50)'),

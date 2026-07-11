@@ -1288,12 +1288,15 @@ class GuestRegistration(db.Model):
     platform = db.Column(db.String(20), nullable=False)  # booking / trip / agoda / expedia
     booking_no = db.Column(db.String(100), nullable=False)
     document_type = db.Column(db.String(20), default='passport')  # passport / hkmo / taiwan
+    document_no = db.Column(db.String(50))  # 证件号码
     surname = db.Column(db.String(100), nullable=False)
     given_name = db.Column(db.String(100), nullable=False)
     middle_name = db.Column(db.String(100))
     date_of_birth = db.Column(db.Date, nullable=False)
     passport_image = db.Column(db.String(255), nullable=False)   # 私密存储 key: private/<uuid>.<ext>
     handheld_image = db.Column(db.String(255), nullable=False)   # 手持护照照片 key
+    checkin_date = db.Column(db.Date)   # 入住日期
+    checkout_date = db.Column(db.Date)  # 离开日期
     lang = db.Column(db.String(10), default='en')  # 登记时使用的界面语言
     status = db.Column(db.SmallInteger, default=0)  # 0待申报 1已申报
     created_at = db.Column(db.DateTime, default=china_now)
@@ -1305,6 +1308,7 @@ class GuestRegistration(db.Model):
             'platform': self.platform,
             'booking_no': self.booking_no,
             'document_type': self.document_type or 'passport',
+            'document_no': self.document_no,
             'surname': self.surname,
             'given_name': self.given_name,
             'middle_name': self.middle_name,
@@ -1312,6 +1316,8 @@ class GuestRegistration(db.Model):
             'date_of_birth': self.date_of_birth.isoformat() if self.date_of_birth else None,
             'passport_image': self.passport_image,
             'handheld_image': self.handheld_image,
+            'checkin_date': self.checkin_date.isoformat() if self.checkin_date else None,
+            'checkout_date': self.checkout_date.isoformat() if self.checkout_date else None,
             'lang': self.lang,
             'status': self.status,
             'created_at': self.created_at.isoformat() if self.created_at else None,
