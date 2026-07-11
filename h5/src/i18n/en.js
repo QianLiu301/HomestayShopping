@@ -403,5 +403,5 @@ export default {
     cat_entertainment: 'Entertainment',
     cat_shopping: 'Shopping',
   },
-  lang: { title: 'Language', zh: '中文', en: 'English', ru: 'Русский', es: 'Español' }
+  lang: { title: 'Language', zh: '中文', en: 'English', ru: 'Русский', es: 'Español', ja: '日本語', ko: '한국어' }
 }

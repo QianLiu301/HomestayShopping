@@ -23,11 +23,13 @@ const langStore = useLangStore()
 const current = ref(langStore.current)
 const showPicker = ref(false)
 
-const langLabels = { zh: '中文', en: 'EN', ru: 'РУ', es: 'ES' }
+const langLabels = { zh: '中文', en: 'EN', ru: 'РУ', es: 'ES', ja: '日本語', ko: '한국어' }
 
 const actions = [
-  { name: '中文', value: 'zh' },
   { name: 'English', value: 'en' },
+  { name: '中文', value: 'zh' },
+  { name: '日本語', value: 'ja' },
+  { name: '한국어', value: 'ko' },
   { name: 'Русский', value: 'ru' },
   { name: 'Español', value: 'es' }
 ]

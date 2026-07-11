@@ -89,6 +89,9 @@ def escape_like(keyword):
 def get_lang():
     """获取请求的语言参数"""
     lang = request.args.get('lang', 'zh')
+    # 日语/韩语界面：内容字段暂无 ja/ko 翻译，回退英文
+    if lang in ('ja', 'ko'):
+        return 'en'
     if lang not in ['zh', 'en', 'ru', 'es']:
         lang = 'zh'
     return lang

@@ -390,5 +390,5 @@ export default {
     cat_entertainment: 'Развлечения',
     cat_shopping: 'Шопинг',
   },
-  lang: { title: 'Язык', zh: '中文', en: 'English', ru: 'Русский', es: 'Español' }
+  lang: { title: 'Язык', zh: '中文', en: 'English', ru: 'Русский', es: 'Español', ja: '日本語', ko: '한국어' }
 }

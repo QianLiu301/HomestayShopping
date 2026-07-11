@@ -60,10 +60,12 @@ const currentLang = computed(() => langStore.current)
 const isHome = computed(() => route.path === '/')
 const cartCount = computed(() => cart.totalCount || 0)
 
-const langLabels = { zh: '中文', en: 'EN', ru: 'РУ', es: 'ES' }
+const langLabels = { zh: '中文', en: 'EN', ru: 'РУ', es: 'ES', ja: '日本語', ko: '한국어' }
 const langs = [
   { name: 'English', value: 'en' },
   { name: '中文', value: 'zh' },
+  { name: '日本語', value: 'ja' },
+  { name: '한국어', value: 'ko' },
   { name: 'Русский', value: 'ru' },
   { name: 'Español', value: 'es' }
 ]
