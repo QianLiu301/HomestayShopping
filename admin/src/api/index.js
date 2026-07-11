@@ -150,6 +150,24 @@ export const createGuide = data => http.post('/admin/guides', data)
 export const updateGuide = (id, data) => http.put(`/admin/guides/${id}`, data)
 export const deleteGuide = id => http.delete(`/admin/guides/${id}`)
 
+// Guest Registrations (住宿登记)
+export const getGuestRegistrations = params => http.get('/admin/guest-registrations', { params })
+export const updateGuestRegistrationStatus = (id, status) => http.put(`/admin/guest-registrations/${id}/status`, { status })
+export const deleteGuestRegistration = id => http.delete(`/admin/guest-registrations/${id}`)
+export const guestDocUrl = key => {
+  const token = localStorage.getItem('admin_token')
+  return `${API_BASE}/api/admin/guest-doc/${key}?token=${encodeURIComponent(token || '')}`
+}
+export const guestRegistrationsExportUrl = (params = {}) => {
+  const search = new URLSearchParams()
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') search.append(key, value)
+  })
+  const token = localStorage.getItem('admin_token')
+  if (token) search.append('token', token)
+  return `${API_BASE}/api/admin/guest-registrations/export?${search.toString()}`
+}
+
 // Accounts (管理员账号管理 — 仅 owner)
 export const getAccounts = params => http.get('/admin/accounts', { params })
 export const createAccount = data => http.post('/admin/accounts', data)

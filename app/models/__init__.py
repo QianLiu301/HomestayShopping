@@ -1278,3 +1278,39 @@ class TicketTransportPrice(db.Model):
             'status': self.status,
             'sort_order': self.sort_order
         }
+
+
+class GuestRegistration(db.Model):
+    """境外人员住宿登记表"""
+    __tablename__ = 'guest_registrations'
+
+    id = db.Column(db.Integer, primary_key=True)
+    platform = db.Column(db.String(20), nullable=False)  # booking / trip / agoda / expedia
+    booking_no = db.Column(db.String(100), nullable=False)
+    surname = db.Column(db.String(100), nullable=False)
+    given_name = db.Column(db.String(100), nullable=False)
+    middle_name = db.Column(db.String(100))
+    date_of_birth = db.Column(db.Date, nullable=False)
+    passport_image = db.Column(db.String(255), nullable=False)   # 私密存储 key: private/<uuid>.<ext>
+    handheld_image = db.Column(db.String(255), nullable=False)   # 手持护照照片 key
+    lang = db.Column(db.String(10), default='en')  # 登记时使用的界面语言
+    status = db.Column(db.SmallInteger, default=0)  # 0待申报 1已申报
+    created_at = db.Column(db.DateTime, default=china_now)
+    updated_at = db.Column(db.DateTime, default=china_now, onupdate=china_now)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'platform': self.platform,
+            'booking_no': self.booking_no,
+            'surname': self.surname,
+            'given_name': self.given_name,
+            'middle_name': self.middle_name,
+            'full_name': ' '.join(filter(None, [self.surname, self.middle_name, self.given_name])),
+            'date_of_birth': self.date_of_birth.isoformat() if self.date_of_birth else None,
+            'passport_image': self.passport_image,
+            'handheld_image': self.handheld_image,
+            'lang': self.lang,
+            'status': self.status,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }

@@ -101,4 +101,12 @@ export const submitWish = (data) => api.post('/wishes', data)
 export const getGuides = (params) => api.get('/guides', { params })
 export const getGuide = (id) => api.get(`/guides/${id}`)
 
+// ==================== Guest Registration (住宿登记) ====================
+export const uploadGuestDoc = (file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  return api.post('/guest-registrations/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+}
+export const submitGuestRegistration = (data) => api.post('/guest-registrations', data)
+
 export default api

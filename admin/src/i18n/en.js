@@ -24,6 +24,7 @@ export default {
     delivery: 'Delivery',
     guides: 'Guides',
     wishes: 'Wish Pool',
+    guestRegistrations: 'Guest Registrations',
     reviews: 'Reviews',
     accounts: 'Accounts',
     logout: 'Logout'
@@ -125,6 +126,7 @@ export default {
     yes: 'Yes',
     no: 'No',
     confirm: 'Confirm',
+    warning: 'Warning',
     manage: 'Manage',
     created: 'Created',
     updated: 'Updated',
@@ -701,6 +703,32 @@ export default {
     insertImage: 'Upload Image',
     insertVideo: 'Upload Video',
     videoTip: 'Video: mp4/mov/webm, max 100MB',
+  },
+
+  // Guest Registrations
+  guestReg: {
+    searchPlaceholder: 'Search name / booking no...',
+    statusFilter: 'Declaration Status',
+    dateStart: 'Start Date',
+    dateEnd: 'End Date',
+    exportBtn: 'Export Excel (Last Month)',
+    name: 'Name',
+    dob: 'Date of Birth',
+    platform: 'Platform',
+    bookingNo: 'Booking No.',
+    photos: 'Documents',
+    viewPhotos: 'View Photos',
+    status: 'Status',
+    pending: 'Pending',
+    declared: 'Declared',
+    markDeclared: 'Mark Declared',
+    markPending: 'Mark Pending',
+    createdAt: 'Registered At',
+    detailTitle: 'Registration Detail',
+    passportPhoto: 'Passport Page',
+    handheldPhoto: 'Holding Passport',
+    download: 'Download',
+    deleteConfirm: 'Delete this registration? Passport photos will be removed and cannot be recovered.',
   },
 
   // Ticket Orders

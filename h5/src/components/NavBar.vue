@@ -72,12 +72,18 @@ const navItems = [
   { id: 'services', label: 'nav.services', href: '#services' },
   { id: 'shop', label: 'nav.shop', href: '#shop' },
   { id: 'how', label: 'nav.howItWorks', href: '#how-it-works' },
+  { id: 'checkin', label: 'nav.checkin', href: '/checkin', route: true },
   { id: 'orders', label: 'nav.orders', href: '#orders' },
   { id: 'contact', label: 'nav.contact', href: '#contact' }
 ]
 
 function onNavClick(item, e) {
   menuOpen.value = false
+  if (item.route) {
+    e.preventDefault()
+    router.push(item.href)
+    return
+  }
   if (route.path !== '/') {
     e.preventDefault()
     router.push('/' + item.href)

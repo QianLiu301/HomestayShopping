@@ -190,6 +190,10 @@ ROUTE_PERMISSIONS = [
 
     # 评价管理
     ('/api/admin/reviews',         CAN_MANAGE_REVIEWS, CAN_MANAGE_REVIEWS),
+
+    # 住宿登记（护照等敏感证件，仅 owner/admin）
+    ('/api/admin/guest-registrations', CAN_EDIT_CONTENT, CAN_EDIT_CONTENT),
+    ('/api/admin/guest-doc',           CAN_EDIT_CONTENT, CAN_EDIT_CONTENT),
 ]
 
 

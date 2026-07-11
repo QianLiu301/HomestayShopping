@@ -23,6 +23,10 @@
             <span class="hero-action-btn__title">{{ t('home.guidesTitle') }}</span>
             <span class="hero-action-btn__hint">{{ t('home.guidesCtaHint') }}</span>
           </button>
+          <button type="button" class="btn btn-outline hero-action-btn hero-action-btn--outline" @click="$router.push('/checkin')">
+            <span class="hero-action-btn__title">{{ t('home.checkinTitle') }}</span>
+            <span class="hero-action-btn__hint">{{ t('home.checkinCtaHint') }}</span>
+          </button>
         </div>
       </div>
       <div class="hero-scroll-hint">

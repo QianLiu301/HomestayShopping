@@ -1,5 +1,5 @@
 export default {
-  nav: { services: '接送服务', shop: '精品商城', howItWorks: '流程', orders: '订单', contact: '联系我们' },
+  nav: { services: '接送服务', shop: '精品商城', howItWorks: '流程', orders: '订单', contact: '联系我们', checkin: '住宿登记' },
   common: { home: '首页', shop: '商城', cart: '购物车', orders: '订单', transfer: '接送机', submit: '提交', confirm: '确认', cancel: '取消', loading: '加载中...', noData: '暂无数据', currency: '¥', back: '返回', all: '全部', viewMore: '查看更多', required: '必填' },
   home: {
     heroLabel: '欢迎来到 Homestay',
@@ -14,6 +14,8 @@ export default {
     ticketsCtaHint: '热门景点 / 游玩须知 / 可选接送',
     guidesTitle: '免费攻略',
     guidesCtaHint: '上海旅游攻略 / 免费阅读',
+    checkinTitle: '住宿登记',
+    checkinCtaHint: '境外人员登记 / 法律要求',
     servicesSubtitle: '专业司机，豪华车型，准时接送，让您的旅途无忧。', trainServicesSubtitle: '专业司机，豪华车型，准时接送，火车站无缝衔接。',
     servicesComingSoon: '车型即将上线', bookNow: '立即预订',
     shopTitle: '精选礼品系列',

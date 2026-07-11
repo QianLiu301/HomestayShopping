@@ -84,6 +84,11 @@ const routes = [
     meta: { tabBar: true }
   },
   {
+    path: '/checkin',
+    name: 'Checkin',
+    component: () => import('../views/Checkin.vue')
+  },
+  {
     path: '/privacy',
     name: 'Privacy',
     component: () => import('../views/Privacy.vue')

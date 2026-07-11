@@ -53,6 +53,7 @@ export const MENU_PERMISSIONS = {
   '/guides':  [ROLE_OWNER, ROLE_ADMIN, ROLE_CS],
   '/wishes':  [ROLE_OWNER, ROLE_ADMIN, ROLE_CS],
   '/reviews': [ROLE_OWNER, ROLE_ADMIN, ROLE_CS],
+  '/guest-registrations': [ROLE_OWNER, ROLE_ADMIN],  // 护照敏感信息，仅 owner/admin
 
   // 系统
   '/payment':  [ROLE_OWNER, ROLE_FINANCE],   // 财务只读

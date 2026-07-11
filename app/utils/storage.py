@@ -143,6 +143,58 @@ def upload_file(file_storage, upload_folder):
     return url
 
 
+def upload_private_file(file_storage, private_folder):
+    """
+    上传私密文件（如护照照片），返回文件 key（非公开 URL）。
+    - R2 模式：存储在 private/ 前缀下，key = private/<uuid>.<ext>
+    - 本地模式：存储在 private_folder（不在静态服务目录下），key = private/<uuid>.<ext>
+    访问必须通过管理端鉴权代理接口。
+    """
+    ext = file_storage.filename.rsplit('.', 1)[1].lower()
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    key = f"private/{filename}"
+
+    compressed_buf, ext = _compress_image(file_storage, ext)
+
+    r2 = _get_r2_client()
+    bucket = os.getenv('R2_BUCKET_NAME', 'homestay')
+
+    if r2:
+        content_type = _CONTENT_TYPES.get(ext, 'application/octet-stream')
+        compressed_buf.seek(0)
+        r2.upload_fileobj(
+            compressed_buf,
+            bucket,
+            key,
+            ExtraArgs={'ContentType': content_type}
+        )
+    else:
+        os.makedirs(private_folder, exist_ok=True)
+        filepath = os.path.join(private_folder, filename)
+        with open(filepath, 'wb') as f:
+            f.write(compressed_buf.read())
+
+    return key
+
+
+def get_private_file(key, private_folder):
+    """读取私密文件，返回 (bytes, content_type) 或 (None, None)。key 形如 private/<filename>"""
+    if not key or not key.startswith('private/') or '..' in key:
+        return None, None
+    filename = key.split('/', 1)[1]
+
+    r2 = _get_r2_client()
+    if r2:
+        return get_r2_file(key)
+
+    filepath = os.path.join(private_folder, filename)
+    if not os.path.isfile(filepath):
+        return None, None
+    ext = filename.rsplit('.', 1)[-1].lower()
+    with open(filepath, 'rb') as f:
+        return f.read(), _CONTENT_TYPES.get(ext, 'application/octet-stream')
+
+
 # ==================== R2 图片代理缓存 ====================
 
 # 简易 LRU 内存缓存：最多缓存 200 张图片（约 200MB 上限）

@@ -17,3 +17,4 @@ from app.api import tickets
 from app.api import wishes
 from app.api import accounts
 from app.api import guides
+from app.api import checkin

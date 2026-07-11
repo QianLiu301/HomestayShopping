@@ -24,6 +24,7 @@ export default {
     delivery: '配送管理',
     guides: '攻略管理',
     wishes: '许愿池',
+    guestRegistrations: '住宿登记',
     reviews: '评价管理',
     accounts: '账号管理',
     logout: '退出登录'
@@ -125,6 +126,7 @@ export default {
     yes: '是',
     no: '否',
     confirm: '确认',
+    warning: '提示',
     manage: '管理',
     created: '已创建',
     updated: '已更新',
@@ -698,6 +700,32 @@ export default {
     insertImage: '上传图片',
     insertVideo: '上传视频',
     videoTip: '视频支持 mp4/mov/webm，最大100MB',
+  },
+
+  // Guest Registrations (住宿登记)
+  guestReg: {
+    searchPlaceholder: '搜索姓名/预约单号...',
+    statusFilter: '申报状态',
+    dateStart: '开始日期',
+    dateEnd: '结束日期',
+    exportBtn: '导出Excel（近一个月）',
+    name: '姓名',
+    dob: '出生日期',
+    platform: '预订平台',
+    bookingNo: '预约单号',
+    photos: '证件照片',
+    viewPhotos: '查看照片',
+    status: '申报状态',
+    pending: '待申报',
+    declared: '已申报',
+    markDeclared: '标记已申报',
+    markPending: '标记待申报',
+    createdAt: '登记时间',
+    detailTitle: '登记详情',
+    passportPhoto: '护照信息页',
+    handheldPhoto: '手持护照照片',
+    download: '下载',
+    deleteConfirm: '确定删除该登记记录吗？护照照片记录将一并删除，无法恢复。',
   },
 
   // Ticket Orders

@@ -1,5 +1,5 @@
 export default {
-  nav: { services: 'Услуги', shop: 'Магазин', howItWorks: 'Как это работает', orders: 'Заказы', contact: 'Контакты' },
+  nav: { services: 'Услуги', shop: 'Магазин', howItWorks: 'Как это работает', orders: 'Заказы', contact: 'Контакты', checkin: 'Регистрация' },
   common: { home: 'Главная', shop: 'Магазин', cart: 'Корзина', orders: 'Заказы', transfer: 'Трансфер', submit: 'Отправить', confirm: 'Подтвердить', cancel: 'Отмена', loading: 'Загрузка...', noData: 'Нет данных', currency: '¥', back: 'Назад', all: 'Все', viewMore: 'Подробнее', required: 'Обязательно' },
   home: {
     heroLabel: 'Добро пожаловать',
@@ -14,6 +14,8 @@ export default {
     ticketsCtaHint: 'Билеты / Трансфер',
     guidesTitle: 'Бесплатные гиды',
     guidesCtaHint: 'Путеводители по Шанхаю / Бесплатно',
+    checkinTitle: 'Регистрация гостя',
+    checkinCtaHint: 'Регистрация проживания / Требование закона',
     servicesComingSoon: 'Автомобили скоро появятся', bookNow: 'Забронировать',
     shopTitle: 'Коллекция подарков', shopSubtitle: 'Сувениры и местные специальности — заказ сегодня, доставка в номер до выезда.',
     productsComingSoon: 'Товары скоро появятся', viewAllProducts: 'Все товары', enterShopNow: 'Перейти в магазин', allProductsLoaded: 'Все товары загружены',

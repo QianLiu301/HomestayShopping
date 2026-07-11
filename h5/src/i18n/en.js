@@ -1,5 +1,5 @@
 export default {
-  nav: { services: 'Services', shop: 'Shop', howItWorks: 'How It Works', orders: 'Orders', contact: 'Contact' },
+  nav: { services: 'Services', shop: 'Shop', howItWorks: 'How It Works', orders: 'Orders', contact: 'Contact', checkin: 'Check-in' },
   common: { home: 'Home', shop: 'Shop', cart: 'Cart', orders: 'Orders', transfer: 'Transfer', submit: 'Submit', confirm: 'Confirm', cancel: 'Cancel', loading: 'Loading...', noData: 'No data', currency: '¥', back: 'Back', all: 'All', viewMore: 'View More', required: 'Required' },
   home: {
     heroLabel: 'Welcome to Homestay',
@@ -14,6 +14,8 @@ export default {
     ticketsCtaHint: 'Attractions / Transfer',
     guidesTitle: 'Free Guides',
     guidesCtaHint: 'Shanghai Travel Guides / Free',
+    checkinTitle: 'Guest Registration',
+    checkinCtaHint: 'Check-in Registration / Required by Law',
     servicesSubtitle: 'Professional drivers, luxury vehicles, and on-time pickup & dropoff for a seamless travel experience.', trainServicesSubtitle: 'Professional drivers, luxury vehicles, and on-time pickup & dropoff for a seamless station transfer.',
     servicesComingSoon: 'Vehicle options coming soon', bookNow: 'Book Now',
     shopTitle: 'Curated Gift Collection',

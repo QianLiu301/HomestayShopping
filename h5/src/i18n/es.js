@@ -1,5 +1,5 @@
 export default {
-  nav: { services: 'Servicios', shop: 'Tienda', howItWorks: 'Cómo funciona', orders: 'Pedidos', contact: 'Contacto' },
+  nav: { services: 'Servicios', shop: 'Tienda', howItWorks: 'Cómo funciona', orders: 'Pedidos', contact: 'Contacto', checkin: 'Registro' },
   common: { home: 'Inicio', shop: 'Tienda', cart: 'Carrito', orders: 'Pedidos', transfer: 'Traslado', submit: 'Enviar', confirm: 'Confirmar', cancel: 'Cancelar', loading: 'Cargando...', noData: 'Sin datos', currency: '¥', back: 'Volver', all: 'Todo', viewMore: 'Ver más', required: 'Obligatorio' },
   home: {
     heroLabel: 'Bienvenido a Homestay',
@@ -14,6 +14,8 @@ export default {
     ticketsCtaHint: 'Lugares / Traslado',
     guidesTitle: 'Guías gratis',
     guidesCtaHint: 'Guías de viaje de Shanghai / Gratis',
+    checkinTitle: 'Registro de huésped',
+    checkinCtaHint: 'Registro de alojamiento / Requerido por ley',
     servicesComingSoon: 'Vehículos próximamente', bookNow: 'Reservar',
     shopTitle: 'Colección de regalos', shopSubtitle: 'Souvenirs y especialidades locales — pedido hoy, entregado en tu habitación.',
     productsComingSoon: 'Productos próximamente', viewAllProducts: 'Ver todos los productos', enterShopNow: 'Entrar a la tienda', allProductsLoaded: 'Todos los productos cargados',

@@ -37,6 +37,7 @@ const routes = [
       { path: 'tickets/orders', name: 'TicketOrders', component: () => import('../views/TicketOrders.vue'), meta: { title: 'Ticket Orders' } },
       { path: 'guides', name: 'Guides', component: () => import('../views/Guides.vue'), meta: { title: 'Guides' } },
       { path: 'wishes', name: 'Wishes', component: () => import('../views/Wishes.vue'), meta: { title: 'Wishes' } },
+      { path: 'guest-registrations', name: 'GuestRegistrations', component: () => import('../views/GuestRegistrations.vue'), meta: { title: 'Guest Registrations' } },
       { path: 'reviews', name: 'Reviews', component: () => import('../views/Reviews.vue'), meta: { title: 'Reviews' } },
       { path: 'accounts', name: 'Accounts', component: () => import('../views/Accounts.vue'), meta: { title: 'Accounts' } }
     ]

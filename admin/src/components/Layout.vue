@@ -75,6 +75,11 @@
           <template #title>{{ $t('nav.wishes') }}</template>
         </el-menu-item>
 
+        <el-menu-item v-if="can('/guest-registrations')" index="/guest-registrations">
+          <el-icon><Postcard /></el-icon>
+          <template #title>{{ $t('nav.guestRegistrations') }}</template>
+        </el-menu-item>
+
         <el-menu-item v-if="can('/reviews')" index="/reviews">
           <el-icon><Star /></el-icon>
           <template #title>{{ $t('nav.reviews') }}</template>
@@ -140,7 +145,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
-import { DataAnalysis, ShoppingBag, Van, List, Ticket, Discount, CreditCard, Fold, Expand, UserFilled, ArrowDown, ChatLineRound, Star, Avatar, Notebook } from '@element-plus/icons-vue'
+import { DataAnalysis, ShoppingBag, Van, List, Ticket, Discount, CreditCard, Fold, Expand, UserFilled, ArrowDown, ChatLineRound, Star, Avatar, Notebook, Postcard } from '@element-plus/icons-vue'
 import { canAccess, canAccessGroup, ROLE_LABELS } from '../utils/permissions'
 
 const { t, locale } = useI18n()
