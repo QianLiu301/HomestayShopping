@@ -28,7 +28,10 @@
           >{{ l.label }}</button>
         </div>
         <h2 class="notice-title">{{ L.noticeTitle }}</h2>
-        <div class="notice-body">{{ L.noticeBody }}</div>
+        <div class="notice-body">
+          {{ L.noticeBody }}
+          <div class="notice-source">{{ L.noticeSource }}</div>
+        </div>
         <label class="notice-agree">
           <van-checkbox v-model="agreed" shape="square" icon-size="18px" />
           <span>{{ L.agreeLabel }}</span>
@@ -216,6 +219,7 @@ const DICT = {
     title: 'Guest Check-in Registration',
     noticeTitle: 'Registration Notice',
     noticeBody: 'According to Chinese law, foreign nationals staying in accommodation other than hotels must register their stay with the local Public Security Bureau within 24 hours of check-in. This is your legal obligation and an important record for future visa applications. Please fill in the information truthfully. False declarations, late declarations or failure to declare may be subject to penalties under the law.',
+    noticeSource: '— Source: Shanghai Municipal Public Security Bureau, Accommodation Registration System for Overseas Personnel',
     agreeLabel: 'I have read and agree',
     continueBtn: 'Continue',
     platformLabel: 'Booking Platform',
@@ -261,6 +265,7 @@ const DICT = {
     title: '住宿登记',
     noticeTitle: '登记须知',
     noticeBody: '根据中国法律有关规定，境外人员在旅馆业以外场所入住后24小时内申报住宿登记是您应遵守的法律义务，也是您将来申请签证证件的重要依据。请如实填报相关信息。恶意虚假申报、超时申报或不申报均将被依法查处。',
+    noticeSource: '— 信息来源：上海市公安局境外人员住宿登记申报系统',
     agreeLabel: '我已阅读并同意',
     continueBtn: '继续',
     platformLabel: '预订平台',
@@ -306,6 +311,7 @@ const DICT = {
     title: '宿泊登録',
     noticeTitle: '登録に関するご案内',
     noticeBody: '中国の法律により、ホテル以外の場所に宿泊する外国人は、チェックイン後24時間以内に現地の公安機関へ宿泊登録を申告する法的義務があります。これは将来のビザ申請の重要な記録にもなります。情報は正確にご記入ください。虚偽申告・期限超過・未申告は法律により処罰される場合があります。',
+    noticeSource: '— 出典：上海市公安局 境外人員宿泊登録申告システム',
     agreeLabel: '内容を読み、同意します',
     continueBtn: '続ける',
     platformLabel: '予約プラットフォーム',
@@ -351,6 +357,7 @@ const DICT = {
     title: '숙박 등록',
     noticeTitle: '등록 안내',
     noticeBody: '중국 법률에 따라 호텔 이외의 장소에 숙박하는 외국인은 체크인 후 24시간 이내에 현지 공안 기관에 숙박 등록을 신고해야 할 법적 의무가 있습니다. 이는 향후 비자 신청의 중요한 기록이기도 합니다. 정보를 사실대로 기입해 주세요. 허위 신고, 기한 초과 또는 미신고 시 법에 따라 처벌될 수 있습니다.',
+    noticeSource: '— 출처: 상하이시 공안국 외국인 숙박 등록 신고 시스템',
     agreeLabel: '내용을 읽고 동의합니다',
     continueBtn: '계속하기',
     platformLabel: '예약 플랫폼',
@@ -396,6 +403,7 @@ const DICT = {
     title: 'Регистрация проживания',
     noticeTitle: 'Уведомление о регистрации',
     noticeBody: 'Согласно законодательству Китая, иностранные граждане, проживающие не в гостиницах, обязаны зарегистрировать своё проживание в местном отделении общественной безопасности в течение 24 часов после заселения. Это ваша юридическая обязанность и важная запись для будущих визовых заявлений. Пожалуйста, указывайте достоверную информацию. Ложные сведения, просрочка или отсутствие регистрации могут повлечь ответственность по закону.',
+    noticeSource: '— Источник: Управление общественной безопасности Шанхая, система регистрации проживания иностранных граждан',
     agreeLabel: 'Я прочитал(а) и согласен(на)',
     continueBtn: 'Продолжить',
     platformLabel: 'Платформа бронирования',
@@ -441,6 +449,7 @@ const DICT = {
     title: 'Registro de alojamiento',
     noticeTitle: 'Aviso de registro',
     noticeBody: 'Según la ley china, los extranjeros que se alojen en lugares distintos de hoteles deben registrar su estancia ante la oficina de seguridad pública local dentro de las 24 horas posteriores a su llegada. Es su obligación legal y un registro importante para futuras solicitudes de visado. Por favor, proporcione información veraz. Las declaraciones falsas, tardías o la falta de declaración pueden ser sancionadas por la ley.',
+    noticeSource: '— Fuente: Oficina de Seguridad Pública de Shanghái, Sistema de Registro de Alojamiento para Personal Extranjero',
     agreeLabel: 'He leído y acepto',
     continueBtn: 'Continuar',
     platformLabel: 'Plataforma de reserva',
@@ -677,6 +686,14 @@ async function onSubmit() {
   color: #4a3f34;
   max-height: 45vh;
   overflow-y: auto;
+}
+
+.notice-source {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #8d7b67;
+  font-style: italic;
+  text-align: right;
 }
 
 .notice-agree {
