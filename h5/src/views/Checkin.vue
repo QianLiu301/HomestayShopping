@@ -47,6 +47,9 @@
       <div class="success-icon">✅</div>
       <h2 class="success-title">{{ L.successTitle }}</h2>
       <p class="success-desc">{{ L.successDesc }}</p>
+      <button type="button" class="register-again-btn" @click="registerAnother">
+        ＋ {{ L.registerAgain }}
+      </button>
       <div class="success-links">
         <button type="button" class="success-link primary" @click="goAfterSuccess('/guides')">
           <span class="link-title">{{ L.linkGuides }}</span>
@@ -86,6 +89,15 @@
       <div class="card">
         <div class="card-title">{{ L.bookingNoLabel }} <span class="required">*</span></div>
         <input v-model.trim="form.booking_no" class="text-input" :placeholder="L.bookingNoPlaceholder" maxlength="100" />
+      </div>
+
+      <div class="card">
+        <div class="card-title">{{ L.docTypeLabel }} <span class="required">*</span></div>
+        <select v-model="form.document_type" class="text-input dob-select">
+          <option value="passport">{{ L.docPassport }}</option>
+          <option value="hkmo">{{ L.docHkMo }}</option>
+          <option value="taiwan">{{ L.docTaiwan }}</option>
+        </select>
       </div>
 
       <div class="card">
@@ -146,10 +158,10 @@
       </div>
 
       <div class="card">
-        <div class="card-title">{{ L.passportLabel }} <span class="required">*</span></div>
+        <div class="card-title">{{ docPhotoLabel }} <span class="required">*</span></div>
         <div class="upload-row">
           <div class="sample-box">
-            <img :src="'/checkin/passport-sample.png'" class="sample-img" @error="passportSampleMissing = true" v-show="!passportSampleMissing" />
+            <img :key="docSampleSrc" :src="docSampleSrc" class="sample-img" @error="passportSampleMissing = true" @load="passportSampleMissing = false" v-show="!passportSampleMissing" />
             <div v-if="passportSampleMissing" class="sample-fallback">🛂<br />{{ L.sampleLabel }}</div>
             <div class="sample-caption">{{ L.sampleLabel }}</div>
           </div>
@@ -168,7 +180,7 @@
       </div>
 
       <div class="card">
-        <div class="card-title">{{ L.handheldLabel }} <span class="required">*</span></div>
+        <div class="card-title">{{ handheldPhotoLabel }} <span class="required">*</span></div>
         <div class="upload-row">
           <div class="sample-box">
             <img :src="'/checkin/handheld-sample.png'" class="sample-img" @error="handheldSampleMissing = true" v-show="!handheldSampleMissing" />
@@ -240,8 +252,15 @@ const DICT = {
     dobMonthPlaceholder: 'Select month',
     dobHint: 'Day / Month / Year, as shown on your passport.',
     months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+    docTypeLabel: 'Document Type',
+    docPassport: 'Passport (Foreign Nationals)',
+    docHkMo: 'HK/Macao Resident Mainland Travel Permit',
+    docTaiwan: 'Taiwan Resident Mainland Travel Permit',
     passportLabel: 'Passport Photo Page',
+    permitLabel: 'Travel Permit Photo Page',
     handheldLabel: 'Photo of You Holding Your Passport',
+    handheldPermitLabel: 'Photo of You Holding Your Permit',
+    registerAgain: 'Register Another Guest',
     sampleLabel: 'Example',
     uploadBtn: 'Upload Photo',
     privacyNote: 'This photo is used only for the homestay accommodation registration required by law. It will not be used for any other purpose.',
@@ -286,8 +305,15 @@ const DICT = {
     dobMonthPlaceholder: '选择月份',
     dobHint: '按 日 / 月 / 年 填写，与护照一致。',
     months: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'],
+    docTypeLabel: '证件类型',
+    docPassport: '外国人护照',
+    docHkMo: '港澳居民来往内地通行证',
+    docTaiwan: '台湾居民来往大陆通行证',
     passportLabel: '护照信息页照片',
+    permitLabel: '通行证信息页照片',
     handheldLabel: '手持护照照片',
+    handheldPermitLabel: '手持通行证照片',
+    registerAgain: '继续登记下一位',
     sampleLabel: '示例',
     uploadBtn: '上传照片',
     privacyNote: '照片仅用于法律要求的民宿住宿登记申报，不作任何其他用途。',
@@ -332,8 +358,15 @@ const DICT = {
     dobMonthPlaceholder: '月を選択',
     dobHint: '日 / 月 / 年 の順で、パスポート記載通りにご入力ください。',
     months: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+    docTypeLabel: '証明書の種類',
+    docPassport: '外国人パスポート',
+    docHkMo: '香港・マカオ居民来往内地通行証',
+    docTaiwan: '台湾居民来往大陸通行証',
     passportLabel: 'パスポート写真ページ',
+    permitLabel: '通行証情報ページの写真',
     handheldLabel: 'パスポートを持った本人の写真',
+    handheldPermitLabel: '通行証を持った本人の写真',
+    registerAgain: '続けて別の方を登録',
     sampleLabel: '見本',
     uploadBtn: '写真をアップロード',
     privacyNote: 'この写真は法律で義務付けられた民泊の宿泊登録のみに使用され、他の用途には一切使用されません。',
@@ -378,8 +411,15 @@ const DICT = {
     dobMonthPlaceholder: '월 선택',
     dobHint: '일 / 월 / 년 순서로 여권 기재대로 입력해 주세요.',
     months: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
+    docTypeLabel: '증명서 유형',
+    docPassport: '외국인 여권',
+    docHkMo: '홍콩·마카오 주민 내지 왕래 통행증',
+    docTaiwan: '대만 주민 대륙 왕래 통행증',
     passportLabel: '여권 사진면',
+    permitLabel: '통행증 정보면 사진',
     handheldLabel: '여권을 든 본인 사진',
+    handheldPermitLabel: '통행증을 든 본인 사진',
+    registerAgain: '다른 투숙객 등록하기',
     sampleLabel: '예시',
     uploadBtn: '사진 업로드',
     privacyNote: '이 사진은 법률상 요구되는 민박 숙박 등록 신고에만 사용되며, 다른 용도로는 일절 사용되지 않습니다.',
@@ -424,8 +464,15 @@ const DICT = {
     dobMonthPlaceholder: 'Выберите месяц',
     dobHint: 'День / Месяц / Год, как в паспорте.',
     months: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+    docTypeLabel: 'Тип документа',
+    docPassport: 'Паспорт иностранного гражданина',
+    docHkMo: 'Разрешение для жителей Гонконга/Макао',
+    docTaiwan: 'Разрешение для жителей Тайваня',
     passportLabel: 'Страница паспорта с фото',
+    permitLabel: 'Страница разрешения с фото',
     handheldLabel: 'Фото с паспортом в руках',
+    handheldPermitLabel: 'Фото с разрешением в руках',
+    registerAgain: 'Зарегистрировать ещё одного гостя',
     sampleLabel: 'Пример',
     uploadBtn: 'Загрузить фото',
     privacyNote: 'Фото используется только для обязательной по закону регистрации проживания и ни для каких других целей.',
@@ -470,8 +517,15 @@ const DICT = {
     dobMonthPlaceholder: 'Seleccione el mes',
     dobHint: 'Día / Mes / Año, como en su pasaporte.',
     months: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+    docTypeLabel: 'Tipo de documento',
+    docPassport: 'Pasaporte (extranjeros)',
+    docHkMo: 'Permiso de viaje para residentes de Hong Kong/Macao',
+    docTaiwan: 'Permiso de viaje para residentes de Taiwán',
     passportLabel: 'Página de foto del pasaporte',
+    permitLabel: 'Página de foto del permiso',
     handheldLabel: 'Foto sosteniendo su pasaporte',
+    handheldPermitLabel: 'Foto sosteniendo su permiso',
+    registerAgain: 'Registrar a otro huésped',
     sampleLabel: 'Ejemplo',
     uploadBtn: 'Subir foto',
     privacyNote: 'Esta foto se usa únicamente para el registro de alojamiento exigido por la ley y para ningún otro fin.',
@@ -527,6 +581,7 @@ function buildDob() {
 const form = reactive({
   platform: '',
   booking_no: '',
+  document_type: 'passport',
   surname: '',
   given_name: '',
   middle_name: '',
@@ -534,6 +589,33 @@ const form = reactive({
   passport_image: '',
   handheld_image: '',
 })
+
+// 证件样本图：护照 / 港澳通行证 / 台湾通行证 各一张（手持样本不随类型变化）
+const DOC_SAMPLES = {
+  passport: '/checkin/passport-sample.png',
+  hkmo: '/checkin/hkmo-permit-sample.png',
+  taiwan: '/checkin/taiwan-permit-sample.png',
+}
+const docSampleSrc = computed(() => DOC_SAMPLES[form.document_type] || DOC_SAMPLES.passport)
+const docPhotoLabel = computed(() => form.document_type === 'passport' ? L.value.passportLabel : L.value.permitLabel)
+const handheldPhotoLabel = computed(() => form.document_type === 'passport' ? L.value.handheldLabel : L.value.handheldPermitLabel)
+
+function registerAnother() {
+  // 保留预订平台和单号（通常同一订单多人登记），清空个人信息
+  form.surname = ''
+  form.given_name = ''
+  form.middle_name = ''
+  form.date_of_birth = ''
+  form.passport_image = ''
+  form.handheld_image = ''
+  dob.day = ''
+  dob.month = ''
+  dob.year = ''
+  passportPreview.value = ''
+  handheldPreview.value = ''
+  submitted.value = false
+  window.scrollTo({ top: 0 })
+}
 
 const passportPreview = ref('')
 const handheldPreview = ref('')
@@ -598,6 +680,7 @@ async function onSubmit() {
     await submitGuestRegistration({
       platform: form.platform,
       booking_no: form.booking_no,
+      document_type: form.document_type,
       surname: form.surname,
       given_name: form.given_name,
       middle_name: form.middle_name || undefined,
@@ -965,6 +1048,23 @@ async function onSubmit() {
   color: var(--text-secondary, #8d7b67);
   line-height: 1.7;
   margin: 0 0 28px;
+}
+
+.register-again-btn {
+  display: inline-block;
+  margin-bottom: 24px;
+  padding: 12px 28px;
+  border: 1.5px dashed var(--accent, #c8a97e);
+  border-radius: 999px;
+  background: #fdf6ea;
+  color: #8a5a23;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.register-again-btn:active {
+  transform: scale(0.97);
 }
 
 .success-links {

@@ -1287,6 +1287,7 @@ class GuestRegistration(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     platform = db.Column(db.String(20), nullable=False)  # booking / trip / agoda / expedia
     booking_no = db.Column(db.String(100), nullable=False)
+    document_type = db.Column(db.String(20), default='passport')  # passport / hkmo / taiwan
     surname = db.Column(db.String(100), nullable=False)
     given_name = db.Column(db.String(100), nullable=False)
     middle_name = db.Column(db.String(100))
@@ -1303,6 +1304,7 @@ class GuestRegistration(db.Model):
             'id': self.id,
             'platform': self.platform,
             'booking_no': self.booking_no,
+            'document_type': self.document_type or 'passport',
             'surname': self.surname,
             'given_name': self.given_name,
             'middle_name': self.middle_name,

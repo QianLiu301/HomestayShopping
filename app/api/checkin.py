@@ -11,6 +11,7 @@ from app.utils import success_response, error_response, admin_required, paginate
 from app.utils.storage import upload_private_file, get_private_file
 
 VALID_PLATFORMS = {'booking', 'trip', 'agoda', 'expedia'}
+VALID_DOC_TYPES = {'passport', 'hkmo', 'taiwan'}
 
 
 def _private_folder():
@@ -73,9 +74,14 @@ def create_guest_registration():
     if not passport_image.startswith('private/') or not handheld_image.startswith('private/'):
         return error_response('Please upload both passport photos')
 
+    document_type = (data.get('document_type') or 'passport').strip().lower()
+    if document_type not in VALID_DOC_TYPES:
+        document_type = 'passport'
+
     reg = GuestRegistration(
         platform=platform,
         booking_no=booking_no,
+        document_type=document_type,
         surname=surname,
         given_name=given_name,
         middle_name=middle_name,
@@ -225,7 +231,7 @@ def admin_export_guest_registrations():
     thin = Side(border_style='thin', color='DDD0BC')
     border = Border(top=thin, left=thin, right=thin, bottom=thin)
 
-    headers = ['ID', '姓 (Surname)', '名 (Given Name)', '中间名', '出生日期', '预订平台', '预约单号', '申报状态', '登记时间']
+    headers = ['ID', '姓 (Surname)', '名 (Given Name)', '中间名', '出生日期', '证件类型', '预订平台', '预约单号', '申报状态', '登记时间']
     for col, label in enumerate(headers, start=1):
         cell = ws.cell(row=1, column=col, value=label)
         cell.font = header_font
@@ -234,18 +240,20 @@ def admin_export_guest_registrations():
         cell.border = border
 
     platform_labels = {'booking': 'Booking.com', 'trip': 'Trip.com', 'agoda': 'Agoda', 'expedia': 'Expedia'}
+    doc_labels = {'passport': '外国人护照', 'hkmo': '港澳通行证', 'taiwan': '台湾通行证'}
     for i, r in enumerate(rows, start=2):
         ws.cell(row=i, column=1, value=r.id)
         ws.cell(row=i, column=2, value=r.surname)
         ws.cell(row=i, column=3, value=r.given_name)
         ws.cell(row=i, column=4, value=r.middle_name or '')
         ws.cell(row=i, column=5, value=r.date_of_birth.isoformat() if r.date_of_birth else '')
-        ws.cell(row=i, column=6, value=platform_labels.get(r.platform, r.platform))
-        ws.cell(row=i, column=7, value=r.booking_no)
-        ws.cell(row=i, column=8, value='已申报' if r.status == 1 else '待申报')
-        ws.cell(row=i, column=9, value=r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at else '')
+        ws.cell(row=i, column=6, value=doc_labels.get(r.document_type or 'passport', r.document_type))
+        ws.cell(row=i, column=7, value=platform_labels.get(r.platform, r.platform))
+        ws.cell(row=i, column=8, value=r.booking_no)
+        ws.cell(row=i, column=9, value='已申报' if r.status == 1 else '待申报')
+        ws.cell(row=i, column=10, value=r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at else '')
 
-    widths = [8, 16, 16, 14, 14, 14, 24, 12, 20]
+    widths = [8, 16, 16, 14, 14, 14, 14, 24, 12, 20]
     for i, w in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(i)].width = w
 

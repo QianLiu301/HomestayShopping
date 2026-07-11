@@ -43,6 +43,9 @@
       <el-table-column :label="$t('guestReg.dob')" width="120">
         <template #default="{ row }">{{ row.date_of_birth || '-' }}</template>
       </el-table-column>
+      <el-table-column :label="$t('guestReg.docType')" width="110">
+        <template #default="{ row }">{{ docTypeLabel(row.document_type) }}</template>
+      </el-table-column>
       <el-table-column :label="$t('guestReg.platform')" width="120">
         <template #default="{ row }">{{ platformLabel(row.platform) }}</template>
       </el-table-column>
@@ -99,6 +102,7 @@
         <el-descriptions :column="2" border style="margin-bottom:16px">
           <el-descriptions-item :label="$t('guestReg.name')">{{ current.full_name }}</el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.dob')">{{ current.date_of_birth }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('guestReg.docType')">{{ docTypeLabel(current.document_type) }}</el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.platform')">{{ platformLabel(current.platform) }}</el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.bookingNo')">{{ current.booking_no }}</el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.status')">
@@ -171,6 +175,9 @@ const current = ref(null)
 
 const platformLabels = { booking: 'Booking.com', trip: 'Trip.com', agoda: 'Agoda', expedia: 'Expedia' }
 const platformLabel = p => platformLabels[p] || p
+
+const docTypeLabels = { passport: t('guestReg.docPassport'), hkmo: t('guestReg.docHkMo'), taiwan: t('guestReg.docTaiwan') }
+const docTypeLabel = d => docTypeLabels[d || 'passport'] || d
 
 function formatDateTime(val) {
   if (!val) return '-'
