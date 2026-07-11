@@ -17,6 +17,16 @@
     <!-- 登记须知弹窗 -->
     <van-popup v-model:show="showNotice" round :close-on-click-overlay="false" class="notice-popup">
       <div class="notice-box">
+        <div class="notice-langs">
+          <button
+            v-for="l in langs"
+            :key="l.value"
+            type="button"
+            class="lang-chip lang-chip--sm"
+            :class="{ active: lang === l.value }"
+            @click="lang = l.value"
+          >{{ l.label }}</button>
+        </div>
         <h2 class="notice-title">{{ L.noticeTitle }}</h2>
         <div class="notice-body">{{ L.noticeBody }}</div>
         <label class="notice-agree">
@@ -627,7 +637,20 @@ async function onSubmit() {
 }
 
 .notice-box {
-  padding: 24px 20px;
+  padding: 20px;
+}
+
+.notice-langs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.lang-chip--sm {
+  padding: 4px 10px;
+  font-size: 12px;
 }
 
 .notice-title {
