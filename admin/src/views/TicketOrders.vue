@@ -215,6 +215,11 @@
             </el-descriptions-item>
             <el-descriptions-item :label="tOrders.refundAmount">{{ current.refund_amount !== null && current.refund_amount !== undefined ? `¥${current.refund_amount}` : '-' }}</el-descriptions-item>
             <el-descriptions-item :label="tOrders.refundTime">{{ formatDateTime(current.refund_time) }}</el-descriptions-item>
+            <el-descriptions-item :label="tOrders.costPrice">{{ current.cost_price != null ? `¥${current.cost_price}` : '-' }}</el-descriptions-item>
+            <el-descriptions-item :label="tOrders.profit">
+              <span v-if="current.profit != null" :style="{ color: current.profit >= 0 ? '#67c23a' : '#f56c6c', fontWeight: 600 }">¥{{ current.profit }}</span>
+              <span v-else>-</span>
+            </el-descriptions-item>
             <el-descriptions-item :label="tOrders.remark">{{ current.remark || '-' }}</el-descriptions-item>
             <el-descriptions-item :label="tOrders.adminNote">{{ current.admin_note || '-' }}</el-descriptions-item>
           </el-descriptions>
@@ -328,6 +333,19 @@
                   <el-input v-model="updateForm.transfer_admin_note" type="textarea" :rows="4" :placeholder="tOrders.transferAdminNotePlaceholder" />
                 </el-form-item>
               </template>
+              <el-form-item :label="tOrders.costPrice">
+                <el-input-number
+                  v-model="updateForm.cost_price"
+                  :min="0"
+                  :precision="2"
+                  :controls="false"
+                  style="width: 100%"
+                  :placeholder="tOrders.costPricePlaceholder"
+                />
+                <div v-if="updateForm.cost_price != null && current" class="profit-hint">
+                  {{ tOrders.profit }}: ¥{{ (Number(current.total_price || 0) - Number(updateForm.cost_price)).toFixed(2) }}
+                </div>
+              </el-form-item>
               <el-form-item :label="tOrders.adminNote">
                 <el-input v-model="updateForm.admin_note" type="textarea" :rows="4" :placeholder="tOrders.adminNotePlaceholder" />
               </el-form-item>
@@ -433,6 +451,7 @@ const selectedIds = ref([])
 const updateForm = reactive({
   status: 0,
   admin_note: '',
+  cost_price: null,
   transfer_pickup_time: '',
   transfer_return_time: '',
   transfer_pickup_location: '',
@@ -652,6 +671,7 @@ async function openDetail(row) {
     current.value = res.data
     updateForm.status = res.data.status ?? 0
     updateForm.admin_note = res.data.admin_note || ''
+    updateForm.cost_price = res.data.cost_price ?? null
     updateForm.transfer_pickup_time = toDatetimeLocal(res.data.transfer_pickup_time)
     updateForm.transfer_return_time = toDatetimeLocal(res.data.transfer_return_time)
     updateForm.transfer_pickup_location = res.data.transfer_pickup_location || ''
@@ -671,7 +691,8 @@ async function onUpdateStatus() {
   try {
     const payload = {
       status: updateForm.status,
-      admin_note: updateForm.admin_note
+      admin_note: updateForm.admin_note,
+      cost_price: updateForm.cost_price
     }
     if (current.value.need_transfer) {
       payload.transfer_pickup_time = updateForm.transfer_pickup_time || ''
@@ -865,6 +886,13 @@ onMounted(loadData)
   flex-wrap: wrap;
   color: #909399;
   font-size: 12px;
+}
+
+.profit-hint {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #67c23a;
+  font-weight: 600;
 }
 
 @media (max-width: 960px) {

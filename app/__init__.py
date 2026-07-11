@@ -221,6 +221,17 @@ def _auto_migrate(app):
         ('service_reviews', 'created_at', 'TIMESTAMP'),
         ('service_reviews', 'updated_at', 'TIMESTAMP'),
 
+        # 接送订单出行人数
+        ('transfer_orders', 'adult_count', 'INTEGER DEFAULT 1'),
+        ('transfer_orders', 'child_count', 'INTEGER DEFAULT 0'),
+
+        # 攻略多图
+        ('guides', 'images', 'JSON'),
+
+        # 成本价（利润核算）
+        ('shop_orders', 'cost_price', 'NUMERIC(10, 2)'),
+        ('ticket_orders', 'cost_price', 'NUMERIC(10, 2)'),
+
         # 许愿池
         ('wishes', 'contact_name', 'VARCHAR(50)'),
         ('wishes', 'contact_phone', 'VARCHAR(30)'),

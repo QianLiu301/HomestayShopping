@@ -113,6 +113,10 @@
           <el-tag type="danger" size="small">{{ $t('orders.refunded') }}</el-tag>
           <span v-if="current.refund_time" style="margin-left:8px;color:#999;font-size:12px">{{ formatDateTime(current.refund_time) }}</span>
         </el-descriptions-item>
+        <el-descriptions-item v-if="current.cost_price != null" :label="$t('orders.costPrice')">¥{{ current.cost_price }}</el-descriptions-item>
+        <el-descriptions-item v-if="current.profit != null" :label="$t('orders.profit')">
+          <span :style="{ color: current.profit >= 0 ? '#67c23a' : '#f56c6c', fontWeight: 600 }">¥{{ current.profit }}</span>
+        </el-descriptions-item>
         <el-descriptions-item v-if="current.remark" :label="$t('orders.remark')">{{ current.remark }}</el-descriptions-item>
         <el-descriptions-item v-if="current.review" :label="$t('orders.review')">
           <el-rate :model-value="current.review.rating" disabled size="small" />
@@ -145,6 +149,12 @@
           <el-select v-model="updateForm.status" style="width:100%">
             <el-option :label="$t('orders.pending')" :value="0" /><el-option :label="$t('orders.confirmed')" :value="1" /><el-option :label="$t('orders.delivering')" :value="2" /><el-option :label="$t('orders.completed')" :value="3" /><el-option :label="$t('orders.cancelled')" :value="4" />
           </el-select>
+        </el-form-item>
+        <el-form-item :label="$t('orders.costPrice')">
+          <el-input-number v-model="updateForm.cost_price" :min="0" :precision="2" :controls="false" style="width:100%" :placeholder="$t('orders.costPricePlaceholder')" />
+          <div v-if="updateForm.cost_price != null && current" style="margin-top:4px;font-size:12px;color:#67c23a;font-weight:600">
+            {{ $t('orders.profit') }}: ¥{{ (Number(current.total_price || 0) - Number(updateForm.cost_price)).toFixed(2) }}
+          </div>
         </el-form-item>
         <el-form-item :label="$t('orders.remark')">
           <el-input v-model="updateForm.remark" type="textarea" :rows="2" :placeholder="$t('orders.remarkPlaceholder')" />
@@ -179,7 +189,7 @@ const keyword = ref('')
 const statusFilter = ref('')
 const dateRange = ref(null)
 const selectedIds = ref([])
-const updateForm = reactive({ status: 0, remark: '', booking_no: '', resolved_address: '', checkout_date: '' })
+const updateForm = reactive({ status: 0, remark: '', booking_no: '', resolved_address: '', checkout_date: '', cost_price: null })
 
 function formatDateTime(val) {
   if (!val) return '-'
@@ -252,6 +262,7 @@ function openDetail(row) {
   updateForm.booking_no = row.booking_no || ''
   updateForm.resolved_address = row.resolved_address || ''
   updateForm.checkout_date = row.checkout_date || ''
+  updateForm.cost_price = row.cost_price ?? null
   dialogVisible.value = true
 }
 

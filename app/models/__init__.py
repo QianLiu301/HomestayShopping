@@ -550,6 +550,7 @@ class ShopOrder(db.Model):
     discount_amount = db.Column(db.Numeric(10, 2), default=0)
     coupon_id = db.Column(db.Integer, db.ForeignKey('coupons.id'))
     total_price = db.Column(db.Numeric(10, 2), nullable=False)
+    cost_price = db.Column(db.Numeric(10, 2))  # 成本价（管理员手动录入，用于利润核算）
     payment_method = db.Column(db.String(20))
     payment_status = db.Column(db.SmallInteger, default=0)
     payment_time = db.Column(db.DateTime)
@@ -590,6 +591,8 @@ class ShopOrder(db.Model):
             'subtotal': float(self.subtotal),
             'discount_amount': float(self.discount_amount) if self.discount_amount else 0,
             'total_price': float(self.total_price),
+            'cost_price': float(self.cost_price) if self.cost_price is not None else None,
+            'profit': round(float(self.total_price) - float(self.cost_price), 2) if self.cost_price is not None else None,
             'payment_method': self.payment_method,
             'payment_status': self.payment_status,
             'transaction_id': self.transaction_id,
@@ -1003,6 +1006,7 @@ class TicketOrder(db.Model):
     booking_no = db.Column(db.String(100))
     lang = db.Column(db.String(10), default='zh')
     total_price = db.Column(db.Numeric(10, 2), nullable=False)
+    cost_price = db.Column(db.Numeric(10, 2))  # 成本价（管理员手动录入，用于利润核算）
     discount_amount = db.Column(db.Numeric(10, 2), default=0)
     coupon_id = db.Column(db.Integer, db.ForeignKey('coupons.id'))
     status = db.Column(db.SmallInteger, default=0)  # 0待处理 1已确认 2已完成 3已取消
@@ -1055,6 +1059,8 @@ class TicketOrder(db.Model):
             'booking_no': self.booking_no,
             'lang': self.lang,
             'total_price': float(self.total_price),
+            'cost_price': float(self.cost_price) if self.cost_price is not None else None,
+            'profit': round(float(self.total_price) - float(self.cost_price), 2) if self.cost_price is not None else None,
             'discount_amount': float(self.discount_amount) if self.discount_amount else 0,
             'status': self.status,
             'payment_method': self.payment_method,

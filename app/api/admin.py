@@ -856,10 +856,21 @@ def admin_analytics_export():
         ('', ''),
         ('指标', '数值'),
     ]
+    def _sum_cost(rows):
+        return round(sum(float(r.cost_price) for r in rows if getattr(r, 'cost_price', None) is not None), 2)
+
+    def _sum_profit(rows):
+        return round(sum(
+            float(r.total_price or 0) - float(r.cost_price)
+            for r in rows if getattr(r, 'cost_price', None) is not None
+        ), 2)
+
     if not is_transfer_only:
         rows_data += [
             ('商城订单数', len(shop_paid)),
             ('商城营收 (¥)', round(sum(float(r.total_price or 0) for r in shop_paid), 2)),
+            ('商城成本 (¥)', _sum_cost(shop_paid)),
+            ('商城利润 (¥)', _sum_profit(shop_paid)),
         ]
     rows_data += [
         ('接送订单数', len(transfer_paid)),
@@ -869,6 +880,8 @@ def admin_analytics_export():
         rows_data += [
             ('门票订单数', len(ticket_paid)),
             ('门票营收 (¥)', round(sum(float(r.total_price or 0) for r in ticket_paid), 2)),
+            ('门票成本 (¥)', _sum_cost(ticket_paid)),
+            ('门票利润 (¥)', _sum_profit(ticket_paid)),
             ('', ''),
             ('总订单数', len(shop_paid) + len(transfer_paid) + len(ticket_paid)),
             ('总营收 (¥)', round(
@@ -876,6 +889,8 @@ def admin_analytics_export():
                 + sum(float(r.total_price or 0) for r in transfer_paid)
                 + sum(float(r.total_price or 0) for r in ticket_paid), 2
             )),
+            ('总成本 (¥)', round(_sum_cost(shop_paid) + _sum_cost(ticket_paid), 2)),
+            ('总利润(已录成本) (¥)', round(_sum_profit(shop_paid) + _sum_profit(ticket_paid), 2)),
         ]
 
     for i, (k, v) in enumerate(rows_data, start=4):
@@ -892,7 +907,7 @@ def admin_analytics_export():
     # ========== Sheet: 商城订单明细 ==========
     if not is_transfer_only:
         ws = wb.create_sheet('商城订单明细')
-        headers = ['订单号', '客户', '电话', '邮箱', '金额(¥)', '订单状态', '支付状态', '退款状态', '下单时间']
+        headers = ['订单号', '客户', '电话', '邮箱', '金额(¥)', '成本(¥)', '利润(¥)', '订单状态', '支付状态', '退款状态', '下单时间']
         write_headers(ws, headers)
         for i, o in enumerate(shop_rows, start=2):
             ws.cell(row=i, column=1, value=o.order_no)
@@ -900,11 +915,13 @@ def admin_analytics_export():
             ws.cell(row=i, column=3, value=o.contact_phone or '')
             ws.cell(row=i, column=4, value=o.contact_email or '')
             ws.cell(row=i, column=5, value=float(o.total_price or 0))
-            ws.cell(row=i, column=6, value=status_label_shop(o.status))
-            ws.cell(row=i, column=7, value='已支付' if o.payment_status == 1 else '未支付')
-            ws.cell(row=i, column=8, value='已退款' if o.refund_status == 1 else '—')
-            ws.cell(row=i, column=9, value=fmt_dt(o.created_at))
-        autosize(ws, [26, 14, 16, 24, 12, 12, 12, 12, 20])
+            ws.cell(row=i, column=6, value=float(o.cost_price) if o.cost_price is not None else '')
+            ws.cell(row=i, column=7, value=round(float(o.total_price or 0) - float(o.cost_price), 2) if o.cost_price is not None else '')
+            ws.cell(row=i, column=8, value=status_label_shop(o.status))
+            ws.cell(row=i, column=9, value='已支付' if o.payment_status == 1 else '未支付')
+            ws.cell(row=i, column=10, value='已退款' if o.refund_status == 1 else '—')
+            ws.cell(row=i, column=11, value=fmt_dt(o.created_at))
+        autosize(ws, [26, 14, 16, 24, 12, 12, 12, 12, 12, 12, 20])
 
     # ========== Sheet: 接送订单明细 ==========
     ws = wb.create_sheet('接送订单明细')
@@ -927,7 +944,7 @@ def admin_analytics_export():
     # ========== Sheet: 门票订单明细 ==========
     if not is_transfer_only:
         ws = wb.create_sheet('门票订单明细')
-        headers = ['订单号', '客户', '电话', '邮箱', '景点ID', '游玩日期', '金额(¥)', '订单状态', '支付状态', '下单时间']
+        headers = ['订单号', '客户', '电话', '邮箱', '景点ID', '游玩日期', '金额(¥)', '成本(¥)', '利润(¥)', '订单状态', '支付状态', '下单时间']
         write_headers(ws, headers)
         for i, o in enumerate(ticket_rows, start=2):
             ws.cell(row=i, column=1, value=o.order_no)
@@ -937,10 +954,12 @@ def admin_analytics_export():
             ws.cell(row=i, column=5, value=o.attraction_id)
             ws.cell(row=i, column=6, value=str(o.visit_date) if o.visit_date else '')
             ws.cell(row=i, column=7, value=float(o.total_price or 0))
-            ws.cell(row=i, column=8, value=status_label_ticket(o.status))
-            ws.cell(row=i, column=9, value='已支付' if o.payment_status == 1 else '未支付')
-            ws.cell(row=i, column=10, value=fmt_dt(o.created_at))
-        autosize(ws, [26, 14, 16, 24, 10, 14, 12, 12, 12, 20])
+            ws.cell(row=i, column=8, value=float(o.cost_price) if o.cost_price is not None else '')
+            ws.cell(row=i, column=9, value=round(float(o.total_price or 0) - float(o.cost_price), 2) if o.cost_price is not None else '')
+            ws.cell(row=i, column=10, value=status_label_ticket(o.status))
+            ws.cell(row=i, column=11, value='已支付' if o.payment_status == 1 else '未支付')
+            ws.cell(row=i, column=12, value=fmt_dt(o.created_at))
+        autosize(ws, [26, 14, 16, 24, 10, 14, 12, 12, 12, 12, 12, 20])
 
     # ========== Sheet: 退款记录 ==========
     ws = wb.create_sheet('退款记录')
@@ -1070,6 +1089,18 @@ def admin_update_shop_order(order_id):
         order.remark = data['remark']
     if 'booking_no' in data:
         order.booking_no = data['booking_no']
+    if 'cost_price' in data:
+        raw_cost = data['cost_price']
+        if raw_cost in (None, ''):
+            order.cost_price = None
+        else:
+            try:
+                cost = float(raw_cost)
+                if cost < 0:
+                    return error_response('成本价不能为负数')
+                order.cost_price = cost
+            except (TypeError, ValueError):
+                return error_response('成本价格式错误')
     if 'resolved_address' in data:
         order.resolved_address = data['resolved_address']
     if 'checkout_date' in data:
@@ -2266,6 +2297,20 @@ def admin_update_ticket_order_status(order_id):
     # 管理员备注
     if 'admin_note' in data:
         order.admin_note = data['admin_note']
+
+    # 成本价（用于利润核算）
+    if 'cost_price' in data:
+        raw_cost = data['cost_price']
+        if raw_cost in (None, ''):
+            order.cost_price = None
+        else:
+            try:
+                cost = float(raw_cost)
+                if cost < 0:
+                    return error_response('成本价不能为负数')
+                order.cost_price = cost
+            except (TypeError, ValueError):
+                return error_response('成本价格式错误')
 
     if order.need_transfer:
         try:
