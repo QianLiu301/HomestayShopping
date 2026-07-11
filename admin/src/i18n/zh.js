@@ -689,6 +689,14 @@ export default {
     selectAttraction: '选择景点',
     insertBtn: '插入',
     targetField: '目标语言',
+    insertTarget: '插入到',
+    syncAllLangs: '同步插入到四种语言',
+    insertMap: '插入地图位置',
+    mapNamePlaceholder: '输入地点名称，如：上海迪士尼度假区',
+    insertMedia: '插入图片/视频',
+    insertImage: '上传图片',
+    insertVideo: '上传视频',
+    videoTip: '视频支持 mp4/mov/webm，最大100MB',
   },
 
   // Ticket Orders

@@ -174,25 +174,49 @@
 
         <el-tab-pane :label="$t('guides.contentTab')" name="content">
           <div class="insert-ticket-bar">
-            <span class="insert-label">{{ $t('guides.insertTicketLink') }}</span>
-            <el-select
-              v-model="insertAttractionId"
-              :placeholder="$t('guides.selectAttraction')"
-              filterable
-              clearable
-              style="width:260px"
-            >
-              <el-option v-for="a in attractions" :key="a.id" :label="a.name_zh || a.name_en" :value="a.id" />
-            </el-select>
-            <el-select v-model="insertTargetField" style="width:140px">
-              <el-option label="中文" value="content_zh" />
-              <el-option label="English" value="content_en" />
-              <el-option label="Русский" value="content_ru" />
-              <el-option label="Español" value="content_es" />
-            </el-select>
-            <el-button type="primary" plain size="small" :disabled="!insertAttractionId" @click="onInsertTicketLink">
-              {{ $t('guides.insertBtn') }}
-            </el-button>
+            <div class="insert-row">
+              <span class="insert-label">{{ $t('guides.insertTarget') }}</span>
+              <el-select v-model="insertTargetField" style="width:130px" size="small">
+                <el-option label="中文" value="content_zh" />
+                <el-option label="English" value="content_en" />
+                <el-option label="Русский" value="content_ru" />
+                <el-option label="Español" value="content_es" />
+              </el-select>
+              <el-checkbox v-model="syncAllLangs" size="small">{{ $t('guides.syncAllLangs') }}</el-checkbox>
+            </div>
+            <div class="insert-row">
+              <span class="insert-label">{{ $t('guides.insertTicketLink') }}</span>
+              <el-select
+                v-model="insertAttractionId"
+                :placeholder="$t('guides.selectAttraction')"
+                filterable
+                clearable
+                size="small"
+                style="width:220px"
+              >
+                <el-option v-for="a in attractions" :key="a.id" :label="a.name_zh || a.name_en" :value="a.id" />
+              </el-select>
+              <el-button type="primary" plain size="small" :disabled="!insertAttractionId" @click="onInsertTicketLink">
+                {{ $t('guides.insertBtn') }}
+              </el-button>
+            </div>
+            <div class="insert-row">
+              <span class="insert-label">{{ $t('guides.insertMap') }}</span>
+              <el-input v-model="insertMapName" :placeholder="$t('guides.mapNamePlaceholder')" size="small" style="width:220px" />
+              <el-button type="primary" plain size="small" :disabled="!insertMapName.trim()" @click="onInsertMap">
+                {{ $t('guides.insertBtn') }}
+              </el-button>
+            </div>
+            <div class="insert-row">
+              <span class="insert-label">{{ $t('guides.insertMedia') }}</span>
+              <el-upload :show-file-list="false" :http-request="handleContentImageUpload" accept="image/*">
+                <el-button type="primary" plain size="small" :loading="mediaUploading">📷 {{ $t('guides.insertImage') }}</el-button>
+              </el-upload>
+              <el-upload :show-file-list="false" :http-request="handleContentVideoUpload" accept="video/mp4,video/quicktime,video/webm">
+                <el-button type="primary" plain size="small" :loading="mediaUploading">🎬 {{ $t('guides.insertVideo') }}</el-button>
+              </el-upload>
+              <span class="insert-tip">{{ $t('guides.videoTip') }}</span>
+            </div>
           </div>
           <el-form :model="form" label-width="140px">
             <el-form-item :label="$t('guides.contentZh')">
@@ -246,6 +270,10 @@ const draggedIndex = ref(null)
 const uploadingCount = ref(0)
 const insertAttractionId = ref(null)
 const insertTargetField = ref('content_zh')
+const syncAllLangs = ref(true)
+const insertMapName = ref('')
+const mediaUploading = ref(false)
+const contentFields = ['content_zh', 'content_en', 'content_ru', 'content_es']
 const contentZhRef = ref(null)
 const contentEnRef = ref(null)
 const contentRuRef = ref(null)
@@ -376,13 +404,7 @@ function onDrop(event, dropIndex) {
   draggedIndex.value = null
 }
 
-function onInsertTicketLink() {
-  const aid = insertAttractionId.value
-  if (!aid) return
-  const att = attractions.value.find(a => a.id === aid)
-  if (!att) return
-  const name = att.name_zh || att.name_en || ''
-  const tag = `{{ticket:${aid}:${name}}}`
+function insertTag(tag, successMsg) {
   const field = insertTargetField.value
   const elInputRef = contentRefMap[field]
   const textarea = elInputRef?.value?.$el?.querySelector('textarea')
@@ -399,8 +421,70 @@ function onInsertTicketLink() {
   } else {
     form.value[field] = text + '\n' + tag
   }
-  ElMessage.success(`已插入「${name}」的门票链接`)
+  // 同步追加到其它三种语言的内容末尾
+  if (syncAllLangs.value) {
+    for (const f of contentFields) {
+      if (f === field) continue
+      form.value[f] = (form.value[f] || '') + '\n' + tag
+    }
+  }
+  ElMessage.success(successMsg + (syncAllLangs.value ? '（已同步四种语言）' : ''))
+}
+
+function onInsertTicketLink() {
+  const aid = insertAttractionId.value
+  if (!aid) return
+  const att = attractions.value.find(a => a.id === aid)
+  if (!att) return
+  const name = att.name_zh || att.name_en || ''
+  insertTag(`{{ticket:${aid}:${name}}}`, `已插入「${name}」的门票链接`)
   insertAttractionId.value = null
+}
+
+function onInsertMap() {
+  const name = insertMapName.value.trim()
+  if (!name) return
+  insertTag(`{{map:${name}}}`, `已插入「${name}」的位置卡片`)
+  insertMapName.value = ''
+}
+
+async function handleContentImageUpload(options) {
+  mediaUploading.value = true
+  try {
+    const res = await apiUploadFile(options.file)
+    const url = res.data?.url
+    if (url) {
+      insertTag(`{{img:${url}}}`, '已插入图片')
+      options.onSuccess?.(res)
+    }
+  } catch (e) {
+    options.onError?.(e)
+    ElMessage.error('图片上传失败')
+  } finally {
+    mediaUploading.value = false
+  }
+}
+
+async function handleContentVideoUpload(options) {
+  if (options.file.size > 100 * 1024 * 1024) {
+    ElMessage.error('视频不能超过 100MB')
+    options.onError?.(new Error('too large'))
+    return
+  }
+  mediaUploading.value = true
+  try {
+    const res = await apiUploadFile(options.file)
+    const url = res.data?.url
+    if (url) {
+      insertTag(`{{video:${url}}}`, '已插入视频')
+      options.onSuccess?.(res)
+    }
+  } catch (e) {
+    options.onError?.(e)
+    ElMessage.error('视频上传失败')
+  } finally {
+    mediaUploading.value = false
+  }
 }
 
 async function onSave() {
@@ -567,13 +651,19 @@ onMounted(() => {
 
 .insert-ticket-bar {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
   padding: 12px 16px;
   margin-bottom: 16px;
   background: #fdf8f0;
   border: 1px solid #ebe5df;
   border-radius: 8px;
+}
+
+.insert-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
@@ -582,5 +672,11 @@ onMounted(() => {
   font-weight: 600;
   color: #4a3728;
   white-space: nowrap;
+  min-width: 110px;
+}
+
+.insert-tip {
+  font-size: 12px;
+  color: #909399;
 }
 </style>

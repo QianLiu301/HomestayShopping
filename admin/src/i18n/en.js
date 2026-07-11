@@ -692,6 +692,14 @@ export default {
     selectAttraction: 'Select Attraction',
     insertBtn: 'Insert',
     targetField: 'Target Language',
+    insertTarget: 'Insert Into',
+    syncAllLangs: 'Sync to all 4 languages',
+    insertMap: 'Insert Map Location',
+    mapNamePlaceholder: 'Place name, e.g. Shanghai Disney Resort',
+    insertMedia: 'Insert Image/Video',
+    insertImage: 'Upload Image',
+    insertVideo: 'Upload Video',
+    videoTip: 'Video: mp4/mov/webm, max 100MB',
   },
 
   // Ticket Orders

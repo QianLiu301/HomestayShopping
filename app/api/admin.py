@@ -33,8 +33,10 @@ def _get_product_sales_map(product_ids):
 
 # ==================== 文件上传 ====================
 
-def allowed_file(filename):
-    allowed = current_app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif', 'webp'})
+def allowed_file(filename, include_video=False):
+    allowed = set(current_app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif', 'webp'}))
+    if include_video:
+        allowed |= set(current_app.config.get('ALLOWED_VIDEO_EXTENSIONS', {'mp4', 'mov', 'webm', 'm4v'}))
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed
 
 
@@ -49,8 +51,8 @@ def admin_upload_file():
     if file.filename == '':
         return error_response('没有选择文件')
 
-    if not allowed_file(file.filename):
-        return error_response('不支持的文件格式，请上传 png/jpg/jpeg/gif/webp')
+    if not allowed_file(file.filename, include_video=True):
+        return error_response('不支持的文件格式，请上传 png/jpg/jpeg/gif/webp 或 mp4/mov/webm 视频')
 
     upload_folder = current_app.config['UPLOAD_FOLDER']
     try:

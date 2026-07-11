@@ -393,6 +393,7 @@ export default {
     hasTicket: 'Tickets Available',
     buyTicketHint: 'Tap to buy tickets',
     swipeHint: '← Swipe to see more photos →',
+    viewLocation: 'Tap to view location',
     loadMore: 'Load More',
     cat_attraction: 'Attractions',
     cat_food: 'Food',

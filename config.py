@@ -24,8 +24,10 @@ class Config:
 
     # 文件上传配置
     UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
-    MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10MB
+    MAX_CONTENT_LENGTH = 100 * 1024 * 1024  # 100MB（支持视频上传）
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+    # 视频格式仅管理端上传接口允许（攻略内容插入视频用）
+    ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'mov', 'webm', 'm4v'}
 
 
 class DevelopmentConfig(Config):

@@ -92,18 +92,59 @@ const guideImages = computed(() => {
   return []
 })
 
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
 const renderedContent = computed(() => {
   if (!guide.value?.content) return ''
   const hint = t('guides.buyTicketHint')
-  return guide.value.content.replace(
+  const locationLabel = t('guides.viewLocation')
+  let html = guide.value.content
+
+  // 门票链接卡片
+  html = html.replace(
     /\{\{ticket:(\d+):([^}]+)\}\}/g,
     (_, id, name) =>
       `<div class="inline-ticket-cta" data-ticket-id="${id}">` +
         `<div class="cta-left"><span class="cta-icon">🎫</span>` +
-        `<div><div class="cta-title">${name}</div>` +
+        `<div><div class="cta-title">${escapeHtml(name)}</div>` +
         `<div class="cta-hint">${hint}</div></div></div>` +
         `<span class="cta-arrow">→</span></div>`
   )
+
+  // 地图位置卡片（高德 + Google 双链接）
+  html = html.replace(
+    /\{\{map:([^}]+)\}\}/g,
+    (_, name) => {
+      const clean = name.trim()
+      const q = encodeURIComponent(clean)
+      const amapUrl = `https://uri.amap.com/search?keyword=${q}`
+      const googleUrl = `https://www.google.com/maps/search/?api=1&query=${q}`
+      return `<div class="inline-map-card">` +
+        `<div class="map-card-head"><span class="map-icon">📍</span>` +
+        `<div><div class="map-name">${escapeHtml(clean)}</div>` +
+        `<div class="map-hint">${locationLabel}</div></div></div>` +
+        `<div class="map-btns">` +
+        `<a class="map-btn map-btn-amap" href="${amapUrl}" target="_blank" rel="noopener">高德地图</a>` +
+        `<a class="map-btn map-btn-google" href="${googleUrl}" target="_blank" rel="noopener">Google Maps</a>` +
+        `</div></div>`
+    }
+  )
+
+  // 内容图片
+  html = html.replace(
+    /\{\{img:([^}]+)\}\}/g,
+    (_, url) => `<img class="content-media-img" src="${escapeHtml(resolveUrl(url.trim()))}" loading="lazy" />`
+  )
+
+  // 内容视频
+  html = html.replace(
+    /\{\{video:([^}]+)\}\}/g,
+    (_, url) => `<video class="content-media-video" src="${escapeHtml(resolveUrl(url.trim()))}" controls playsinline preload="metadata"></video>`
+  )
+
+  return html
 })
 
 function onContentClick(e) {
@@ -392,5 +433,83 @@ onMounted(async () => {
   font-size: 20px;
   color: #c8a97e;
   font-weight: 700;
+}
+
+.detail-content .inline-map-card {
+  margin: 16px 0;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #eef7ee, #e8f3ec);
+  border: 1px solid rgba(76, 155, 100, 0.25);
+  white-space: normal;
+}
+
+.detail-content .inline-map-card .map-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.detail-content .inline-map-card .map-icon {
+  font-size: 26px;
+}
+
+.detail-content .inline-map-card .map-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2c4a35;
+}
+
+.detail-content .inline-map-card .map-hint {
+  font-size: 12px;
+  color: #6b9478;
+  margin-top: 2px;
+}
+
+.detail-content .inline-map-card .map-btns {
+  display: flex;
+  gap: 10px;
+}
+
+.detail-content .inline-map-card .map-btn {
+  flex: 1;
+  text-align: center;
+  padding: 8px 0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+.detail-content .inline-map-card .map-btn:active {
+  opacity: 0.8;
+}
+
+.detail-content .inline-map-card .map-btn-amap {
+  background: #1e88e5;
+  color: #fff;
+}
+
+.detail-content .inline-map-card .map-btn-google {
+  background: #34a853;
+  color: #fff;
+}
+
+.detail-content .content-media-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+  margin: 12px 0;
+}
+
+.detail-content .content-media-video {
+  width: 100%;
+  max-height: 420px;
+  display: block;
+  border-radius: 12px;
+  margin: 12px 0;
+  background: #000;
 }
 </style>

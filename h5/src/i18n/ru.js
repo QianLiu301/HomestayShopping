@@ -380,6 +380,7 @@ export default {
     hasTicket: 'Билеты доступны',
     buyTicketHint: 'Нажмите для покупки билетов',
     swipeHint: '← Листайте для просмотра фото →',
+    viewLocation: 'Нажмите, чтобы открыть карту',
     loadMore: 'Загрузить ещё',
     cat_attraction: 'Достопримечательности',
     cat_food: 'Еда',

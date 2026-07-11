@@ -380,6 +380,7 @@ export default {
     hasTicket: 'Entradas disponibles',
     buyTicketHint: 'Toca para comprar entradas',
     swipeHint: '← Desliza para ver más fotos →',
+    viewLocation: 'Toca para ver la ubicación',
     loadMore: 'Cargar más',
     cat_attraction: 'Atracciones',
     cat_food: 'Comida',
