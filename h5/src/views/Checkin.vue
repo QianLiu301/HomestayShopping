@@ -96,7 +96,40 @@
 
       <div class="card">
         <div class="card-title">{{ L.dobLabel }} <span class="required">*</span></div>
-        <input v-model="form.date_of_birth" type="date" class="text-input" :max="today" min="1900-01-01" />
+        <div class="dob-row">
+          <div class="dob-field">
+            <label class="field-label">{{ L.dobDay }}</label>
+            <input
+              v-model.trim="dob.day"
+              class="text-input dob-input"
+              type="text"
+              inputmode="numeric"
+              maxlength="2"
+              placeholder="DD"
+            />
+          </div>
+          <div class="dob-field dob-field--month">
+            <label class="field-label">{{ L.dobMonth }}</label>
+            <select v-model="dob.month" class="text-input dob-select">
+              <option value="" disabled>{{ L.dobMonthPlaceholder }}</option>
+              <option v-for="(m, idx) in L.months" :key="idx" :value="String(idx + 1).padStart(2, '0')">
+                {{ String(idx + 1).padStart(2, '0') }} — {{ m }}
+              </option>
+            </select>
+          </div>
+          <div class="dob-field">
+            <label class="field-label">{{ L.dobYear }}</label>
+            <input
+              v-model.trim="dob.year"
+              class="text-input dob-input"
+              type="text"
+              inputmode="numeric"
+              maxlength="4"
+              placeholder="YYYY"
+            />
+          </div>
+        </div>
+        <p class="field-hint">{{ L.dobHint }}</p>
       </div>
 
       <div class="card">
@@ -185,6 +218,12 @@ const DICT = {
     middleNamePlaceholder: 'Optional',
     nameHint: 'Please enter your name exactly as it appears on your passport.',
     dobLabel: 'Date of Birth',
+    dobDay: 'Day',
+    dobMonth: 'Month',
+    dobYear: 'Year',
+    dobMonthPlaceholder: 'Select month',
+    dobHint: 'Day / Month / Year, as shown on your passport.',
+    months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
     passportLabel: 'Passport Photo Page',
     handheldLabel: 'Photo of You Holding Your Passport',
     sampleLabel: 'Example',
@@ -200,7 +239,7 @@ const DICT = {
     errPlatform: 'Please select your booking platform',
     errBookingNo: 'Please enter your booking number',
     errName: 'Please enter your surname and given name',
-    errDob: 'Please select your date of birth',
+    errDob: 'Please enter a valid date of birth',
     errPassport: 'Please upload your passport photo page',
     errHandheld: 'Please upload the photo of you holding your passport',
     errUploadFail: 'Upload failed, please try again',
@@ -224,6 +263,12 @@ const DICT = {
     middleNamePlaceholder: '选填',
     nameHint: '请严格按照护照上的拼写填写姓名。',
     dobLabel: '出生日期',
+    dobDay: '日',
+    dobMonth: '月',
+    dobYear: '年',
+    dobMonthPlaceholder: '选择月份',
+    dobHint: '按 日 / 月 / 年 填写，与护照一致。',
+    months: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'],
     passportLabel: '护照信息页照片',
     handheldLabel: '手持护照照片',
     sampleLabel: '示例',
@@ -239,7 +284,7 @@ const DICT = {
     errPlatform: '请选择预订平台',
     errBookingNo: '请输入预约单号',
     errName: '请填写姓和名',
-    errDob: '请选择出生日期',
+    errDob: '请填写正确的出生日期',
     errPassport: '请上传护照信息页照片',
     errHandheld: '请上传手持护照照片',
     errUploadFail: '上传失败，请重试',
@@ -263,6 +308,12 @@ const DICT = {
     middleNamePlaceholder: '任意',
     nameHint: 'パスポートに記載されている通りに氏名をご記入ください。',
     dobLabel: '生年月日',
+    dobDay: '日',
+    dobMonth: '月',
+    dobYear: '年',
+    dobMonthPlaceholder: '月を選択',
+    dobHint: '日 / 月 / 年 の順で、パスポート記載通りにご入力ください。',
+    months: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
     passportLabel: 'パスポート写真ページ',
     handheldLabel: 'パスポートを持った本人の写真',
     sampleLabel: '見本',
@@ -278,7 +329,7 @@ const DICT = {
     errPlatform: '予約プラットフォームを選択してください',
     errBookingNo: '予約番号を入力してください',
     errName: '姓と名を入力してください',
-    errDob: '生年月日を選択してください',
+    errDob: '正しい生年月日を入力してください',
     errPassport: 'パスポート写真ページをアップロードしてください',
     errHandheld: 'パスポートを持った写真をアップロードしてください',
     errUploadFail: 'アップロードに失敗しました。もう一度お試しください',
@@ -302,6 +353,12 @@ const DICT = {
     middleNamePlaceholder: '선택 사항',
     nameHint: '여권에 기재된 것과 동일하게 이름을 입력해 주세요.',
     dobLabel: '생년월일',
+    dobDay: '일',
+    dobMonth: '월',
+    dobYear: '년',
+    dobMonthPlaceholder: '월 선택',
+    dobHint: '일 / 월 / 년 순서로 여권 기재대로 입력해 주세요.',
+    months: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
     passportLabel: '여권 사진면',
     handheldLabel: '여권을 든 본인 사진',
     sampleLabel: '예시',
@@ -317,7 +374,7 @@ const DICT = {
     errPlatform: '예약 플랫폼을 선택해 주세요',
     errBookingNo: '예약 번호를 입력해 주세요',
     errName: '성과 이름을 입력해 주세요',
-    errDob: '생년월일을 선택해 주세요',
+    errDob: '올바른 생년월일을 입력해 주세요',
     errPassport: '여권 사진면을 업로드해 주세요',
     errHandheld: '여권을 든 사진을 업로드해 주세요',
     errUploadFail: '업로드에 실패했습니다. 다시 시도해 주세요',
@@ -341,7 +398,20 @@ const submitting = ref(false)
 const passportSampleMissing = ref(false)
 const handheldSampleMissing = ref(false)
 
-const today = new Date().toISOString().slice(0, 10)
+const dob = reactive({ day: '', month: '', year: '' })
+
+function buildDob() {
+  const d = parseInt(dob.day, 10)
+  const m = parseInt(dob.month, 10)
+  const y = parseInt(dob.year, 10)
+  if (!d || !m || !y || String(dob.year).length !== 4) return null
+  if (y < 1900 || y > new Date().getFullYear()) return null
+  const date = new Date(y, m - 1, d)
+  // 校验是真实日期（如 2月31日 会被 Date 自动进位，这里要拒绝）
+  if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) return null
+  if (date > new Date()) return null
+  return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+}
 
 const form = reactive({
   platform: '',
@@ -399,6 +469,7 @@ async function onSubmit() {
   if (!form.platform) return showToast(L.value.errPlatform)
   if (!form.booking_no) return showToast(L.value.errBookingNo)
   if (!form.surname || !form.given_name) return showToast(L.value.errName)
+  form.date_of_birth = buildDob()
   if (!form.date_of_birth) return showToast(L.value.errDob)
   if (!form.passport_image) return showToast(L.value.errPassport)
   if (!form.handheld_image) return showToast(L.value.errHandheld)
@@ -589,6 +660,29 @@ async function onSubmit() {
   margin: 10px 0 0;
   font-size: 12px;
   color: #9b8d7b;
+}
+
+.dob-row {
+  display: flex;
+  gap: 10px;
+}
+
+.dob-field {
+  flex: 1;
+}
+
+.dob-field--month {
+  flex: 1.6;
+}
+
+.dob-input {
+  text-align: center;
+}
+
+.dob-select {
+  appearance: auto;
+  -webkit-appearance: auto;
+  height: 42px;
 }
 
 .upload-row {
