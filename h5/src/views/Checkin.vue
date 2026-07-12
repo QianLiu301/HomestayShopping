@@ -650,9 +650,17 @@ const platforms = [
   { value: 'expedia', label: 'Expedia' },
 ]
 
-const showNotice = ref(true)
-const agreed = ref(false)
-const submitted = ref(false)
+// 从其它页面返回时恢复"登记成功"状态（跳转是整页导航，组件状态会丢失）
+const CHECKIN_DONE_KEY = 'checkin_done'
+const CHECKIN_LANG_KEY = 'checkin_lang'
+const wasDone = sessionStorage.getItem(CHECKIN_DONE_KEY) === '1'
+if (wasDone && sessionStorage.getItem(CHECKIN_LANG_KEY)) {
+  lang.value = sessionStorage.getItem(CHECKIN_LANG_KEY)
+}
+
+const showNotice = ref(!wasDone)
+const agreed = ref(wasDone)
+const submitted = ref(wasDone)
 const submitting = ref(false)
 const passportSampleMissing = ref(false)
 const handheldSampleMissing = ref(false)
@@ -758,6 +766,7 @@ function registerAnother() {
   passportPreview.value = ''
   handheldPreview.value = ''
   submitted.value = false
+  sessionStorage.removeItem(CHECKIN_DONE_KEY)
   window.scrollTo({ top: 0 })
 }
 
@@ -805,8 +814,8 @@ async function onFileChange(e) {
 function goAfterSuccess(path) {
   // 把全站语言同步为登记页所选语言（全站已支持 en/zh/ja/ko/ru/es）
   localStorage.setItem('lang', lang.value)
-  // 用 replace 替换掉登记页的历史记录，浏览器返回时回到进入登记页之前的页面（如首页）
-  window.location.replace(path)
+  // 普通跳转保留历史记录：浏览器返回时回到登记成功页（成功状态由 sessionStorage 恢复）
+  window.location.href = path
 }
 
 async function onSubmit() {
@@ -841,6 +850,8 @@ async function onSubmit() {
       lang: lang.value,
     })
     submitted.value = true
+    sessionStorage.setItem(CHECKIN_DONE_KEY, '1')
+    sessionStorage.setItem(CHECKIN_LANG_KEY, lang.value)
     window.scrollTo({ top: 0 })
   } catch (err) {
     showToast(err.message || L.value.errUploadFail)
