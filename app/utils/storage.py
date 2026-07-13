@@ -44,7 +44,8 @@ WEBP_QUALITY = 80         # WebP 压缩质量
 
 
 def _compress_image(file_storage, ext):
-    """压缩图片，返回 (BytesIO, new_ext)。Pillow 不可用时直接返回原文件。"""
+    """压缩图片，返回 (BytesIO, new_ext)。Pillow 不可用时直接返回原文件。
+    HEIC/HEIF（iPhone 默认格式）会转换为 JPEG。"""
     # GIF 不压缩
     if ext == 'gif':
         file_storage.stream.seek(0)
@@ -58,6 +59,35 @@ def _compress_image(file_storage, ext):
         file_storage.stream.seek(0)
         buf = io.BytesIO(file_storage.stream.read())
         return buf, ext
+
+    # HEIC/HEIF 需要 pillow-heif 插件解码，统一转成 JPEG
+    if ext in ('heic', 'heif'):
+        try:
+            import pillow_heif
+            pillow_heif.register_heif_opener()
+        except ImportError:
+            # 插件不可用时无法解码 HEIC，原样返回（由调用方决定是否拒绝）
+            file_storage.stream.seek(0)
+            buf = io.BytesIO(file_storage.stream.read())
+            return buf, ext
+        try:
+            file_storage.stream.seek(0)
+            img = Image.open(file_storage.stream)
+            try:
+                img = ImageOps.exif_transpose(img)
+            except Exception:
+                pass
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+            img.thumbnail((MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT), Image.LANCZOS)
+            buf = io.BytesIO()
+            img.save(buf, format='JPEG', quality=JPEG_QUALITY, optimize=True)
+            buf.seek(0)
+            return buf, 'jpg'
+        except Exception:
+            file_storage.stream.seek(0)
+            buf = io.BytesIO(file_storage.stream.read())
+            return buf, ext
 
     try:
         file_storage.stream.seek(0)
@@ -151,10 +181,14 @@ def upload_private_file(file_storage, private_folder):
     访问必须通过管理端鉴权代理接口。
     """
     ext = file_storage.filename.rsplit('.', 1)[1].lower()
+    compressed_buf, ext = _compress_image(file_storage, ext)
+
+    # HEIC 未能转换（缺 pillow-heif 插件）时拒绝，避免存下浏览器无法预览的格式
+    if ext in ('heic', 'heif'):
+        raise ValueError('HEIC_NOT_SUPPORTED')
+
     filename = f"{uuid.uuid4().hex}.{ext}"
     key = f"private/{filename}"
-
-    compressed_buf, ext = _compress_image(file_storage, ext)
 
     r2 = _get_r2_client()
     bucket = os.getenv('R2_BUCKET_NAME', 'homestay')

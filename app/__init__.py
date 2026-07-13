@@ -578,10 +578,18 @@ def create_app(config_name='default'):
         resp.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
         return resp
 
-    # 健康检查路由
+    # 健康检查路由（heic 字段用于确认 pillow-heif 是否安装成功）
+    try:
+        import pillow_heif  # noqa: F401
+        _heic_ok = True
+        app.logger.info('pillow-heif 已安装：HEIC 照片上传自动转换已启用')
+    except ImportError:
+        _heic_ok = False
+        app.logger.warning('pillow-heif 未安装：HEIC 照片上传将返回格式指引提示')
+
     @app.route('/health')
     def health_check():
-        return {'status': 'ok', 'message': 'Homestay API is running'}
+        return {'status': 'ok', 'message': 'Homestay API is running', 'heic_support': _heic_ok}
 
     # ==================== SEO: sitemap.xml + robots.txt ====================
     # 主站域名（用户访问的公开域名，不是 api 域名）

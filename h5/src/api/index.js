@@ -105,7 +105,11 @@ export const getGuide = (id) => api.get(`/guides/${id}`)
 export const uploadGuestDoc = (file) => {
   const formData = new FormData()
   formData.append('file', file)
-  return api.post('/guest-registrations/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+  // 手机原图较大（5-10MB），移动网络上传+服务端压缩耗时长，超时放宽到 60 秒
+  return api.post('/guest-registrations/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60000
+  })
 }
 export const submitGuestRegistration = (data) => api.post('/guest-registrations', data)
 

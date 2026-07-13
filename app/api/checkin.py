@@ -29,13 +29,19 @@ def guest_registration_upload():
     if not file.filename:
         return error_response('No file selected')
 
-    allowed = current_app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif', 'webp'})
+    # 额外允许 HEIC/HEIF（iPhone 默认拍照格式），服务端自动转为 JPEG
+    allowed = set(current_app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif', 'webp'})) | {'heic', 'heif'}
     if '.' not in file.filename or file.filename.rsplit('.', 1)[1].lower() not in allowed:
-        return error_response('Unsupported file type. Please upload jpg/png/webp')
+        return error_response('Unsupported file type. Please upload a JPG, PNG or HEIC photo')
 
     try:
         key = upload_private_file(file, _private_folder())
         return success_response({'key': key}, 'Uploaded')
+    except ValueError as e:
+        if 'HEIC_NOT_SUPPORTED' in str(e):
+            return error_response('This photo format (HEIC) could not be processed. Please change your camera format to "Most Compatible" in iPhone Settings > Camera > Formats, or take a screenshot of the photo and upload that instead')
+        current_app.logger.error(f'护照照片上传失败: {e}')
+        return error_response('Upload failed, please try again', 500)
     except Exception as e:
         current_app.logger.error(f'护照照片上传失败: {e}')
         return error_response('Upload failed, please try again', 500)

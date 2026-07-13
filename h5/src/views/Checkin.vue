@@ -782,11 +782,41 @@ function pickFile(target) {
   fileInput.value?.click()
 }
 
+// 前端预压缩：缩到 1600px 并转成 JPEG。
+// 好处：1) 上传体积从几MB降到几百KB，慢网络（酒店WiFi/漫游）不再超时；
+//       2) HEIC 等格式经 canvas 重编码后统一变成 JPEG，兼容性问题在客户端就解决。
+// 任何一步失败都回退用原文件上传（服务端也有 HEIC 转换兜底）。
+async function compressForUpload(file) {
+  try {
+    let bitmap
+    try {
+      bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
+    } catch {
+      bitmap = await createImageBitmap(file)
+    }
+    const maxDim = 1600
+    const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height))
+    const w = Math.max(1, Math.round(bitmap.width * scale))
+    const h = Math.max(1, Math.round(bitmap.height * scale))
+    const canvas = document.createElement('canvas')
+    canvas.width = w
+    canvas.height = h
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h)
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85))
+    if (blob && blob.size > 0) {
+      const base = (file.name || 'photo').replace(/\.\w+$/, '')
+      return new File([blob], `${base}.jpg`, { type: 'image/jpeg' })
+    }
+  } catch {}
+  return file
+}
+
 async function onFileChange(e) {
   const file = e.target.files?.[0]
   e.target.value = ''
   if (!file) return
-  if (!file.type.startsWith('image/')) {
+  // 部分来源（如"文件"App）的图片 type 可能为空，只拦截明确的非图片类型
+  if (file.type && !file.type.startsWith('image/')) {
     showToast(L.value.errImageOnly)
     return
   }
@@ -797,13 +827,16 @@ async function onFileChange(e) {
 
   uploading[target] = true
   try {
-    const res = await uploadGuestDoc(file)
+    const uploadFile = await compressForUpload(file)
+    const res = await uploadGuestDoc(uploadFile)
     const key = res.data?.key
     if (!key) throw new Error('no key')
     if (target === 'passport') form.passport_image = key
     else form.handheld_image = key
-  } catch {
-    showToast(L.value.errUploadFail)
+  } catch (err) {
+    // 优先显示服务器返回的具体原因（如格式不支持），比笼统的"上传失败"更能帮客户解决问题
+    const serverMsg = err?.message && err.message !== 'no key' && err.message !== 'Network error' ? err.message : ''
+    showToast({ message: serverMsg || L.value.errUploadFail, duration: serverMsg ? 6000 : 3000 })
     if (target === 'passport') { passportPreview.value = ''; form.passport_image = '' }
     else { handheldPreview.value = ''; form.handheld_image = '' }
   } finally {
