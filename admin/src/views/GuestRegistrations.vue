@@ -342,10 +342,9 @@ function formatDateTime(val) {
 function commonParams() {
   const params = {}
   if (keyword.value) params.keyword = keyword.value
-  // 选中某一天 → 只看当天的登记（后端 date_end 为包含边界）
+  // 按入住日期筛选：选中某天 → 只看当天入住的客人
   if (filterDate.value) {
-    params.date_start = filterDate.value
-    params.date_end = filterDate.value
+    params.checkin_date = filterDate.value
   }
   return params
 }
@@ -482,10 +481,9 @@ function downloadDoc(key, name) {
 
 function onExport() {
   const params = {}
-  // 选了日期 → 只导出当天；未选 → 默认导出近一个月
+  // 选了入住日期 → 只导出当天入住的客人；未选 → 默认导出近一个月的登记
   if (filterDate.value) {
-    params.date_start = filterDate.value
-    params.date_end = filterDate.value
+    params.checkin_date = filterDate.value
   }
   window.open(guestRegistrationsExportUrl(params), '_blank')
 }

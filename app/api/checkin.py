@@ -136,6 +136,8 @@ def admin_list_guest_registrations():
     date_start = (request.args.get('date_start') or '').strip()
     date_end = (request.args.get('date_end') or '').strip()
 
+    checkin_filter = (request.args.get('checkin_date') or '').strip()
+
     query = GuestRegistration.query
     if keyword:
         like = f'%{escape_like(keyword)}%'
@@ -152,6 +154,12 @@ def admin_list_guest_registrations():
         try:
             query = query.filter(GuestRegistration.status == int(status))
         except (ValueError, TypeError):
+            pass
+    # 按入住日期筛选（每天查"今天入住"的客人）
+    if checkin_filter:
+        try:
+            query = query.filter(GuestRegistration.checkin_date == date.fromisoformat(checkin_filter))
+        except ValueError:
             pass
     if date_start:
         try:
@@ -189,6 +197,7 @@ def admin_grouped_guest_registrations():
     page = int(request.args.get('page', 1))
     per_page = int(request.args.get('per_page', 10))
     keyword = (request.args.get('keyword') or '').strip()
+    checkin_filter = (request.args.get('checkin_date') or '').strip()
     date_start = (request.args.get('date_start') or '').strip()
     date_end = (request.args.get('date_end') or '').strip()
 
@@ -204,6 +213,12 @@ def admin_grouped_guest_registrations():
                 GuestRegistration.room_note.ilike(like),
             )
         )
+    # 按入住日期筛选（每天查"今天入住"的客人）
+    if checkin_filter:
+        try:
+            query = query.filter(GuestRegistration.checkin_date == date.fromisoformat(checkin_filter))
+        except ValueError:
+            pass
     if date_start:
         try:
             query = query.filter(GuestRegistration.created_at >= datetime.fromisoformat(date_start))
@@ -383,28 +398,40 @@ def admin_export_guest_registrations():
         return error_response('服务器缺少 openpyxl 依赖，请联系运维', 500)
 
     now = china_now()
+    checkin_filter = (request.args.get('checkin_date') or '').strip()
     date_start = (request.args.get('date_start') or '').strip()
     date_end = (request.args.get('date_end') or '').strip()
 
-    if date_start:
+    if checkin_filter:
+        # 按入住日期导出当天入住的客人
         try:
-            start = datetime.fromisoformat(date_start)
+            target_day = date.fromisoformat(checkin_filter)
         except ValueError:
+            return error_response('入住日期格式错误')
+        rows = GuestRegistration.query.filter(
+            GuestRegistration.checkin_date == target_day
+        ).order_by(GuestRegistration.created_at.desc()).all()
+        start = end = None
+    else:
+        if date_start:
+            try:
+                start = datetime.fromisoformat(date_start)
+            except ValueError:
+                start = now - timedelta(days=30)
+        else:
             start = now - timedelta(days=30)
-    else:
-        start = now - timedelta(days=30)
-    if date_end:
-        try:
-            end = datetime.fromisoformat(date_end) + timedelta(days=1)
-        except ValueError:
+        if date_end:
+            try:
+                end = datetime.fromisoformat(date_end) + timedelta(days=1)
+            except ValueError:
+                end = now
+        else:
             end = now
-    else:
-        end = now
 
-    rows = GuestRegistration.query.filter(
-        GuestRegistration.created_at >= start,
-        GuestRegistration.created_at <= end,
-    ).order_by(GuestRegistration.created_at.desc()).all()
+        rows = GuestRegistration.query.filter(
+            GuestRegistration.created_at >= start,
+            GuestRegistration.created_at <= end,
+        ).order_by(GuestRegistration.created_at.desc()).all()
 
     # 按组排序：同一房间/订单的客人相邻排列（保持组的最新登记时间倒序）
     group_sizes = {}
@@ -460,7 +487,10 @@ def admin_export_guest_registrations():
     buf = BytesIO()
     wb.save(buf)
     buf.seek(0)
-    filename = f'住宿登记_{start.strftime("%Y%m%d")}-{(end - timedelta(days=1)).strftime("%Y%m%d") if date_end else now.strftime("%Y%m%d")}.xlsx'
+    if checkin_filter:
+        filename = f'住宿登记_入住{checkin_filter.replace("-", "")}.xlsx'
+    else:
+        filename = f'住宿登记_{start.strftime("%Y%m%d")}-{(end - timedelta(days=1)).strftime("%Y%m%d") if date_end else now.strftime("%Y%m%d")}.xlsx'
     return send_file(
         buf,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
