@@ -30,14 +30,15 @@
           <el-option :label="$t('guestReg.declared')" :value="1" />
         </el-select>
         <el-date-picker
-          v-model="dateRange"
-          type="daterange"
+          v-model="filterDate"
+          type="date"
           value-format="YYYY-MM-DD"
-          :start-placeholder="$t('guestReg.dateStart')"
-          :end-placeholder="$t('guestReg.dateEnd')"
-          style="width: 260px"
+          :placeholder="$t('guestReg.filterDate')"
+          clearable
+          style="width: 170px"
           @change="reload"
         />
+        <el-button size="default" plain @click="setToday">{{ $t('guestReg.today') }}</el-button>
       </div>
       <div class="header-actions">
         <el-button
@@ -47,7 +48,9 @@
           :disabled="selectedIds.length < 2"
           @click="onMerge"
         >{{ $t('guestReg.mergeBtn') }}</el-button>
-        <el-button type="success" plain :icon="Download" @click="onExport">{{ $t('guestReg.exportBtn') }}</el-button>
+        <el-button type="success" plain :icon="Download" @click="onExport">
+          {{ filterDate ? $t('guestReg.exportDayBtn') : $t('guestReg.exportBtn') }}
+        </el-button>
       </div>
     </div>
 
@@ -298,7 +301,14 @@ const viewMode = ref('grouped')
 const loading = ref(false)
 const keyword = ref('')
 const statusFilter = ref(undefined)
-const dateRange = ref(null)
+const filterDate = ref(null)
+
+function setToday() {
+  const d = new Date()
+  const pad = n => String(n).padStart(2, '0')
+  filterDate.value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  reload()
+}
 const dialogVisible = ref(false)
 const current = ref(null)
 
@@ -332,9 +342,10 @@ function formatDateTime(val) {
 function commonParams() {
   const params = {}
   if (keyword.value) params.keyword = keyword.value
-  if (dateRange.value?.length === 2) {
-    params.date_start = dateRange.value[0]
-    params.date_end = dateRange.value[1]
+  // 选中某一天 → 只看当天的登记（后端 date_end 为包含边界）
+  if (filterDate.value) {
+    params.date_start = filterDate.value
+    params.date_end = filterDate.value
   }
   return params
 }
@@ -471,9 +482,10 @@ function downloadDoc(key, name) {
 
 function onExport() {
   const params = {}
-  if (dateRange.value?.length === 2) {
-    params.date_start = dateRange.value[0]
-    params.date_end = dateRange.value[1]
+  // 选了日期 → 只导出当天；未选 → 默认导出近一个月
+  if (filterDate.value) {
+    params.date_start = filterDate.value
+    params.date_end = filterDate.value
   }
   window.open(guestRegistrationsExportUrl(params), '_blank')
 }
