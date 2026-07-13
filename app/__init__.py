@@ -237,6 +237,8 @@ def _auto_migrate(app):
         ('guest_registrations', 'document_no', 'VARCHAR(50)'),
         ('guest_registrations', 'checkin_date', 'DATE'),
         ('guest_registrations', 'checkout_date', 'DATE'),
+        ('guest_registrations', 'room_note', 'VARCHAR(100)'),
+        ('guest_registrations', 'group_id', 'VARCHAR(40)'),
 
         # 许愿池
         ('wishes', 'contact_name', 'VARCHAR(50)'),

@@ -139,6 +139,7 @@ def admin_list_guest_registrations():
                 GuestRegistration.given_name.ilike(like),
                 GuestRegistration.booking_no.ilike(like),
                 GuestRegistration.document_no.ilike(like),
+                GuestRegistration.room_note.ilike(like),
             )
         )
     if status != '':
@@ -166,6 +167,161 @@ def admin_list_guest_registrations():
         'per_page': result['per_page'],
         'pages': result['pages'],
     })
+
+
+def _group_key(reg):
+    """分组键：手动合并的 group_id 优先，否则按 平台+预约单号 自动分组"""
+    if reg.group_id:
+        return reg.group_id
+    return f'bn:{reg.platform}:{(reg.booking_no or "").strip().lower()}'
+
+
+@api_bp.route('/admin/guest-registrations/grouped', methods=['GET'])
+@admin_required
+def admin_grouped_guest_registrations():
+    """按订单分组的登记列表（一组 = 一个房间/订单的多位客人）"""
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 10))
+    keyword = (request.args.get('keyword') or '').strip()
+    date_start = (request.args.get('date_start') or '').strip()
+    date_end = (request.args.get('date_end') or '').strip()
+
+    query = GuestRegistration.query
+    if keyword:
+        like = f'%{escape_like(keyword)}%'
+        query = query.filter(
+            db.or_(
+                GuestRegistration.surname.ilike(like),
+                GuestRegistration.given_name.ilike(like),
+                GuestRegistration.booking_no.ilike(like),
+                GuestRegistration.document_no.ilike(like),
+                GuestRegistration.room_note.ilike(like),
+            )
+        )
+    if date_start:
+        try:
+            query = query.filter(GuestRegistration.created_at >= datetime.fromisoformat(date_start))
+        except ValueError:
+            pass
+    if date_end:
+        try:
+            query = query.filter(GuestRegistration.created_at < datetime.fromisoformat(date_end) + timedelta(days=1))
+        except ValueError:
+            pass
+
+    rows = query.order_by(GuestRegistration.created_at.desc()).all()
+
+    # 关键词命中组内任意成员时，整组完整显示（重新拉全组成员）
+    if keyword and rows:
+        keys = {_group_key(r) for r in rows}
+        all_rows = GuestRegistration.query.order_by(GuestRegistration.created_at.desc()).all()
+        rows = [r for r in all_rows if _group_key(r) in keys]
+
+    groups = {}
+    order = []
+    for r in rows:
+        key = _group_key(r)
+        if key not in groups:
+            groups[key] = {
+                'key': key,
+                'platform': r.platform,
+                'booking_no': r.booking_no,
+                'room_note': None,
+                'count': 0,
+                'declared_count': 0,
+                'checkin_date': r.checkin_date.isoformat() if r.checkin_date else None,
+                'checkout_date': r.checkout_date.isoformat() if r.checkout_date else None,
+                'latest_at': r.created_at.isoformat() if r.created_at else None,
+                'items': [],
+            }
+            order.append(key)
+        g = groups[key]
+        g['count'] += 1
+        if r.status == 1:
+            g['declared_count'] += 1
+        if not g['room_note'] and r.room_note:
+            g['room_note'] = r.room_note
+        g['items'].append(r.to_dict())
+
+    group_list = [groups[k] for k in order]
+    total = len(group_list)
+    start_idx = (page - 1) * per_page
+    paged = group_list[start_idx:start_idx + per_page]
+
+    return success_response({
+        'list': paged,
+        'total': total,
+        'page': page,
+        'per_page': per_page,
+        'pages': (total + per_page - 1) // per_page if per_page else 1,
+    })
+
+
+@api_bp.route('/admin/guest-registrations/batch-status', methods=['PUT'])
+@admin_required
+def admin_batch_guest_registration_status():
+    """批量更新申报状态（整组一键标记）"""
+    data = request.get_json() or {}
+    ids = data.get('ids') or []
+    new_status = data.get('status')
+    if not ids or new_status not in (0, 1):
+        return error_response('参数错误')
+    regs = GuestRegistration.query.filter(GuestRegistration.id.in_(ids)).all()
+    for r in regs:
+        r.status = new_status
+    db.session.commit()
+    return success_response({'updated': len(regs)}, f'已更新 {len(regs)} 条记录')
+
+
+@api_bp.route('/admin/guest-registrations/room-note', methods=['PUT'])
+@admin_required
+def admin_set_guest_registration_room_note():
+    """设置房间备注（同步到组内所有记录）"""
+    data = request.get_json() or {}
+    ids = data.get('ids') or []
+    room_note = (data.get('room_note') or '').strip()[:100] or None
+    if not ids:
+        return error_response('参数错误')
+    regs = GuestRegistration.query.filter(GuestRegistration.id.in_(ids)).all()
+    for r in regs:
+        r.room_note = room_note
+    db.session.commit()
+    return success_response({'updated': len(regs)}, '房间备注已保存')
+
+
+@api_bp.route('/admin/guest-registrations/merge', methods=['POST'])
+@admin_required
+def admin_merge_guest_registrations():
+    """手动合并多条登记记录为一组（处理单号输错等情况）"""
+    import uuid
+    data = request.get_json() or {}
+    ids = data.get('ids') or []
+    if len(ids) < 2:
+        return error_response('请至少选择两条记录')
+    regs = GuestRegistration.query.filter(GuestRegistration.id.in_(ids)).all()
+    if len(regs) < 2:
+        return error_response('记录不存在')
+    new_group = f'mg-{uuid.uuid4().hex[:16]}'
+    # 备注取组内第一个非空的
+    note = next((r.room_note for r in regs if r.room_note), None)
+    for r in regs:
+        r.group_id = new_group
+        if note and not r.room_note:
+            r.room_note = note
+    db.session.commit()
+    return success_response({'group_id': new_group, 'merged': len(regs)}, f'已合并 {len(regs)} 条记录')
+
+
+@api_bp.route('/admin/guest-registrations/<int:reg_id>/ungroup', methods=['POST'])
+@admin_required
+def admin_ungroup_guest_registration(reg_id):
+    """把某条记录移出当前分组（变成独立一组）"""
+    reg = GuestRegistration.query.get(reg_id)
+    if not reg:
+        return error_response('登记记录不存在', 404)
+    reg.group_id = f'solo-{reg.id}'
+    db.session.commit()
+    return success_response(reg.to_dict(), '已移出该组')
 
 
 @api_bp.route('/admin/guest-registrations/<int:reg_id>/status', methods=['PUT'])
@@ -244,6 +400,16 @@ def admin_export_guest_registrations():
         GuestRegistration.created_at <= end,
     ).order_by(GuestRegistration.created_at.desc()).all()
 
+    # 按组排序：同一房间/订单的客人相邻排列（保持组的最新登记时间倒序）
+    group_sizes = {}
+    group_first_seen = {}
+    for idx, r in enumerate(rows):
+        key = _group_key(r)
+        group_sizes[key] = group_sizes.get(key, 0) + 1
+        if key not in group_first_seen:
+            group_first_seen[key] = idx
+    rows.sort(key=lambda r: (group_first_seen[_group_key(r)], r.id))
+
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = '住宿登记'
@@ -254,7 +420,7 @@ def admin_export_guest_registrations():
     thin = Side(border_style='thin', color='DDD0BC')
     border = Border(top=thin, left=thin, right=thin, bottom=thin)
 
-    headers = ['ID', '姓 (Surname)', '名 (Given Name)', '中间名', '出生日期', '证件类型', '证件号码', '预订平台', '预约单号', '入住日期', '离开日期', '申报状态', '登记时间']
+    headers = ['ID', '姓 (Surname)', '名 (Given Name)', '中间名', '出生日期', '证件类型', '证件号码', '预订平台', '预约单号', '房间备注', '同组人数', '入住日期', '离开日期', '申报状态', '登记时间']
     for col, label in enumerate(headers, start=1):
         cell = ws.cell(row=1, column=col, value=label)
         cell.font = header_font
@@ -274,12 +440,14 @@ def admin_export_guest_registrations():
         ws.cell(row=i, column=7, value=r.document_no or '')
         ws.cell(row=i, column=8, value=platform_labels.get(r.platform, r.platform))
         ws.cell(row=i, column=9, value=r.booking_no)
-        ws.cell(row=i, column=10, value=r.checkin_date.isoformat() if r.checkin_date else '')
-        ws.cell(row=i, column=11, value=r.checkout_date.isoformat() if r.checkout_date else '')
-        ws.cell(row=i, column=12, value='已申报' if r.status == 1 else '待申报')
-        ws.cell(row=i, column=13, value=r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at else '')
+        ws.cell(row=i, column=10, value=r.room_note or '')
+        ws.cell(row=i, column=11, value=group_sizes.get(_group_key(r), 1))
+        ws.cell(row=i, column=12, value=r.checkin_date.isoformat() if r.checkin_date else '')
+        ws.cell(row=i, column=13, value=r.checkout_date.isoformat() if r.checkout_date else '')
+        ws.cell(row=i, column=14, value='已申报' if r.status == 1 else '待申报')
+        ws.cell(row=i, column=15, value=r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at else '')
 
-    widths = [8, 16, 16, 14, 14, 14, 20, 14, 24, 13, 13, 12, 20]
+    widths = [8, 16, 16, 14, 14, 14, 20, 14, 24, 16, 10, 13, 13, 12, 20]
     for i, w in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(i)].width = w
 

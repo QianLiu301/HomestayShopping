@@ -152,7 +152,12 @@ export const deleteGuide = id => http.delete(`/admin/guides/${id}`)
 
 // Guest Registrations (住宿登记)
 export const getGuestRegistrations = params => http.get('/admin/guest-registrations', { params })
+export const getGuestRegistrationsGrouped = params => http.get('/admin/guest-registrations/grouped', { params })
 export const updateGuestRegistrationStatus = (id, status) => http.put(`/admin/guest-registrations/${id}/status`, { status })
+export const batchGuestRegistrationStatus = (ids, status) => http.put('/admin/guest-registrations/batch-status', { ids, status })
+export const setGuestRegistrationRoomNote = (ids, room_note) => http.put('/admin/guest-registrations/room-note', { ids, room_note })
+export const mergeGuestRegistrations = ids => http.post('/admin/guest-registrations/merge', { ids })
+export const ungroupGuestRegistration = id => http.post(`/admin/guest-registrations/${id}/ungroup`)
 export const deleteGuestRegistration = id => http.delete(`/admin/guest-registrations/${id}`)
 export const guestDocUrl = key => {
   const token = localStorage.getItem('admin_token')

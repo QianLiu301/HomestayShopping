@@ -2,19 +2,30 @@
   <div class="guest-reg-page">
     <div class="page-header">
       <div class="header-filters">
+        <el-radio-group v-model="viewMode" @change="onViewChange">
+          <el-radio-button value="grouped">{{ $t('guestReg.groupedView') }}</el-radio-button>
+          <el-radio-button value="all">{{ $t('guestReg.allView') }}</el-radio-button>
+        </el-radio-group>
         <el-input
           v-model="keyword"
           :placeholder="$t('guestReg.searchPlaceholder')"
           clearable
           style="width: 240px"
-          @keyup.enter="loadData(1)"
-          @clear="loadData(1)"
+          @keyup.enter="reload"
+          @clear="reload"
         >
           <template #append>
-            <el-button :icon="Search" @click="loadData(1)" />
+            <el-button :icon="Search" @click="reload" />
           </template>
         </el-input>
-        <el-select v-model="statusFilter" :placeholder="$t('guestReg.statusFilter')" clearable style="width: 130px" @change="loadData(1)">
+        <el-select
+          v-if="viewMode === 'all'"
+          v-model="statusFilter"
+          :placeholder="$t('guestReg.statusFilter')"
+          clearable
+          style="width: 130px"
+          @change="reload"
+        >
           <el-option :label="$t('guestReg.pending')" :value="0" />
           <el-option :label="$t('guestReg.declared')" :value="1" />
         </el-select>
@@ -25,83 +36,188 @@
           :start-placeholder="$t('guestReg.dateStart')"
           :end-placeholder="$t('guestReg.dateEnd')"
           style="width: 260px"
-          @change="loadData(1)"
+          @change="reload"
         />
       </div>
       <div class="header-actions">
+        <el-button
+          v-if="viewMode === 'all'"
+          type="primary"
+          plain
+          :disabled="selectedIds.length < 2"
+          @click="onMerge"
+        >{{ $t('guestReg.mergeBtn') }}</el-button>
         <el-button type="success" plain :icon="Download" @click="onExport">{{ $t('guestReg.exportBtn') }}</el-button>
       </div>
     </div>
 
-    <el-table v-loading="loading" :data="list" stripe>
-      <el-table-column prop="id" label="ID" width="60" />
-      <el-table-column :label="$t('guestReg.name')" min-width="160">
-        <template #default="{ row }">
-          <span style="font-weight:600">{{ row.full_name }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column :label="$t('guestReg.dob')" width="120">
-        <template #default="{ row }">{{ row.date_of_birth || '-' }}</template>
-      </el-table-column>
-      <el-table-column :label="$t('guestReg.docType')" width="110">
-        <template #default="{ row }">{{ docTypeLabel(row.document_type) }}</template>
-      </el-table-column>
-      <el-table-column prop="document_no" :label="$t('guestReg.docNo')" min-width="130" show-overflow-tooltip />
-      <el-table-column :label="$t('guestReg.platform')" width="120">
-        <template #default="{ row }">{{ platformLabel(row.platform) }}</template>
-      </el-table-column>
-      <el-table-column prop="booking_no" :label="$t('guestReg.bookingNo')" min-width="150" show-overflow-tooltip />
-      <el-table-column :label="$t('guestReg.stayDates')" width="180">
-        <template #default="{ row }">
-          <span v-if="row.checkin_date">{{ row.checkin_date }} ~ {{ row.checkout_date || '?' }}</span>
-          <span v-else>-</span>
-        </template>
-      </el-table-column>
-      <el-table-column :label="$t('guestReg.photos')" width="150">
-        <template #default="{ row }">
-          <el-button link type="primary" size="small" @click="openDetail(row)">{{ $t('guestReg.viewPhotos') }}</el-button>
-        </template>
-      </el-table-column>
-      <el-table-column :label="$t('guestReg.status')" width="110">
-        <template #default="{ row }">
-          <el-tag :type="row.status === 1 ? 'success' : 'warning'" size="small">
-            {{ row.status === 1 ? $t('guestReg.declared') : $t('guestReg.pending') }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column :label="$t('guestReg.createdAt')" width="160">
-        <template #default="{ row }">{{ formatDateTime(row.created_at) }}</template>
-      </el-table-column>
-      <el-table-column :label="$t('common.actions')" width="200" fixed="right">
-        <template #default="{ row }">
-          <el-button
-            v-if="row.status === 0"
-            link
-            type="success"
-            size="small"
-            @click="onSetStatus(row, 1)"
-          >{{ $t('guestReg.markDeclared') }}</el-button>
-          <el-button
-            v-else
-            link
-            type="warning"
-            size="small"
-            @click="onSetStatus(row, 0)"
-          >{{ $t('guestReg.markPending') }}</el-button>
-          <el-button link type="danger" size="small" @click="onDelete(row)">{{ $t('common.delete') }}</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <!-- ===== 按订单分组视图 ===== -->
+    <template v-if="viewMode === 'grouped'">
+      <el-table v-loading="loading" :data="groups" row-key="key" stripe>
+        <el-table-column type="expand">
+          <template #default="{ row }">
+            <div class="group-members">
+              <el-table :data="row.items" size="small" border>
+                <el-table-column prop="id" label="ID" width="60" />
+                <el-table-column :label="$t('guestReg.name')" min-width="140">
+                  <template #default="{ row: m }"><span style="font-weight:600">{{ m.full_name }}</span></template>
+                </el-table-column>
+                <el-table-column :label="$t('guestReg.dob')" width="110">
+                  <template #default="{ row: m }">{{ m.date_of_birth || '-' }}</template>
+                </el-table-column>
+                <el-table-column :label="$t('guestReg.docType')" width="100">
+                  <template #default="{ row: m }">{{ docTypeLabel(m.document_type) }}</template>
+                </el-table-column>
+                <el-table-column prop="document_no" :label="$t('guestReg.docNo')" min-width="120" show-overflow-tooltip />
+                <el-table-column :label="$t('guestReg.photos')" width="100">
+                  <template #default="{ row: m }">
+                    <el-button link type="primary" size="small" @click="openDetail(m)">{{ $t('guestReg.viewPhotos') }}</el-button>
+                  </template>
+                </el-table-column>
+                <el-table-column :label="$t('guestReg.status')" width="90">
+                  <template #default="{ row: m }">
+                    <el-tag :type="m.status === 1 ? 'success' : 'warning'" size="small">
+                      {{ m.status === 1 ? $t('guestReg.declared') : $t('guestReg.pending') }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column :label="$t('common.actions')" width="240">
+                  <template #default="{ row: m }">
+                    <el-button v-if="m.status === 0" link type="success" size="small" @click="onSetStatus(m, 1)">{{ $t('guestReg.markDeclared') }}</el-button>
+                    <el-button v-else link type="warning" size="small" @click="onSetStatus(m, 0)">{{ $t('guestReg.markPending') }}</el-button>
+                    <el-button v-if="row.count > 1" link size="small" @click="onUngroup(m)">{{ $t('guestReg.ungroup') }}</el-button>
+                    <el-button link type="danger" size="small" @click="onDelete(m)">{{ $t('common.delete') }}</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('guestReg.roomNote')" min-width="150">
+          <template #default="{ row }">
+            <span :style="{ fontWeight: 600, color: row.room_note ? '#4a3728' : '#c0b6a8' }">
+              {{ row.room_note || $t('guestReg.noNote') }}
+            </span>
+            <el-button link type="primary" size="small" :icon="EditPen" @click="onEditRoomNote(row)" />
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('guestReg.platform')" width="110">
+          <template #default="{ row }">{{ platformLabel(row.platform) }}</template>
+        </el-table-column>
+        <el-table-column prop="booking_no" :label="$t('guestReg.bookingNo')" min-width="140" show-overflow-tooltip />
+        <el-table-column :label="$t('guestReg.guests')" width="80" align="center">
+          <template #default="{ row }">
+            <el-tag size="small" type="info">{{ row.count }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('guestReg.groupStatus')" width="120">
+          <template #default="{ row }">
+            <el-tag :type="row.declared_count === row.count ? 'success' : (row.declared_count > 0 ? 'primary' : 'warning')" size="small">
+              {{ row.declared_count }} / {{ row.count }} {{ $t('guestReg.declared') }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('guestReg.stayDates')" width="180">
+          <template #default="{ row }">
+            <span v-if="row.checkin_date">{{ row.checkin_date }} ~ {{ row.checkout_date || '?' }}</span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('guestReg.createdAt')" width="150">
+          <template #default="{ row }">{{ formatDateTime(row.latest_at) }}</template>
+        </el-table-column>
+        <el-table-column :label="$t('common.actions')" width="160" fixed="right">
+          <template #default="{ row }">
+            <el-button
+              v-if="row.declared_count < row.count"
+              link
+              type="success"
+              size="small"
+              @click="onMarkGroup(row, 1)"
+            >{{ $t('guestReg.markGroupDeclared') }}</el-button>
+            <el-button
+              v-else
+              link
+              type="warning"
+              size="small"
+              @click="onMarkGroup(row, 0)"
+            >{{ $t('guestReg.markGroupPending') }}</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
-    <div class="pagination">
-      <el-pagination
-        v-model:current-page="page"
-        :page-size="pageSize"
-        :total="total"
-        layout="total, prev, pager, next"
-        @current-change="loadData"
-      />
-    </div>
+      <div class="pagination">
+        <el-pagination
+          v-model:current-page="groupPage"
+          :page-size="groupPageSize"
+          :total="groupTotal"
+          layout="total, prev, pager, next"
+          @current-change="loadGroups"
+        />
+      </div>
+    </template>
+
+    <!-- ===== 全部记录视图 ===== -->
+    <template v-else>
+      <el-table v-loading="loading" :data="list" stripe @selection-change="onSelectionChange">
+        <el-table-column type="selection" width="45" />
+        <el-table-column prop="id" label="ID" width="60" />
+        <el-table-column :label="$t('guestReg.name')" min-width="150">
+          <template #default="{ row }">
+            <span style="font-weight:600">{{ row.full_name }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('guestReg.roomNote')" min-width="110" show-overflow-tooltip>
+          <template #default="{ row }">{{ row.room_note || '-' }}</template>
+        </el-table-column>
+        <el-table-column :label="$t('guestReg.dob')" width="110">
+          <template #default="{ row }">{{ row.date_of_birth || '-' }}</template>
+        </el-table-column>
+        <el-table-column :label="$t('guestReg.docType')" width="105">
+          <template #default="{ row }">{{ docTypeLabel(row.document_type) }}</template>
+        </el-table-column>
+        <el-table-column prop="document_no" :label="$t('guestReg.docNo')" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="booking_no" :label="$t('guestReg.bookingNo')" min-width="130" show-overflow-tooltip />
+        <el-table-column :label="$t('guestReg.stayDates')" width="175">
+          <template #default="{ row }">
+            <span v-if="row.checkin_date">{{ row.checkin_date }} ~ {{ row.checkout_date || '?' }}</span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('guestReg.photos')" width="100">
+          <template #default="{ row }">
+            <el-button link type="primary" size="small" @click="openDetail(row)">{{ $t('guestReg.viewPhotos') }}</el-button>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('guestReg.status')" width="95">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 1 ? 'success' : 'warning'" size="small">
+              {{ row.status === 1 ? $t('guestReg.declared') : $t('guestReg.pending') }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('guestReg.createdAt')" width="150">
+          <template #default="{ row }">{{ formatDateTime(row.created_at) }}</template>
+        </el-table-column>
+        <el-table-column :label="$t('common.actions')" width="190" fixed="right">
+          <template #default="{ row }">
+            <el-button v-if="row.status === 0" link type="success" size="small" @click="onSetStatus(row, 1)">{{ $t('guestReg.markDeclared') }}</el-button>
+            <el-button v-else link type="warning" size="small" @click="onSetStatus(row, 0)">{{ $t('guestReg.markPending') }}</el-button>
+            <el-button link type="danger" size="small" @click="onDelete(row)">{{ $t('common.delete') }}</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <div class="pagination">
+        <el-pagination
+          v-model:current-page="page"
+          :page-size="pageSize"
+          :total="total"
+          layout="total, prev, pager, next"
+          @current-change="loadData"
+        />
+      </div>
+    </template>
 
     <!-- 详情/照片弹窗 -->
     <el-dialog v-model="dialogVisible" :title="$t('guestReg.detailTitle')" width="720px">
@@ -112,9 +228,10 @@
           <el-descriptions-item :label="$t('guestReg.docType')">{{ docTypeLabel(current.document_type) }}</el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.docNo')">{{ current.document_no || '-' }}</el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.platform')">{{ platformLabel(current.platform) }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('guestReg.bookingNo')">{{ current.booking_no }}</el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.checkinDate')">{{ current.checkin_date || '-' }}</el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.checkoutDate')">{{ current.checkout_date || '-' }}</el-descriptions-item>
-          <el-descriptions-item :label="$t('guestReg.bookingNo')">{{ current.booking_no }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('guestReg.roomNote')">{{ current.room_note || '-' }}</el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.status')">
             <el-tag :type="current.status === 1 ? 'success' : 'warning'" size="small">
               {{ current.status === 1 ? $t('guestReg.declared') : $t('guestReg.pending') }}
@@ -161,10 +278,15 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Download } from '@element-plus/icons-vue'
+import { Search, Download, EditPen } from '@element-plus/icons-vue'
 import {
   getGuestRegistrations,
+  getGuestRegistrationsGrouped,
   updateGuestRegistrationStatus,
+  batchGuestRegistrationStatus,
+  setGuestRegistrationRoomNote,
+  mergeGuestRegistrations,
+  ungroupGuestRegistration,
   deleteGuestRegistration,
   guestDocUrl,
   guestRegistrationsExportUrl,
@@ -172,16 +294,26 @@ import {
 
 const { t } = useI18n()
 
-const list = ref([])
+const viewMode = ref('grouped')
 const loading = ref(false)
-const page = ref(1)
-const pageSize = 15
-const total = ref(0)
 const keyword = ref('')
 const statusFilter = ref(undefined)
 const dateRange = ref(null)
 const dialogVisible = ref(false)
 const current = ref(null)
+
+// 全部记录视图
+const list = ref([])
+const page = ref(1)
+const pageSize = 15
+const total = ref(0)
+const selectedIds = ref([])
+
+// 分组视图
+const groups = ref([])
+const groupPage = ref(1)
+const groupPageSize = 10
+const groupTotal = ref(0)
 
 const platformLabels = { booking: 'Booking.com', trip: 'Trip.com', agoda: 'Agoda', expedia: 'Expedia' }
 const platformLabel = p => platformLabels[p] || p
@@ -197,22 +329,51 @@ function formatDateTime(val) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+function commonParams() {
+  const params = {}
+  if (keyword.value) params.keyword = keyword.value
+  if (dateRange.value?.length === 2) {
+    params.date_start = dateRange.value[0]
+    params.date_end = dateRange.value[1]
+  }
+  return params
+}
+
+function reload() {
+  if (viewMode.value === 'grouped') loadGroups(1)
+  else loadData(1)
+}
+
+function onViewChange() {
+  reload()
+}
+
+async function loadGroups(p = groupPage.value) {
+  groupPage.value = p
+  loading.value = true
+  try {
+    const res = await getGuestRegistrationsGrouped({ ...commonParams(), page: p, per_page: groupPageSize })
+    groups.value = res.data?.list || []
+    groupTotal.value = res.data?.total || 0
+  } catch {}
+  loading.value = false
+}
+
 async function loadData(p = page.value) {
   page.value = p
   loading.value = true
   try {
-    const params = { page: p, per_page: pageSize }
-    if (keyword.value) params.keyword = keyword.value
+    const params = { ...commonParams(), page: p, per_page: pageSize }
     if (statusFilter.value !== undefined && statusFilter.value !== null && statusFilter.value !== '') params.status = statusFilter.value
-    if (dateRange.value?.length === 2) {
-      params.date_start = dateRange.value[0]
-      params.date_end = dateRange.value[1]
-    }
     const res = await getGuestRegistrations(params)
     list.value = res.data?.list || []
     total.value = res.data?.total || 0
   } catch {}
   loading.value = false
+}
+
+function onSelectionChange(rows) {
+  selectedIds.value = rows.map(r => r.id)
 }
 
 function openDetail(row) {
@@ -226,6 +387,61 @@ async function onSetStatus(row, status) {
     ElMessage.success(t('common.updated'))
     row.status = status
     if (current.value?.id === row.id) current.value.status = status
+    if (viewMode.value === 'grouped') loadGroups()
+  } catch {}
+}
+
+async function onMarkGroup(group, status) {
+  try {
+    const ids = group.items.map(m => m.id)
+    await batchGuestRegistrationStatus(ids, status)
+    ElMessage.success(t('common.updated'))
+    loadGroups()
+  } catch {}
+}
+
+async function onEditRoomNote(group) {
+  let value
+  try {
+    const res = await ElMessageBox.prompt(t('guestReg.roomNotePrompt'), t('guestReg.roomNote'), {
+      inputValue: group.room_note || '',
+      inputPlaceholder: t('guestReg.roomNotePlaceholder'),
+      confirmButtonText: t('common.save'),
+      cancelButtonText: t('common.cancel'),
+    })
+    value = res.value
+  } catch {
+    return
+  }
+  try {
+    const ids = group.items.map(m => m.id)
+    await setGuestRegistrationRoomNote(ids, value || '')
+    ElMessage.success(t('guestReg.noteSaved'))
+    loadGroups()
+  } catch {}
+}
+
+async function onMerge() {
+  if (selectedIds.value.length < 2) {
+    return ElMessage.warning(t('guestReg.selectAtLeastTwo'))
+  }
+  try {
+    await ElMessageBox.confirm(t('guestReg.mergeConfirm', { count: selectedIds.value.length }), t('common.warning'), { type: 'info' })
+  } catch {
+    return
+  }
+  try {
+    await mergeGuestRegistrations(selectedIds.value)
+    ElMessage.success(t('guestReg.mergeSuccess'))
+    loadData()
+  } catch {}
+}
+
+async function onUngroup(row) {
+  try {
+    await ungroupGuestRegistration(row.id)
+    ElMessage.success(t('common.updated'))
+    loadGroups()
   } catch {}
 }
 
@@ -238,7 +454,7 @@ async function onDelete(row) {
   try {
     await deleteGuestRegistration(row.id)
     ElMessage.success(t('common.deleted'))
-    loadData()
+    reload()
   } catch {}
 }
 
@@ -262,7 +478,7 @@ function onExport() {
   window.open(guestRegistrationsExportUrl(params), '_blank')
 }
 
-onMounted(() => loadData(1))
+onMounted(() => reload())
 </script>
 
 <style scoped>
@@ -280,10 +496,18 @@ onMounted(() => loadData(1))
   align-items: center;
   flex-wrap: wrap;
 }
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
 .pagination {
   margin-top: 16px;
   display: flex;
   justify-content: flex-end;
+}
+.group-members {
+  padding: 8px 16px 12px 48px;
+  background: #fdfaf5;
 }
 .photo-grid {
   display: grid;
