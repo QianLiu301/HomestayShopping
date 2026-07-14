@@ -280,6 +280,19 @@ def _auto_migrate(app):
         except Exception:
             db.session.rollback()
 
+        # 住宿登记单号清洗：去掉客户复制 Booking 单号时带入的小数点和空格（幂等，每次启动检查）
+        try:
+            result = db.session.execute(db.text(
+                "UPDATE guest_registrations "
+                "SET booking_no = REPLACE(REPLACE(booking_no, '.', ''), ' ', '') "
+                "WHERE booking_no LIKE '%.%' OR booking_no LIKE '% %'"
+            ))
+            db.session.commit()
+            if getattr(result, 'rowcount', 0):
+                app.logger.info(f'Auto-migrate: cleaned {result.rowcount} guest_registrations booking_no')
+        except Exception:
+            db.session.rollback()
+
         # 检测数据库类型
         db_url = str(db.engine.url)
         is_pg = 'postgresql' in db_url or 'postgres' in db_url

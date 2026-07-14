@@ -853,6 +853,8 @@ function goAfterSuccess(path) {
 
 async function onSubmit() {
   if (!form.platform) return showToast(L.value.errPlatform)
+  // 清洗单号：Booking.com 确认号复制过来带小数点（如 6231.516.538），统一去掉点和空格
+  form.booking_no = (form.booking_no || '').replace(/[.\s]+/g, '')
   if (!form.booking_no) return showToast(L.value.errBookingNo)
   if (!form.document_no) return showToast(L.value.errDocNo)
   if (!form.surname || !form.given_name) return showToast(L.value.errName)

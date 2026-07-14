@@ -2,6 +2,7 @@
 公开端：上传护照照片（私密存储）+ 提交登记
 管理端：列表 / 状态更新 / 删除 / Excel 导出 / 护照图片鉴权代理
 """
+import re
 from datetime import datetime, date, timedelta
 from flask import request, current_app, Response
 from app.api import api_bp
@@ -12,6 +13,12 @@ from app.utils.storage import upload_private_file, get_private_file
 
 VALID_PLATFORMS = {'booking', 'trip', 'agoda', 'expedia'}
 VALID_DOC_TYPES = {'passport', 'hkmo', 'taiwan'}
+
+
+def _clean_booking_no(value):
+    """清洗预约单号：去掉小数点和所有空白字符。
+    Booking.com 的确认号显示为 6231.516.538 这种带点格式，客户直接复制会带点。"""
+    return re.sub(r'[.\s ]+', '', value or '')
 
 
 def _private_folder():
@@ -56,7 +63,7 @@ def create_guest_registration():
     if platform not in VALID_PLATFORMS:
         return error_response('Invalid booking platform')
 
-    booking_no = (data.get('booking_no') or '').strip()
+    booking_no = _clean_booking_no(data.get('booking_no'))
     surname = (data.get('surname') or '').strip()
     given_name = (data.get('given_name') or '').strip()
     middle_name = (data.get('middle_name') or '').strip() or None
@@ -184,10 +191,11 @@ def admin_list_guest_registrations():
 
 
 def _group_key(reg):
-    """分组键：手动合并的 group_id 优先，否则按 平台+预约单号 自动分组"""
+    """分组键：手动合并的 group_id 优先，否则按 平台+预约单号 自动分组。
+    单号做归一化（去点/去空白/转小写），避免复制粘贴带来的格式差异导致同单号分成多组。"""
     if reg.group_id:
         return reg.group_id
-    return f'bn:{reg.platform}:{(reg.booking_no or "").strip().lower()}'
+    return f'bn:{reg.platform}:{_clean_booking_no(reg.booking_no).lower()}'
 
 
 @api_bp.route('/admin/guest-registrations/grouped', methods=['GET'])

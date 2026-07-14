@@ -84,12 +84,11 @@
                     </el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column :label="$t('common.actions')" width="240">
+                <el-table-column :label="$t('common.actions')" width="200">
                   <template #default="{ row: m }">
                     <el-button v-if="m.status === 0" link type="success" size="small" @click="onSetStatus(m, 1)">{{ $t('guestReg.markDeclared') }}</el-button>
                     <el-button v-else link type="warning" size="small" @click="onSetStatus(m, 0)">{{ $t('guestReg.markPending') }}</el-button>
                     <el-button v-if="row.count > 1" link size="small" @click="onUngroup(m)">{{ $t('guestReg.ungroup') }}</el-button>
-                    <el-button link type="danger" size="small" @click="onDelete(m)">{{ $t('common.delete') }}</el-button>
                   </template>
                 </el-table-column>
               </el-table>
@@ -202,11 +201,10 @@
         <el-table-column :label="$t('guestReg.createdAt')" width="150">
           <template #default="{ row }">{{ formatDateTime(row.created_at) }}</template>
         </el-table-column>
-        <el-table-column :label="$t('common.actions')" width="190" fixed="right">
+        <el-table-column :label="$t('common.actions')" width="150" fixed="right">
           <template #default="{ row }">
             <el-button v-if="row.status === 0" link type="success" size="small" @click="onSetStatus(row, 1)">{{ $t('guestReg.markDeclared') }}</el-button>
             <el-button v-else link type="warning" size="small" @click="onSetStatus(row, 0)">{{ $t('guestReg.markPending') }}</el-button>
-            <el-button link type="danger" size="small" @click="onDelete(row)">{{ $t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -290,7 +288,6 @@ import {
   setGuestRegistrationRoomNote,
   mergeGuestRegistrations,
   ungroupGuestRegistration,
-  deleteGuestRegistration,
   guestDocUrl,
   guestRegistrationsExportUrl,
 } from '../api'
@@ -452,19 +449,6 @@ async function onUngroup(row) {
     await ungroupGuestRegistration(row.id)
     ElMessage.success(t('common.updated'))
     loadGroups()
-  } catch {}
-}
-
-async function onDelete(row) {
-  try {
-    await ElMessageBox.confirm(t('guestReg.deleteConfirm'), t('common.warning'), { type: 'warning' })
-  } catch {
-    return
-  }
-  try {
-    await deleteGuestRegistration(row.id)
-    ElMessage.success(t('common.deleted'))
-    reload()
   } catch {}
 }
 
