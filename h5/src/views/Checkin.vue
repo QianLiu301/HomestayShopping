@@ -47,9 +47,12 @@
       <div class="success-icon">✅</div>
       <h2 class="success-title">{{ L.successTitle }}</h2>
       <p class="success-desc">{{ L.successDesc }}</p>
-      <button type="button" class="register-again-btn" @click="registerAnother">
-        ＋ {{ L.registerAgain }}
-      </button>
+      <div class="register-again-box">
+        <p class="register-again-tip">⚠️ {{ L.registerAllTip }}</p>
+        <button type="button" class="register-again-btn" @click="registerAnother">
+          ＋ {{ L.registerAgain }}
+        </button>
+      </div>
       <div class="success-links">
         <button type="button" class="success-link primary" @click="goAfterSuccess('/guides')">
           <span class="link-title">{{ L.linkGuides }}</span>
@@ -298,6 +301,7 @@ const DICT = {
     handheldLabel: 'Photo of You Holding Your Passport',
     handheldPermitLabel: 'Photo of You Holding Your Permit',
     registerAgain: 'Register Another Guest',
+    registerAllTip: 'Every guest staying must register separately',
     alreadyRegistered: 'This guest has already been registered for this booking. To correct any information, please contact us.',
     stayLabel: 'Stay Dates',
     checkinDate: 'Check-in Date',
@@ -362,6 +366,7 @@ const DICT = {
     handheldLabel: '手持护照照片',
     handheldPermitLabel: '手持通行证照片',
     registerAgain: '继续登记下一位',
+    registerAllTip: '每位入住的客人都需单独登记',
     alreadyRegistered: '该客人在此订单中已登记过，无需重复登记。如需修改信息请联系我们。',
     stayLabel: '住宿日期',
     checkinDate: '入住日期',
@@ -426,6 +431,7 @@ const DICT = {
     handheldLabel: 'パスポートを持った本人の写真',
     handheldPermitLabel: '通行証を持った本人の写真',
     registerAgain: '続けて別の方を登録',
+    registerAllTip: '宿泊者全員の登録が必要です',
     alreadyRegistered: 'この方はこの予約で既に登録済みです。情報の修正はお問い合わせください。',
     stayLabel: '宿泊期間',
     checkinDate: 'チェックイン日',
@@ -490,6 +496,7 @@ const DICT = {
     handheldLabel: '여권을 든 본인 사진',
     handheldPermitLabel: '통행증을 든 본인 사진',
     registerAgain: '다른 투숙객 등록하기',
+    registerAllTip: '투숙객 전원 개별 등록이 필요합니다',
     alreadyRegistered: '이 투숙객은 이미 이 예약에 등록되어 있습니다. 정보 수정이 필요하면 문의해 주세요.',
     stayLabel: '숙박 기간',
     checkinDate: '체크인 날짜',
@@ -554,6 +561,7 @@ const DICT = {
     handheldLabel: 'Фото с паспортом в руках',
     handheldPermitLabel: 'Фото с разрешением в руках',
     registerAgain: 'Зарегистрировать ещё одного гостя',
+    registerAllTip: 'Каждый гость обязан зарегистрироваться отдельно',
     alreadyRegistered: 'Этот гость уже зарегистрирован по данному бронированию. Для исправления данных свяжитесь с нами.',
     stayLabel: 'Даты проживания',
     checkinDate: 'Дата заезда',
@@ -618,6 +626,7 @@ const DICT = {
     handheldLabel: 'Foto sosteniendo su pasaporte',
     handheldPermitLabel: 'Foto sosteniendo su permiso',
     registerAgain: 'Registrar a otro huésped',
+    registerAllTip: 'Cada huésped debe registrarse por separado',
     alreadyRegistered: 'Este huésped ya está registrado en esta reserva. Para corregir información, contáctenos.',
     stayLabel: 'Fechas de estancia',
     checkinDate: 'Fecha de entrada',
@@ -1275,21 +1284,30 @@ async function onSubmit() {
   margin: 0 0 28px;
 }
 
+.register-again-box {
+  margin-bottom: 28px;
+}
+.register-again-tip {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #b5732a;
+}
 .register-again-btn {
-  display: inline-block;
-  margin-bottom: 24px;
-  padding: 12px 28px;
-  border: 1.5px dashed var(--accent, #c8a97e);
-  border-radius: 999px;
+  display: block;
+  width: 100%;
+  padding: 18px 28px;
+  border: 2px dashed var(--accent, #c8a97e);
+  border-radius: 16px;
   background: #fdf6ea;
   color: #8a5a23;
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
 }
 .register-again-btn:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
 }
 
 .success-links {
