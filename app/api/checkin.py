@@ -173,10 +173,12 @@ def admin_list_guest_registrations():
             query = query.filter(GuestRegistration.status == int(status))
         except (ValueError, TypeError):
             pass
-    # 按入住日期筛选（每天查"今天入住"的客人）
+    # 按入住日期筛选（每天查"今天入住"的客人）；未显式筛状态时默认排除已取消的
     if checkin_filter:
         try:
             query = query.filter(GuestRegistration.checkin_date == date.fromisoformat(checkin_filter))
+            if status == '':
+                query = query.filter(GuestRegistration.status != 2)
         except ValueError:
             pass
     if date_start:
@@ -232,10 +234,13 @@ def admin_grouped_guest_registrations():
                 GuestRegistration.room_note.ilike(like),
             )
         )
-    # 按入住日期筛选（每天查"今天入住"的客人）
+    # 按入住日期筛选（每天查"今天入住"的客人），默认排除已取消的
     if checkin_filter:
         try:
-            query = query.filter(GuestRegistration.checkin_date == date.fromisoformat(checkin_filter))
+            query = query.filter(
+                GuestRegistration.checkin_date == date.fromisoformat(checkin_filter),
+                GuestRegistration.status != 2,
+            )
         except ValueError:
             pass
     if date_start:
@@ -269,6 +274,7 @@ def admin_grouped_guest_registrations():
                 'room_note': None,
                 'count': 0,
                 'declared_count': 0,
+                'cancelled_count': 0,
                 'checkin_date': r.checkin_date.isoformat() if r.checkin_date else None,
                 'checkout_date': r.checkout_date.isoformat() if r.checkout_date else None,
                 'latest_at': r.created_at.isoformat() if r.created_at else None,
@@ -279,6 +285,8 @@ def admin_grouped_guest_registrations():
         g['count'] += 1
         if r.status == 1:
             g['declared_count'] += 1
+        elif r.status == 2:
+            g['cancelled_count'] += 1
         if not g['room_note'] and r.room_note:
             g['room_note'] = r.room_note
         g['items'].append(r.to_dict())
@@ -304,7 +312,7 @@ def admin_batch_guest_registration_status():
     data = request.get_json() or {}
     ids = data.get('ids') or []
     new_status = data.get('status')
-    if not ids or new_status not in (0, 1):
+    if not ids or new_status not in (0, 1, 2):
         return error_response('参数错误')
     regs = GuestRegistration.query.filter(GuestRegistration.id.in_(ids)).all()
     for r in regs:
@@ -372,7 +380,7 @@ def admin_update_guest_registration_status(reg_id):
         return error_response('登记记录不存在', 404)
     data = request.get_json() or {}
     new_status = data.get('status')
-    if new_status not in (0, 1):
+    if new_status not in (0, 1, 2):  # 0待申报 1已申报 2已取消
         return error_response('无效的状态值')
     reg.status = new_status
     db.session.commit()
@@ -428,7 +436,8 @@ def admin_export_guest_registrations():
         except ValueError:
             return error_response('入住日期格式错误')
         rows = GuestRegistration.query.filter(
-            GuestRegistration.checkin_date == target_day
+            GuestRegistration.checkin_date == target_day,
+            GuestRegistration.status != 2,  # 当天入住名单排除已取消的
         ).order_by(GuestRegistration.created_at.desc()).all()
         start = end = None
     else:
@@ -496,7 +505,7 @@ def admin_export_guest_registrations():
         ws.cell(row=i, column=11, value=group_sizes.get(_group_key(r), 1))
         ws.cell(row=i, column=12, value=r.checkin_date.isoformat() if r.checkin_date else '')
         ws.cell(row=i, column=13, value=r.checkout_date.isoformat() if r.checkout_date else '')
-        ws.cell(row=i, column=14, value='已申报' if r.status == 1 else '待申报')
+        ws.cell(row=i, column=14, value={0: '待申报', 1: '已申报', 2: '已取消'}.get(r.status, str(r.status)))
         ws.cell(row=i, column=15, value=r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at else '')
 
     widths = [8, 16, 16, 14, 14, 14, 20, 14, 24, 16, 10, 13, 13, 12, 20]

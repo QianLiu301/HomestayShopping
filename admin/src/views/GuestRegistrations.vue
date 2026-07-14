@@ -28,6 +28,7 @@
         >
           <el-option :label="$t('guestReg.pending')" :value="0" />
           <el-option :label="$t('guestReg.declared')" :value="1" />
+          <el-option :label="$t('guestReg.cancelledStatus')" :value="2" />
         </el-select>
         <el-date-picker
           v-model="filterDate"
@@ -79,15 +80,19 @@
                 </el-table-column>
                 <el-table-column :label="$t('guestReg.status')" width="90">
                   <template #default="{ row: m }">
-                    <el-tag :type="m.status === 1 ? 'success' : 'warning'" size="small">
-                      {{ m.status === 1 ? $t('guestReg.declared') : $t('guestReg.pending') }}
-                    </el-tag>
+                    <el-tag :type="statusType(m.status)" size="small">{{ statusLabel(m.status) }}</el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column :label="$t('common.actions')" width="200">
+                <el-table-column :label="$t('common.actions')" width="260">
                   <template #default="{ row: m }">
-                    <el-button v-if="m.status === 0" link type="success" size="small" @click="onSetStatus(m, 1)">{{ $t('guestReg.markDeclared') }}</el-button>
-                    <el-button v-else link type="warning" size="small" @click="onSetStatus(m, 0)">{{ $t('guestReg.markPending') }}</el-button>
+                    <template v-if="m.status === 2">
+                      <el-button link type="primary" size="small" @click="onSetStatus(m, 0)">{{ $t('guestReg.restorePending') }}</el-button>
+                    </template>
+                    <template v-else>
+                      <el-button v-if="m.status === 0" link type="success" size="small" @click="onSetStatus(m, 1)">{{ $t('guestReg.markDeclared') }}</el-button>
+                      <el-button v-else link type="warning" size="small" @click="onSetStatus(m, 0)">{{ $t('guestReg.markPending') }}</el-button>
+                      <el-button link type="info" size="small" @click="onSetStatus(m, 2)">{{ $t('guestReg.markCancelled') }}</el-button>
+                    </template>
                     <el-button v-if="row.count > 1" link size="small" @click="onUngroup(m)">{{ $t('guestReg.ungroup') }}</el-button>
                   </template>
                 </el-table-column>
@@ -112,11 +117,15 @@
             <el-tag size="small" type="info">{{ row.count }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('guestReg.groupStatus')" width="120">
+        <el-table-column :label="$t('guestReg.groupStatus')" width="160">
           <template #default="{ row }">
-            <el-tag :type="row.declared_count === row.count ? 'success' : (row.declared_count > 0 ? 'primary' : 'warning')" size="small">
-              {{ row.declared_count }} / {{ row.count }} {{ $t('guestReg.declared') }}
+            <el-tag v-if="activeCount(row) === 0" type="info" size="small">{{ $t('guestReg.cancelledStatus') }}</el-tag>
+            <el-tag v-else :type="row.declared_count === activeCount(row) ? 'success' : (row.declared_count > 0 ? 'primary' : 'warning')" size="small">
+              {{ row.declared_count }} / {{ activeCount(row) }} {{ $t('guestReg.declared') }}
             </el-tag>
+            <span v-if="row.cancelled_count && activeCount(row) > 0" class="cancelled-hint">
+              {{ $t('guestReg.cancelledSuffix', { count: row.cancelled_count }) }}
+            </span>
           </template>
         </el-table-column>
         <el-table-column :label="$t('guestReg.stayDates')" width="180">
@@ -128,22 +137,28 @@
         <el-table-column :label="$t('guestReg.createdAt')" width="150">
           <template #default="{ row }">{{ formatDateTime(row.latest_at) }}</template>
         </el-table-column>
-        <el-table-column :label="$t('common.actions')" width="160" fixed="right">
+        <el-table-column :label="$t('common.actions')" width="230" fixed="right">
           <template #default="{ row }">
-            <el-button
-              v-if="row.declared_count < row.count"
-              link
-              type="success"
-              size="small"
-              @click="onMarkGroup(row, 1)"
-            >{{ $t('guestReg.markGroupDeclared') }}</el-button>
-            <el-button
-              v-else
-              link
-              type="warning"
-              size="small"
-              @click="onMarkGroup(row, 0)"
-            >{{ $t('guestReg.markGroupPending') }}</el-button>
+            <template v-if="activeCount(row) === 0">
+              <el-button link type="primary" size="small" @click="onMarkGroup(row, 0, true)">{{ $t('guestReg.restorePending') }}</el-button>
+            </template>
+            <template v-else>
+              <el-button
+                v-if="row.declared_count < activeCount(row)"
+                link
+                type="success"
+                size="small"
+                @click="onMarkGroup(row, 1)"
+              >{{ $t('guestReg.markGroupDeclared') }}</el-button>
+              <el-button
+                v-else
+                link
+                type="warning"
+                size="small"
+                @click="onMarkGroup(row, 0)"
+              >{{ $t('guestReg.markGroupPending') }}</el-button>
+              <el-button link type="info" size="small" @click="onCancelGroup(row)">{{ $t('guestReg.markGroupCancelled') }}</el-button>
+            </template>
           </template>
         </el-table-column>
       </el-table>
@@ -193,18 +208,22 @@
         </el-table-column>
         <el-table-column :label="$t('guestReg.status')" width="95">
           <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'warning'" size="small">
-              {{ row.status === 1 ? $t('guestReg.declared') : $t('guestReg.pending') }}
-            </el-tag>
+            <el-tag :type="statusType(row.status)" size="small">{{ statusLabel(row.status) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column :label="$t('guestReg.createdAt')" width="150">
           <template #default="{ row }">{{ formatDateTime(row.created_at) }}</template>
         </el-table-column>
-        <el-table-column :label="$t('common.actions')" width="150" fixed="right">
+        <el-table-column :label="$t('common.actions')" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button v-if="row.status === 0" link type="success" size="small" @click="onSetStatus(row, 1)">{{ $t('guestReg.markDeclared') }}</el-button>
-            <el-button v-else link type="warning" size="small" @click="onSetStatus(row, 0)">{{ $t('guestReg.markPending') }}</el-button>
+            <template v-if="row.status === 2">
+              <el-button link type="primary" size="small" @click="onSetStatus(row, 0)">{{ $t('guestReg.restorePending') }}</el-button>
+            </template>
+            <template v-else>
+              <el-button v-if="row.status === 0" link type="success" size="small" @click="onSetStatus(row, 1)">{{ $t('guestReg.markDeclared') }}</el-button>
+              <el-button v-else link type="warning" size="small" @click="onSetStatus(row, 0)">{{ $t('guestReg.markPending') }}</el-button>
+              <el-button link type="info" size="small" @click="onSetStatus(row, 2)">{{ $t('guestReg.markCancelled') }}</el-button>
+            </template>
           </template>
         </el-table-column>
       </el-table>
@@ -234,9 +253,7 @@
           <el-descriptions-item :label="$t('guestReg.checkoutDate')">{{ current.checkout_date || '-' }}</el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.roomNote')">{{ current.room_note || '-' }}</el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.status')">
-            <el-tag :type="current.status === 1 ? 'success' : 'warning'" size="small">
-              {{ current.status === 1 ? $t('guestReg.declared') : $t('guestReg.pending') }}
-            </el-tag>
+            <el-tag :type="statusType(current.status)" size="small">{{ statusLabel(current.status) }}</el-tag>
           </el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.createdAt')">{{ formatDateTime(current.created_at) }}</el-descriptions-item>
         </el-descriptions>
@@ -328,6 +345,12 @@ const platformLabel = p => platformLabels[p] || p
 const docTypeLabels = { passport: t('guestReg.docPassport'), hkmo: t('guestReg.docHkMo'), taiwan: t('guestReg.docTaiwan') }
 const docTypeLabel = d => docTypeLabels[d || 'passport'] || d
 
+// 申报状态：0待申报 1已申报 2已取消
+const statusLabel = s => (s === 1 ? t('guestReg.declared') : s === 2 ? t('guestReg.cancelledStatus') : t('guestReg.pending'))
+const statusType = s => (s === 1 ? 'success' : s === 2 ? 'info' : 'warning')
+// 组内有效人数（排除已取消）
+const activeCount = g => g.count - (g.cancelled_count || 0)
+
 function formatDateTime(val) {
   if (!val) return '-'
   const d = new Date(val)
@@ -398,10 +421,26 @@ async function onSetStatus(row, status) {
   } catch {}
 }
 
-async function onMarkGroup(group, status) {
+async function onMarkGroup(group, status, includeCancelled = false) {
+  try {
+    // 默认只更新未取消的成员；恢复整组时（includeCancelled）才包含已取消的
+    const ids = group.items.filter(m => includeCancelled || m.status !== 2).map(m => m.id)
+    if (!ids.length) return
+    await batchGuestRegistrationStatus(ids, status)
+    ElMessage.success(t('common.updated'))
+    loadGroups()
+  } catch {}
+}
+
+async function onCancelGroup(group) {
+  try {
+    await ElMessageBox.confirm(t('guestReg.groupCancelConfirm'), t('common.warning'), { type: 'warning' })
+  } catch {
+    return
+  }
   try {
     const ids = group.items.map(m => m.id)
-    await batchGuestRegistrationStatus(ids, status)
+    await batchGuestRegistrationStatus(ids, 2)
     ElMessage.success(t('common.updated'))
     loadGroups()
   } catch {}
@@ -502,6 +541,11 @@ onMounted(() => reload())
 .group-members {
   padding: 8px 16px 12px 48px;
   background: #fdfaf5;
+}
+.cancelled-hint {
+  margin-left: 6px;
+  font-size: 12px;
+  color: #909399;
 }
 .photo-grid {
   display: grid;
