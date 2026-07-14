@@ -91,7 +91,8 @@ def create_guest_registration():
     if document_type not in VALID_DOC_TYPES:
         document_type = 'passport'
 
-    document_no = (data.get('document_no') or '').strip()
+    # 证件号归一化：去空白、转大写，便于判重
+    document_no = re.sub(r'\s+', '', data.get('document_no') or '').upper()
     if not document_no:
         return error_response('Document number is required')
     if len(document_no) > 50:
@@ -109,6 +110,16 @@ def create_guest_registration():
         return error_response('Please select check-in and check-out dates')
     if checkout_date <= checkin_date:
         return error_response('Check-out date must be after check-in date')
+
+    # 重复登记过滤：同一证件号在同一个订单里只登记一次
+    # （不做全局证件号判重——老客户之后用新订单再来住是合法场景）
+    existing = GuestRegistration.query.filter(
+        db.func.upper(GuestRegistration.document_no) == document_no,
+        GuestRegistration.platform == platform,
+        GuestRegistration.booking_no == booking_no,
+    ).first()
+    if existing:
+        return success_response({'id': existing.id, 'duplicate': True}, 'Already registered')
 
     reg = GuestRegistration(
         platform=platform,

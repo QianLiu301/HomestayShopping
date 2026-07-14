@@ -298,6 +298,7 @@ const DICT = {
     handheldLabel: 'Photo of You Holding Your Passport',
     handheldPermitLabel: 'Photo of You Holding Your Permit',
     registerAgain: 'Register Another Guest',
+    alreadyRegistered: 'This guest has already been registered for this booking. To correct any information, please contact us.',
     stayLabel: 'Stay Dates',
     checkinDate: 'Check-in Date',
     checkoutDate: 'Check-out Date',
@@ -361,6 +362,7 @@ const DICT = {
     handheldLabel: '手持护照照片',
     handheldPermitLabel: '手持通行证照片',
     registerAgain: '继续登记下一位',
+    alreadyRegistered: '该客人在此订单中已登记过，无需重复登记。如需修改信息请联系我们。',
     stayLabel: '住宿日期',
     checkinDate: '入住日期',
     checkoutDate: '离开日期',
@@ -424,6 +426,7 @@ const DICT = {
     handheldLabel: 'パスポートを持った本人の写真',
     handheldPermitLabel: '通行証を持った本人の写真',
     registerAgain: '続けて別の方を登録',
+    alreadyRegistered: 'この方はこの予約で既に登録済みです。情報の修正はお問い合わせください。',
     stayLabel: '宿泊期間',
     checkinDate: 'チェックイン日',
     checkoutDate: 'チェックアウト日',
@@ -487,6 +490,7 @@ const DICT = {
     handheldLabel: '여권을 든 본인 사진',
     handheldPermitLabel: '통행증을 든 본인 사진',
     registerAgain: '다른 투숙객 등록하기',
+    alreadyRegistered: '이 투숙객은 이미 이 예약에 등록되어 있습니다. 정보 수정이 필요하면 문의해 주세요.',
     stayLabel: '숙박 기간',
     checkinDate: '체크인 날짜',
     checkoutDate: '체크아웃 날짜',
@@ -550,6 +554,7 @@ const DICT = {
     handheldLabel: 'Фото с паспортом в руках',
     handheldPermitLabel: 'Фото с разрешением в руках',
     registerAgain: 'Зарегистрировать ещё одного гостя',
+    alreadyRegistered: 'Этот гость уже зарегистрирован по данному бронированию. Для исправления данных свяжитесь с нами.',
     stayLabel: 'Даты проживания',
     checkinDate: 'Дата заезда',
     checkoutDate: 'Дата выезда',
@@ -613,6 +618,7 @@ const DICT = {
     handheldLabel: 'Foto sosteniendo su pasaporte',
     handheldPermitLabel: 'Foto sosteniendo su permiso',
     registerAgain: 'Registrar a otro huésped',
+    alreadyRegistered: 'Este huésped ya está registrado en esta reserva. Para corregir información, contáctenos.',
     stayLabel: 'Fechas de estancia',
     checkinDate: 'Fecha de entrada',
     checkoutDate: 'Fecha de salida',
@@ -869,7 +875,7 @@ async function onSubmit() {
 
   submitting.value = true
   try {
-    await submitGuestRegistration({
+    const res = await submitGuestRegistration({
       platform: form.platform,
       booking_no: form.booking_no,
       document_type: form.document_type,
@@ -884,6 +890,10 @@ async function onSubmit() {
       checkout_date: form.checkout_date,
       lang: lang.value,
     })
+    if (res.data?.duplicate) {
+      // 同一证件号在该订单里已登记过：不产生重复记录，仍进入成功页并提示
+      showToast({ message: L.value.alreadyRegistered, duration: 5000 })
+    }
     submitted.value = true
     sessionStorage.setItem(CHECKIN_DONE_KEY, '1')
     sessionStorage.setItem(CHECKIN_LANG_KEY, lang.value)
