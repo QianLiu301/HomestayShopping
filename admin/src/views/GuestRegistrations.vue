@@ -61,7 +61,7 @@
         <el-table-column type="expand">
           <template #default="{ row }">
             <div class="group-members">
-              <el-table :data="row.items" size="small" border>
+              <el-table :data="row.items" size="small" border style="min-width: 960px">
                 <el-table-column prop="id" label="ID" width="60" />
                 <el-table-column :label="$t('guestReg.name')" min-width="140">
                   <template #default="{ row: m }"><span style="font-weight:600">{{ m.full_name }}</span></template>
@@ -541,6 +541,7 @@ onMounted(() => reload())
 .group-members {
   padding: 8px 16px 12px 48px;
   background: #fdfaf5;
+  overflow-x: auto;
 }
 .cancelled-hint {
   margin-left: 6px;
