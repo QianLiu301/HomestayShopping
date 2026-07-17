@@ -111,6 +111,11 @@ def create_guest_registration():
     if checkout_date <= checkin_date:
         return error_response('Check-out date must be after check-in date')
 
+    # 入住时间：形如 "18:00" 或 "03:00 (+1)"（次日凌晨），白名单校验避免脏数据
+    checkin_time = (data.get('checkin_time') or '').strip()
+    if not re.match(r'^([01]\d|2[0-3]):00( \(\+1\))?$', checkin_time):
+        return error_response('Please select your check-in time')
+
     # 重复登记过滤：同一证件号在同一个订单里只登记一次
     # （不做全局证件号判重——老客户之后用新订单再来住是合法场景）
     existing = GuestRegistration.query.filter(
@@ -127,6 +132,7 @@ def create_guest_registration():
         document_type=document_type,
         document_no=document_no,
         checkin_date=checkin_date,
+        checkin_time=checkin_time,
         checkout_date=checkout_date,
         surname=surname,
         given_name=given_name,
@@ -276,6 +282,7 @@ def admin_grouped_guest_registrations():
                 'declared_count': 0,
                 'cancelled_count': 0,
                 'checkin_date': r.checkin_date.isoformat() if r.checkin_date else None,
+                'checkin_time': r.checkin_time,
                 'checkout_date': r.checkout_date.isoformat() if r.checkout_date else None,
                 'latest_at': r.created_at.isoformat() if r.created_at else None,
                 'items': [],
@@ -424,6 +431,17 @@ def admin_export_guest_registrations():
     except ImportError:
         return error_response('服务器缺少 openpyxl 依赖，请联系运维', 500)
 
+    try:
+        return _do_export_guest_registrations(openpyxl, Font, PatternFill, Alignment, Border, Side, get_column_letter)
+    except Exception as e:
+        current_app.logger.error(f'住宿登记导出失败: {e}', exc_info=True)
+        return error_response(f'导出失败：{e}', 500)
+
+
+def _do_export_guest_registrations(openpyxl, Font, PatternFill, Alignment, Border, Side, get_column_letter):
+    from io import BytesIO
+    from flask import send_file
+
     now = china_now()
     checkin_filter = (request.args.get('checkin_date') or '').strip()
     date_start = (request.args.get('date_start') or '').strip()
@@ -481,7 +499,7 @@ def admin_export_guest_registrations():
     thin = Side(border_style='thin', color='DDD0BC')
     border = Border(top=thin, left=thin, right=thin, bottom=thin)
 
-    headers = ['ID', '姓 (Surname)', '名 (Given Name)', '中间名', '出生日期', '证件类型', '证件号码', '预订平台', '预约单号', '房间备注', '同组人数', '入住日期', '离开日期', '申报状态', '登记时间']
+    headers = ['ID', '姓 (Surname)', '名 (Given Name)', '中间名', '出生日期', '证件类型', '证件号码', '预订平台', '预约单号', '房间备注', '同组人数', '入住日期', '入住时间', '离开日期', '申报状态', '登记时间']
     for col, label in enumerate(headers, start=1):
         cell = ws.cell(row=1, column=col, value=label)
         cell.font = header_font
@@ -504,21 +522,23 @@ def admin_export_guest_registrations():
         ws.cell(row=i, column=10, value=r.room_note or '')
         ws.cell(row=i, column=11, value=group_sizes.get(_group_key(r), 1))
         ws.cell(row=i, column=12, value=r.checkin_date.isoformat() if r.checkin_date else '')
-        ws.cell(row=i, column=13, value=r.checkout_date.isoformat() if r.checkout_date else '')
-        ws.cell(row=i, column=14, value={0: '待申报', 1: '已申报', 2: '已取消'}.get(r.status, str(r.status)))
-        ws.cell(row=i, column=15, value=r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at else '')
+        ws.cell(row=i, column=13, value=r.checkin_time or '')
+        ws.cell(row=i, column=14, value=r.checkout_date.isoformat() if r.checkout_date else '')
+        ws.cell(row=i, column=15, value={0: '待申报', 1: '已申报', 2: '已取消'}.get(r.status, str(r.status)))
+        ws.cell(row=i, column=16, value=r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at else '')
 
-    widths = [8, 16, 16, 14, 14, 14, 20, 14, 24, 16, 10, 13, 13, 12, 20]
+    widths = [8, 16, 16, 14, 14, 14, 20, 14, 24, 16, 10, 13, 13, 13, 12, 20]
     for i, w in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(i)].width = w
 
     buf = BytesIO()
     wb.save(buf)
     buf.seek(0)
+    # 文件名用 ASCII，避免个别环境下中文 Content-Disposition 报错导致下载损坏
     if checkin_filter:
-        filename = f'住宿登记_入住{checkin_filter.replace("-", "")}.xlsx'
+        filename = f'guest_checkin_{checkin_filter.replace("-", "")}.xlsx'
     else:
-        filename = f'住宿登记_{start.strftime("%Y%m%d")}-{(end - timedelta(days=1)).strftime("%Y%m%d") if date_end else now.strftime("%Y%m%d")}.xlsx'
+        filename = f'guest_checkin_{start.strftime("%Y%m%d")}-{(end - timedelta(days=1)).strftime("%Y%m%d") if date_end else now.strftime("%Y%m%d")}.xlsx'
     return send_file(
         buf,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

@@ -1296,6 +1296,7 @@ class GuestRegistration(db.Model):
     passport_image = db.Column(db.String(255), nullable=False)   # 私密存储 key: private/<uuid>.<ext>
     handheld_image = db.Column(db.String(255), nullable=False)   # 手持护照照片 key
     checkin_date = db.Column(db.Date)   # 入住日期
+    checkin_time = db.Column(db.String(20))  # 入住时间（如 "18:00" 或 "03:00 (+1)" 次日凌晨）
     checkout_date = db.Column(db.Date)  # 离开日期
     room_note = db.Column(db.String(100))  # 房间备注（管理员填写，组内共享）
     group_id = db.Column(db.String(40))    # 手动合并分组ID；为空时按 平台+预约单号 自动分组
@@ -1319,6 +1320,7 @@ class GuestRegistration(db.Model):
             'passport_image': self.passport_image,
             'handheld_image': self.handheld_image,
             'checkin_date': self.checkin_date.isoformat() if self.checkin_date else None,
+            'checkin_time': self.checkin_time,
             'checkout_date': self.checkout_date.isoformat() if self.checkout_date else None,
             'room_note': self.room_note,
             'group_id': self.group_id,

@@ -49,9 +49,21 @@
           :disabled="selectedIds.length < 2"
           @click="onMerge"
         >{{ $t('guestReg.mergeBtn') }}</el-button>
-        <el-button type="success" plain :icon="Download" @click="onExport">
-          {{ filterDate ? $t('guestReg.exportDayBtn') : $t('guestReg.exportBtn') }}
+
+        <!-- 分组视图：只导出近一个月全部 -->
+        <el-button v-if="viewMode === 'grouped'" type="success" plain :icon="Download" @click="onExportMonth">
+          {{ $t('guestReg.exportBtn') }}
         </el-button>
+
+        <!-- 全部记录视图：按入住日期导出今天/明天 -->
+        <template v-else>
+          <el-button type="success" plain :icon="Download" @click="onExportToday">
+            {{ $t('guestReg.exportTodayBtn') }}
+          </el-button>
+          <el-button type="warning" plain :icon="Download" @click="onExportTomorrow">
+            {{ $t('guestReg.exportTomorrowBtn') }}
+          </el-button>
+        </template>
       </div>
     </div>
 
@@ -128,6 +140,12 @@
             </span>
           </template>
         </el-table-column>
+        <el-table-column :label="$t('guestReg.checkinTime')" width="120">
+          <template #default="{ row }">
+            <span v-if="row.checkin_time" class="checkin-time">{{ row.checkin_time }}</span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('guestReg.stayDates')" width="180">
           <template #default="{ row }">
             <span v-if="row.checkin_date">{{ row.checkin_date }} ~ {{ row.checkout_date || '?' }}</span>
@@ -195,6 +213,12 @@
         </el-table-column>
         <el-table-column prop="document_no" :label="$t('guestReg.docNo')" min-width="120" show-overflow-tooltip />
         <el-table-column prop="booking_no" :label="$t('guestReg.bookingNo')" min-width="130" show-overflow-tooltip />
+        <el-table-column :label="$t('guestReg.checkinTime')" width="110">
+          <template #default="{ row }">
+            <span v-if="row.checkin_time" class="checkin-time">{{ row.checkin_time }}</span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('guestReg.stayDates')" width="175">
           <template #default="{ row }">
             <span v-if="row.checkin_date">{{ row.checkin_date }} ~ {{ row.checkout_date || '?' }}</span>
@@ -249,7 +273,7 @@
           <el-descriptions-item :label="$t('guestReg.docNo')">{{ current.document_no || '-' }}</el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.platform')">{{ platformLabel(current.platform) }}</el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.bookingNo')">{{ current.booking_no }}</el-descriptions-item>
-          <el-descriptions-item :label="$t('guestReg.checkinDate')">{{ current.checkin_date || '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('guestReg.checkinDate')">{{ current.checkin_date || '-' }}<span v-if="current.checkin_time"> {{ current.checkin_time }}</span></el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.checkoutDate')">{{ current.checkout_date || '-' }}</el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.roomNote')">{{ current.room_note || '-' }}</el-descriptions-item>
           <el-descriptions-item :label="$t('guestReg.status')">
@@ -502,13 +526,29 @@ function downloadDoc(key, name) {
   document.body.removeChild(a)
 }
 
-function onExport() {
-  const params = {}
-  // 选了入住日期 → 只导出当天入住的客人；未选 → 默认导出近一个月的登记
-  if (filterDate.value) {
-    params.checkin_date = filterDate.value
-  }
-  window.open(guestRegistrationsExportUrl(params), '_blank')
+function addDays(dateStr, days) {
+  // dateStr: 'YYYY-MM-DD'（无则用今天）；返回加 days 后的 'YYYY-MM-DD'
+  const base = dateStr ? new Date(dateStr) : new Date()
+  base.setDate(base.getDate() + days)
+  const pad = n => String(n).padStart(2, '0')
+  return `${base.getFullYear()}-${pad(base.getMonth() + 1)}-${pad(base.getDate())}`
+}
+
+// 分组视图：导出近一个月全部登记
+function onExportMonth() {
+  window.open(guestRegistrationsExportUrl({}), '_blank')
+}
+
+// 全部记录视图：导出今天入住（有日期筛选则按所选日期）
+function onExportToday() {
+  const day = filterDate.value || addDays(null, 0)
+  window.open(guestRegistrationsExportUrl({ checkin_date: day }), '_blank')
+}
+
+// 全部记录视图：导出明天入住（所选日期+1，未选则今天+1）
+function onExportTomorrow() {
+  const day = addDays(filterDate.value, 1)
+  window.open(guestRegistrationsExportUrl({ checkin_date: day }), '_blank')
 }
 
 onMounted(() => reload())
@@ -547,6 +587,10 @@ onMounted(() => reload())
   margin-left: 6px;
   font-size: 12px;
   color: #909399;
+}
+.checkin-time {
+  color: #b5732a;
+  font-weight: 600;
 }
 .photo-grid {
   display: grid;

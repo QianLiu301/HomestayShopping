@@ -213,18 +213,26 @@
 
       <div class="card">
         <div class="card-title">{{ L.stayLabel }} <span class="required">*</span></div>
-        <div class="stay-row">
-          <div class="field">
-            <label class="field-label">{{ L.checkinDate }}</label>
-            <div class="text-input date-display" :class="{ empty: !form.checkin_date }" @click="openCalendar('in')">
-              {{ form.checkin_date || L.selectDate }}
-            </div>
+        <div class="field">
+          <label class="field-label">{{ L.checkinDate }}</label>
+          <div class="text-input date-display" :class="{ empty: !form.checkin_date }" @click="openCalendar('in')">
+            {{ form.checkin_date || L.selectDate }}
           </div>
-          <div class="field">
-            <label class="field-label">{{ L.checkoutDate }}</label>
-            <div class="text-input date-display" :class="{ empty: !form.checkout_date }" @click="openCalendar('out')">
-              {{ form.checkout_date || L.selectDate }}
-            </div>
+        </div>
+        <!-- 选完入住日期后才出现入住时间，避免空框占位 -->
+        <transition name="fade-slide">
+          <div v-if="form.checkin_date" class="field" style="margin-top:14px">
+            <label class="field-label">{{ L.checkinTime }}</label>
+            <select v-model="form.checkin_time" class="text-input dob-select">
+              <option value="" disabled>{{ L.selectTime }}</option>
+              <option v-for="t in checkinTimeOptions" :key="t" :value="t">{{ t }}</option>
+            </select>
+          </div>
+        </transition>
+        <div class="field" style="margin-top:14px">
+          <label class="field-label">{{ L.checkoutDate }}</label>
+          <div class="text-input date-display" :class="{ empty: !form.checkout_date }" @click="openCalendar('out')">
+            {{ form.checkout_date || L.selectDate }}
           </div>
         </div>
       </div>
@@ -305,9 +313,12 @@ const DICT = {
     alreadyRegistered: 'This guest has already been registered for this booking. To correct any information, please contact us.',
     stayLabel: 'Stay Dates',
     checkinDate: 'Check-in Date',
+    checkinTime: 'Check-in Time',
     checkoutDate: 'Check-out Date',
     selectDate: 'Select date',
+    selectTime: 'Select time',
     errCheckinDate: 'Please select your check-in date',
+    errCheckinTime: 'Please select your check-in time',
     errCheckoutDate: 'Please select your check-out date',
     errDateOrder: 'Check-out date must be after check-in date',
     sampleLabel: 'Example',
@@ -370,9 +381,12 @@ const DICT = {
     alreadyRegistered: '该客人在此订单中已登记过，无需重复登记。如需修改信息请联系我们。',
     stayLabel: '住宿日期',
     checkinDate: '入住日期',
+    checkinTime: '入住时间',
     checkoutDate: '离开日期',
     selectDate: '请选择日期',
+    selectTime: '请选择时间',
     errCheckinDate: '请选择入住日期',
+    errCheckinTime: '请选择入住时间',
     errCheckoutDate: '请选择离开日期',
     errDateOrder: '离开日期需晚于入住日期',
     sampleLabel: '示例',
@@ -435,9 +449,12 @@ const DICT = {
     alreadyRegistered: 'この方はこの予約で既に登録済みです。情報の修正はお問い合わせください。',
     stayLabel: '宿泊期間',
     checkinDate: 'チェックイン日',
+    checkinTime: 'チェックイン時刻',
     checkoutDate: 'チェックアウト日',
     selectDate: '日付を選択',
+    selectTime: '時刻を選択',
     errCheckinDate: 'チェックイン日を選択してください',
+    errCheckinTime: 'チェックイン時刻を選択してください',
     errCheckoutDate: 'チェックアウト日を選択してください',
     errDateOrder: 'チェックアウト日はチェックイン日より後にしてください',
     sampleLabel: '見本',
@@ -500,9 +517,12 @@ const DICT = {
     alreadyRegistered: '이 투숙객은 이미 이 예약에 등록되어 있습니다. 정보 수정이 필요하면 문의해 주세요.',
     stayLabel: '숙박 기간',
     checkinDate: '체크인 날짜',
+    checkinTime: '체크인 시간',
     checkoutDate: '체크아웃 날짜',
     selectDate: '날짜 선택',
+    selectTime: '시간 선택',
     errCheckinDate: '체크인 날짜를 선택해 주세요',
+    errCheckinTime: '체크인 시간을 선택해 주세요',
     errCheckoutDate: '체크아웃 날짜를 선택해 주세요',
     errDateOrder: '체크아웃 날짜는 체크인 날짜 이후여야 합니다',
     sampleLabel: '예시',
@@ -565,9 +585,12 @@ const DICT = {
     alreadyRegistered: 'Этот гость уже зарегистрирован по данному бронированию. Для исправления данных свяжитесь с нами.',
     stayLabel: 'Даты проживания',
     checkinDate: 'Дата заезда',
+    checkinTime: 'Время заезда',
     checkoutDate: 'Дата выезда',
     selectDate: 'Выберите дату',
+    selectTime: 'Выберите время',
     errCheckinDate: 'Выберите дату заезда',
+    errCheckinTime: 'Выберите время заезда',
     errCheckoutDate: 'Выберите дату выезда',
     errDateOrder: 'Дата выезда должна быть позже даты заезда',
     sampleLabel: 'Пример',
@@ -630,9 +653,12 @@ const DICT = {
     alreadyRegistered: 'Este huésped ya está registrado en esta reserva. Para corregir información, contáctenos.',
     stayLabel: 'Fechas de estancia',
     checkinDate: 'Fecha de entrada',
+    checkinTime: 'Hora de entrada',
     checkoutDate: 'Fecha de salida',
     selectDate: 'Seleccione fecha',
+    selectTime: 'Seleccione hora',
     errCheckinDate: 'Seleccione la fecha de entrada',
+    errCheckinTime: 'Seleccione la hora de entrada',
     errCheckoutDate: 'Seleccione la fecha de salida',
     errDateOrder: 'La fecha de salida debe ser posterior a la de entrada',
     sampleLabel: 'Ejemplo',
@@ -707,8 +733,22 @@ const form = reactive({
   passport_image: '',
   handheld_image: '',
   checkin_date: '',
+  checkin_time: '',
   checkout_date: '',
 })
+
+// 入住时间选项（整点）：当天 12:00~23:00，以及次日 00:00~11:00 标记 (+1)
+// 值和显示一致，"(+1)" 表示次日到达，后台据此判断实际入住日
+const checkinTimeOptions = (() => {
+  const opts = []
+  for (let h = 12; h <= 23; h++) {
+    opts.push(`${String(h).padStart(2, '0')}:00`)
+  }
+  for (let h = 0; h <= 11; h++) {
+    opts.push(`${String(h).padStart(2, '0')}:00 (+1)`)
+  }
+  return opts
+})()
 
 // ===== 入住/离开日期日历选择 =====
 const showCalendar = ref(false)
@@ -878,6 +918,7 @@ async function onSubmit() {
   if (!form.passport_image) return showToast(L.value.errPassport)
   if (!form.handheld_image) return showToast(L.value.errHandheld)
   if (!form.checkin_date) return showToast(L.value.errCheckinDate)
+  if (!form.checkin_time) return showToast(L.value.errCheckinTime)
   if (!form.checkout_date) return showToast(L.value.errCheckoutDate)
   if (form.checkout_date <= form.checkin_date) return showToast(L.value.errDateOrder)
   if (uploading.passport || uploading.handheld) return
@@ -896,6 +937,7 @@ async function onSubmit() {
       passport_image: form.passport_image,
       handheld_image: form.handheld_image,
       checkin_date: form.checkin_date,
+      checkin_time: form.checkin_time,
       checkout_date: form.checkout_date,
       lang: lang.value,
     })
@@ -1131,6 +1173,17 @@ async function onSubmit() {
 
 .stay-row .field {
   flex: 1;
+}
+
+/* 入住时间选择器平滑出现 */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.25s ease;
+}
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 
 .date-display {

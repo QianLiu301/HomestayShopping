@@ -236,6 +236,7 @@ def _auto_migrate(app):
         ('guest_registrations', 'document_type', "VARCHAR(20) DEFAULT 'passport'"),
         ('guest_registrations', 'document_no', 'VARCHAR(50)'),
         ('guest_registrations', 'checkin_date', 'DATE'),
+        ('guest_registrations', 'checkin_time', 'VARCHAR(20)'),
         ('guest_registrations', 'checkout_date', 'DATE'),
         ('guest_registrations', 'room_note', 'VARCHAR(100)'),
         ('guest_registrations', 'group_id', 'VARCHAR(40)'),
