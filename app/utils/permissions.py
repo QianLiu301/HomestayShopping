@@ -81,6 +81,9 @@ CAN_MANAGE_WISHES = (ROLE_OWNER, ROLE_ADMIN, ROLE_CS)
 # 评价管理
 CAN_MANAGE_REVIEWS = (ROLE_OWNER, ROLE_ADMIN, ROLE_CS)
 
+# 住宿登记（含护照等敏感证件）— owner/admin + 客服 + 接送专员
+CAN_MANAGE_GUEST_REG = (ROLE_OWNER, ROLE_ADMIN, ROLE_CS, ROLE_TRANSFER_OPS)
+
 # 支付设置
 CAN_MANAGE_PAYMENT = (ROLE_OWNER,)
 CAN_VIEW_PAYMENT = (ROLE_OWNER, ROLE_FINANCE)
@@ -192,8 +195,8 @@ ROUTE_PERMISSIONS = [
     ('/api/admin/reviews',         CAN_MANAGE_REVIEWS, CAN_MANAGE_REVIEWS),
 
     # 住宿登记（护照等敏感证件，仅 owner/admin）
-    ('/api/admin/guest-registrations', CAN_EDIT_CONTENT, CAN_EDIT_CONTENT),
-    ('/api/admin/guest-doc',           CAN_EDIT_CONTENT, CAN_EDIT_CONTENT),
+    ('/api/admin/guest-registrations', CAN_MANAGE_GUEST_REG, CAN_MANAGE_GUEST_REG),
+    ('/api/admin/guest-doc',           CAN_MANAGE_GUEST_REG, CAN_MANAGE_GUEST_REG),
 ]
 
 
