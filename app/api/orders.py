@@ -8,6 +8,7 @@ from app.models import (
 )
 from app import db, limiter
 from app.utils import success_response, error_response, generate_order_no, get_lang
+from app.utils.cache import cached
 from app.utils.storage import upload_file
 from app.utils.email import (
     send_new_order_email,
@@ -41,6 +42,7 @@ def guest_upload_file():
 # ==================== 接送机订单 ====================
 
 @api_bp.route('/transfer/price', methods=['GET'])
+@cached(ttl=300)
 def get_transfer_price():
     """获取接送机价格配置"""
     pickup_price = float(Setting.get_value('pickup_price', 300))

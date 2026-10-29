@@ -4,12 +4,14 @@ from app.api import api_bp
 from app.models import Guide, TicketAttraction
 from app import db
 from app.utils import success_response, error_response, admin_required, paginate_query, get_lang, escape_like
+from app.utils.cache import cached
 from app.translations import auto_fill_translations
 
 
 # ==================== 公开接口 ====================
 
 @api_bp.route('/guides', methods=['GET'])
+@cached(ttl=120)
 def list_guides():
     lang = get_lang()
     page = int(request.args.get('page', 1))
@@ -42,6 +44,7 @@ def list_guides():
 
 
 @api_bp.route('/guides/<int:guide_id>', methods=['GET'])
+@cached(ttl=120)
 def get_guide(guide_id):
     lang = get_lang()
     guide = Guide.query.get(guide_id)

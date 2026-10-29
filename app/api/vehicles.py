@@ -2,9 +2,11 @@ from flask import request
 from app.api import api_bp
 from app.models import Vehicle
 from app.utils import success_response, error_response, get_lang
+from app.utils.cache import cached
 
 
 @api_bp.route('/vehicles', methods=['GET'])
+@cached(ttl=300)
 def get_vehicles():
     """获取车型列表"""
     lang = get_lang()
@@ -17,6 +19,7 @@ def get_vehicles():
 
 
 @api_bp.route('/vehicles/<int:vehicle_id>', methods=['GET'])
+@cached(ttl=300)
 def get_vehicle(vehicle_id):
     """获取车型详情"""
     lang = get_lang()

@@ -8,6 +8,7 @@ from app.models import (
 )
 from app import db, limiter
 from app.utils import success_response, error_response, paginate_query, escape_like
+from app.utils.cache import cached
 from config import config
 
 CHINA_TZ = timezone(timedelta(hours=8))
@@ -41,6 +42,7 @@ def _parse_datetime(value, field_name, fmt='%Y-%m-%d %H:%M'):
 # ==================== 公开接口 ====================
 
 @api_bp.route('/tickets/attractions', methods=['GET'])
+@cached(ttl=120)
 def get_attractions():
     """获取景点列表（H5公开）"""
     lang = request.args.get('lang', 'zh')
@@ -84,6 +86,7 @@ def get_attractions():
 
 
 @api_bp.route('/tickets/attractions/<int:attraction_id>', methods=['GET'])
+@cached(ttl=120)
 def get_attraction_detail(attraction_id):
     """获取景点详情（H5公开）"""
     lang = request.args.get('lang', 'zh')
@@ -104,6 +107,7 @@ def get_attraction_detail(attraction_id):
 
 
 @api_bp.route('/tickets/packages', methods=['GET'])
+@cached(ttl=120)
 def get_packages():
     """按景点获取票种列表（H5公开）"""
     lang = request.args.get('lang', 'zh')
@@ -124,6 +128,7 @@ def get_packages():
 
 
 @api_bp.route('/tickets/transport-options', methods=['GET'])
+@cached(ttl=120)
 def get_transport_options():
     """获取景点加购用车选项（H5公开）"""
     lang = request.args.get('lang', 'zh')
@@ -436,6 +441,7 @@ def get_ticket_order(order_no):
 
 
 @api_bp.route('/tickets/cities', methods=['GET'])
+@cached(ttl=300)
 def get_ticket_cities():
     """获取所有景点所在城市列表"""
     cities = db.session.query(TicketAttraction.city).filter(

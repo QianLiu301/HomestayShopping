@@ -585,6 +585,22 @@ def create_app(config_name='default'):
     from app.api import api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
 
+    # 公开接口缓存失效：管理端任何写操作（POST/PUT/PATCH/DELETE）成功后清空公开缓存，
+    # 让内容编辑立即对外生效。普通读请求命中缓存则不碰数据库，降低 Neon 流量。
+    from app.utils.cache import clear_public_cache
+    from flask import request as _req
+
+    @app.after_request
+    def _invalidate_public_cache_on_write(resp):
+        try:
+            if (_req.method in ('POST', 'PUT', 'PATCH', 'DELETE')
+                    and _req.path.startswith('/api/admin/')
+                    and resp.status_code < 400):
+                clear_public_cache()
+        except Exception:
+            pass
+        return resp
+
     # 静态文件服务 - 上传的图片
     @app.route('/uploads/<path:filename>')
     def uploaded_file(filename):

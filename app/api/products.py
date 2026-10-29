@@ -2,6 +2,7 @@ from flask import request
 from app.api import api_bp
 from app.models import Product, Category, OrderItem, ShopOrder, Review
 from app.utils import success_response, error_response, get_lang, paginate_query
+from app.utils.cache import cached
 from app import db
 
 
@@ -48,6 +49,7 @@ def _get_product_ratings_map(product_ids):
 
 
 @api_bp.route('/products', methods=['GET'])
+@cached(ttl=120)
 def get_products():
     """获取商品列表"""
     lang = get_lang()
@@ -130,6 +132,7 @@ def get_products():
 
 
 @api_bp.route('/products/<int:product_id>', methods=['GET'])
+@cached(ttl=120)
 def get_product(product_id):
     """获取商品详情"""
     lang = get_lang()
@@ -148,6 +151,7 @@ def get_product(product_id):
 
 
 @api_bp.route('/products/featured', methods=['GET'])
+@cached(ttl=120)
 def get_featured_products():
     """获取推荐商品"""
     lang = get_lang()

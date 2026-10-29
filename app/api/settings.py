@@ -3,9 +3,11 @@ from app.api import api_bp
 from app.models import Setting
 from app import db
 from app.utils import success_response, error_response, admin_required
+from app.utils.cache import cached
 
 
 @api_bp.route('/contact-info', methods=['GET'])
+@cached(ttl=300)
 def get_contact_info():
     """获取联系方式（公开接口，供前端OrderResult页面使用）"""
     return success_response({
@@ -17,6 +19,7 @@ def get_contact_info():
 
 
 @api_bp.route('/payment/qrcodes', methods=['GET'])
+@cached(ttl=300)
 def get_payment_qrcodes():
     """获取支付收款二维码（公开接口）"""
     wechat_qr = Setting.get_value('wechat_qr_url', '')

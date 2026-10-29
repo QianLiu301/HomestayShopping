@@ -4,6 +4,7 @@ from app.api import api_bp
 from app.models import Review, ShopOrder, OrderItem, Product, ServiceReview, TransferOrder, TicketOrder
 from app import db, limiter
 from app.utils import success_response, error_response, paginate_query, admin_required, escape_like
+from app.utils.cache import cached
 
 
 @api_bp.route('/reviews', methods=['POST'])
@@ -45,6 +46,7 @@ def create_review():
 
 
 @api_bp.route('/products/<int:product_id>/rating', methods=['GET'])
+@cached(ttl=180)
 def get_product_rating(product_id):
     """获取商品平均评分和评价数"""
     result = db.session.query(
@@ -164,6 +166,7 @@ def submit_ticket_review():
 
 
 @api_bp.route('/reviews/ticket/<int:attraction_id>', methods=['GET'])
+@cached(ttl=180)
 def get_ticket_reviews(attraction_id):
     """获取某景点的所有评价 + 平均分（供 TicketDetail 页展示）"""
     page = int(request.args.get('page', 1))
@@ -193,6 +196,7 @@ def get_ticket_reviews(attraction_id):
 
 
 @api_bp.route('/reviews/transfer/recent', methods=['GET'])
+@cached(ttl=180)
 def get_transfer_recent_reviews():
     """获取最近的接送评价 + 平均分（供 Transfer/Home 页展示）"""
     per_page = int(request.args.get('per_page', 6))
