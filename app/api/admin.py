@@ -12,6 +12,7 @@ from app.utils import (
     success_response, error_response, admin_required, paginate_query, escape_like
 )
 from app.utils.storage import upload_file, get_r2_file
+from app.utils.permissions import require_role, ROLE_OWNER
 from app.translations import auto_fill_translations
 
 
@@ -2445,3 +2446,14 @@ def admin_send_ticket_voucher(order_id):
 
     db.session.commit()
     return success_response(order.to_dict(), '已标记为已发送')
+
+
+# ==================== 数据库访问统计 ====================
+
+@api_bp.route('/admin/db-stats', methods=['GET'])
+@admin_required
+@require_role(ROLE_OWNER)
+def admin_db_stats():
+    """各接口的请求数 / 缓存命中 / 数据库查询数与返回行数（自上次重启以来）"""
+    from app.utils.db_stats import snapshot
+    return success_response(snapshot())

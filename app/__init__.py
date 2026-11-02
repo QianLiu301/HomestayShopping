@@ -736,6 +736,10 @@ def create_app(config_name='default'):
         resp.headers['Expires'] = '0'
         return resp
 
+    # 数据库访问统计（排查 Neon 流量来源）
+    from app.utils.db_stats import init_db_stats
+    init_db_stats(app, db)
+
     # 自动迁移：确保所有新列存在
     _auto_migrate(app)
 
