@@ -3,6 +3,7 @@ from app.api import api_bp
 from app.models import Review, ShopOrder, OrderItem, Product
 from app import db
 from app.utils import success_response, error_response
+from app.utils.cache import cached_response
 
 
 @api_bp.route('/reviews', methods=['POST'])
@@ -44,6 +45,7 @@ def create_review():
 
 
 @api_bp.route('/products/<int:product_id>/rating', methods=['GET'])
+@cached_response()
 def get_product_rating(product_id):
     """获取商品平均评分和评价数"""
     # 找出包含该商品的已完成订单的评价

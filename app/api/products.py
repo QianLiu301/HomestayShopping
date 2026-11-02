@@ -2,10 +2,12 @@ from flask import request
 from app.api import api_bp
 from app.models import Product, Category, OrderItem, ShopOrder
 from app.utils import success_response, error_response, get_lang, paginate_query
+from app.utils.cache import cached_response
 from app import db
 
 
 @api_bp.route('/products', methods=['GET'])
+@cached_response()
 def get_products():
     """获取商品列表"""
     lang = get_lang()
@@ -48,7 +50,7 @@ def get_products():
     result = paginate_query(query, page, per_page)
 
     return success_response({
-        'list': [p.to_dict(lang) for p in result['items']],
+        'list': [p.to_dict(lang, include_translations=False) for p in result['items']],
         'total': result['total'],
         'page': result['page'],
         'per_page': result['per_page'],
@@ -57,6 +59,7 @@ def get_products():
 
 
 @api_bp.route('/products/<int:product_id>', methods=['GET'])
+@cached_response()
 def get_product(product_id):
     """获取商品详情"""
     lang = get_lang()
@@ -70,6 +73,7 @@ def get_product(product_id):
 
 
 @api_bp.route('/products/featured', methods=['GET'])
+@cached_response()
 def get_featured_products():
     """获取推荐商品"""
     lang = get_lang()
@@ -80,4 +84,4 @@ def get_featured_products():
         .limit(limit)\
         .all()
     
-    return success_response([p.to_dict(lang) for p in products])
+    return success_response([p.to_dict(lang, include_translations=False) for p in products])

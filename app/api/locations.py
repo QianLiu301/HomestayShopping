@@ -2,9 +2,11 @@ from flask import request
 from app.api import api_bp
 from app.models import Location
 from app.utils import success_response, error_response, get_lang
+from app.utils.cache import cached_response
 
 
 @api_bp.route('/locations', methods=['GET'])
+@cached_response()
 def get_locations():
     """获取民宿点列表"""
     lang = get_lang()
@@ -17,6 +19,7 @@ def get_locations():
 
 
 @api_bp.route('/locations/<int:location_id>', methods=['GET'])
+@cached_response()
 def get_location(location_id):
     """获取民宿点详情"""
     lang = get_lang()

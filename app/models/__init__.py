@@ -1,5 +1,6 @@
 from datetime import datetime, timezone, timedelta
 from app import db
+from app.utils.cache import cache_get, cache_set
 
 CHINA_TZ = timezone(timedelta(hours=8))
 
@@ -196,8 +197,8 @@ class Product(db.Model):
     created_at = db.Column(db.DateTime, default=china_now)
     updated_at = db.Column(db.DateTime, default=china_now, onupdate=china_now)
 
-    def to_dict(self, lang='zh'):
-        return {
+    def to_dict(self, lang='zh', include_translations=True):
+        data = {
             'id': self.id,
             'category_id': self.category_id,
             'name': _localized(self, 'name', lang),
@@ -218,6 +219,11 @@ class Product(db.Model):
             'sort_order': self.sort_order,
             'status': self.status
         }
+        if not include_translations:
+            for field in ('name', 'desc'):
+                for code in ('zh', 'en', 'ru', 'es'):
+                    del data[f'{field}_{code}']
+        return data
 
 
 class Vehicle(db.Model):
@@ -281,8 +287,11 @@ class Setting(db.Model):
     
     @staticmethod
     def get_value(key, default=None):
-        setting = Setting.query.filter_by(key=key).first()
-        return setting.value if setting else default
+        settings = cache_get('settings:all')
+        if settings is None:
+            settings = {s.key: s.value for s in Setting.query.all()}
+            cache_set('settings:all', settings, 300)
+        return settings.get(key, default)
 
 
 class Coupon(db.Model):

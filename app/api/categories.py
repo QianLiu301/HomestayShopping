@@ -2,9 +2,11 @@ from flask import request
 from app.api import api_bp
 from app.models import Category
 from app.utils import success_response, error_response, get_lang
+from app.utils.cache import cached_response
 
 
 @api_bp.route('/categories', methods=['GET'])
+@cached_response()
 def get_categories():
     """获取商品分类列表"""
     lang = get_lang()
@@ -17,6 +19,7 @@ def get_categories():
 
 
 @api_bp.route('/categories/<int:category_id>', methods=['GET'])
+@cached_response()
 def get_category(category_id):
     """获取分类详情"""
     lang = get_lang()
