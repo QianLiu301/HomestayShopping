@@ -217,6 +217,20 @@ def _group_key(reg):
     return f'bn:{reg.platform}:{_clean_booking_no(reg.booking_no).lower()}'
 
 
+# 与 _clean_booking_no 去掉的字符一致（写入时已清洗，这里兼容旧数据）
+_BOOKING_NO_STRIP_CHARS = ('.', ' ', '\t', '\n', '\r', '\x0b', '\x0c', '\u00a0', '\u3000')
+
+
+def _group_key_expr():
+    """_group_key 的 SQL 版本，用于在数据库里分组"""
+    cleaned = db.func.coalesce(GuestRegistration.booking_no, '')
+    for ch in _BOOKING_NO_STRIP_CHARS:
+        cleaned = db.func.replace(cleaned, ch, '')
+    auto_key = db.literal('bn:') + GuestRegistration.platform + db.literal(':') + db.func.lower(cleaned)
+    has_manual = db.and_(GuestRegistration.group_id.isnot(None), GuestRegistration.group_id != '')
+    return db.case((has_manual, GuestRegistration.group_id), else_=auto_key)
+
+
 @api_bp.route('/admin/guest-registrations/grouped', methods=['GET'])
 @admin_required
 def admin_grouped_guest_registrations():
@@ -260,18 +274,28 @@ def admin_grouped_guest_registrations():
         except ValueError:
             pass
 
-    rows = query.order_by(GuestRegistration.created_at.desc()).all()
+    # 分组和分页都在数据库里做，只取当前页那几组的成员，避免每次把整张表拉出来（Neon 流量）
+    gkey = _group_key_expr()
+    if keyword:
+        # 关键词命中组内任意成员时，整组完整显示（不受其他筛选限制）
+        matched = query.with_entities(gkey).subquery()
+        scope = GuestRegistration.query.filter(gkey.in_(db.select(matched.c[0])))
+    else:
+        scope = query
 
-    # 关键词命中组内任意成员时，整组完整显示（重新拉全组成员）
-    if keyword and rows:
-        keys = {_group_key(r) for r in rows}
-        all_rows = GuestRegistration.query.order_by(GuestRegistration.created_at.desc()).all()
-        rows = [r for r in all_rows if _group_key(r) in keys]
+    total = scope.with_entities(db.func.count(db.distinct(gkey))).scalar() or 0
+    latest = db.func.max(GuestRegistration.created_at)
+    page_keys = [k for k, _ in scope.with_entities(gkey, latest)
+                 .group_by(gkey).order_by(latest.desc(), gkey)
+                 .offset((page - 1) * per_page).limit(per_page).all()]
+    rows = []
+    if page_keys:
+        rows = (scope.with_entities(GuestRegistration, gkey)
+                .filter(gkey.in_(page_keys))
+                .order_by(GuestRegistration.created_at.desc()).all())
 
     groups = {}
-    order = []
-    for r in rows:
-        key = _group_key(r)
+    for r, key in rows:
         if key not in groups:
             groups[key] = {
                 'key': key,
@@ -287,7 +311,6 @@ def admin_grouped_guest_registrations():
                 'latest_at': r.created_at.isoformat() if r.created_at else None,
                 'items': [],
             }
-            order.append(key)
         g = groups[key]
         g['count'] += 1
         if r.status == 1:
@@ -298,10 +321,7 @@ def admin_grouped_guest_registrations():
             g['room_note'] = r.room_note
         g['items'].append(r.to_dict())
 
-    group_list = [groups[k] for k in order]
-    total = len(group_list)
-    start_idx = (page - 1) * per_page
-    paged = group_list[start_idx:start_idx + per_page]
+    paged = [groups[k] for k in page_keys if k in groups]
 
     return success_response({
         'list': paged,
